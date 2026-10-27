@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán chuyển khoản | ChainPoint POS</title>
+  <meta name="description" content="Thanh toán chuyển khoản: khách quét mã QR, thu ngân kiểm tra trạng thái hoặc chuyển bill sang chờ thanh toán.">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/payment.css">
+</head>
+<body>
+  <div class="pay-shell">
+    <header class="pay-head">
+      <button id="btn-back" class="icon-btn back" type="button" aria-label="Quay lại">←</button>
+      <div><h1 id="pay-title">Thanh toán chuyển khoản</h1><p id="pay-sub" class="sub"></p></div>
+    </header>
+
+    <div class="pay-body">
+      <section class="glass pay-card" aria-label="Chi tiết bill">
+        <h2>Danh sách món</h2>
+        <div class="sum-list" id="sum-list"></div>
+        <div class="sum-total"><span>Tổng cộng</span><span id="sum-total" class="money">0đ</span></div>
+      </section>
+
+      <section class="glass pay-card qr-card" aria-label="Mã QR chuyển khoản">
+        <div class="qr-frame"><img id="qr-img" src="assets/qr-sample.jpg" alt="Mã QR chuyển khoản"></div>
+        <p class="qr-hint">Khách quét mã bằng app ngân hàng để thanh toán</p>
+        <div id="qr-amount" class="amount-big">0đ</div>
+        <div class="info-list">
+          <div class="info-row"><span>Ngân hàng</span><b>Vietcombank (mẫu)</b></div>
+          <div class="info-row"><span>Chủ tài khoản</span><b>CONG TY CHAINPOINT</b></div>
+          <div class="info-row"><span>Nội dung CK</span><b id="qr-memo"></b></div>
+        </div>
+        <label class="dev-box" for="dev-paid">
+          <input id="dev-paid" type="checkbox">
+          <span>[Dev] Giả lập: khách đã chuyển khoản (bên thứ 3 xác nhận)</span>
+        </label>
+        <div class="pay-actions" style="width:100%">
+          <button id="btn-wait" class="btn btn-warn btn-lg" type="button">⏳ Chờ thanh toán</button>
+          <button id="btn-check" class="btn btn-primary btn-lg" type="button">✔ Thanh toán</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/pay-common.js"></script>
+  <script src="js/payment-transfer.js"></script>
+</body>
+</html>

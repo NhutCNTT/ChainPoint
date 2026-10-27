@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn bàn | ChainPoint POS</title>
+    <meta name="description"
+        content="ChainPoint POS thu ngân: chọn bàn để gọi món, theo dõi trạng thái bàn theo từng khu vực.">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/tables.css">
+</head>
+
+<body>
+    <div class="app-shell">
+        <!-- Trái: hamburger menu -->
+        <aside class="rail rail-left">
+            <button id="btn-hamburger" class="icon-btn" type="button" aria-label="Mở menu">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round">
+                    <path d="M4 7h16M4 12h16M4 17h16" />
+                </svg>
+            </button>
+            <div class="brand-mark" title="ChainPoint">CP</div>
+        </aside>
+
+        <!-- Giữa: chọn bàn -->
+        <main class="main">
+            <header class="page-head">
+                <div>
+                    <h1>Chọn bàn</h1>
+                    <p class="sub">Chạm vào bàn để gọi món hoặc xem lại order</p>
+                </div>
+                <div class="clock"><span id="clock-time">--:--</span><small id="clock-date"></small></div>
+            </header>
+
+            <section class="glass main-panel" aria-label="Danh sách bàn">
+                <div class="table-toolbar">
+                    <div class="area-tabs" id="area-tabs" role="tablist"></div>
+                    <ul class="legend" aria-label="Chú thích">
+                        <li><i class="dot free"></i>Trống <b id="count-free">0</b></li>
+                        <li><i class="dot busy"></i>Đang dùng <b id="count-busy">0</b></li>
+                        <li><i class="dot pending"></i>Chờ thanh toán <b id="count-pending">0</b></li>
+                    </ul>
+                </div>
+                <div class="table-grid" id="table-grid"></div>
+            </section>
+        </main>
+
+        <!-- Phải: điều hướng -->
+        <nav class="rail rail-right" aria-label="Điều hướng chính">
+            <a id="nav-tables" class="nav-btn active" href="index.html"><span class="ico">🍽️</span>Chọn bàn</a>
+            <a id="nav-pending" class="nav-btn" href="pending.html"><span class="ico">🧾</span>Chờ thanh toán<b
+                    id="pending-count" class="nav-badge" data-zero="true">0</b></a>
+        </nav>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/store.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/index.js"></script>
+</body>
+
+</html>
