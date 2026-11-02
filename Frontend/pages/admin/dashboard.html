@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint — Tổng quan doanh thu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/admin/admin.css" />
+  <link rel="stylesheet" href="../../css/admin/dashboard.css" />
+</head>
+<body data-area="admin">
+  <div class="app">
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <a class="logo" href="dashboard.html">
+        <div class="logo-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.5 14.5 14.5 9.5" />
+            <path d="M11 6.5 12.8 4.7a4 4 0 0 1 5.6 0l.9.9a4 4 0 0 1 0 5.6L17.5 13" />
+            <path d="M13 17.5 11.2 19.3a4 4 0 0 1-5.6 0l-.9-.9a4 4 0 0 1 0-5.6L6.5 11" />
+          </svg>
+        </div>
+        <div class="logo-text">Chain<span>Point</span></div>
+      </a>
+
+      <nav class="nav" aria-label="Menu chính">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          Tổng quan
+        </a>
+        <a href="branches.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 4l9 5.5"/><path d="M5 10v9h14v-9"/><path d="M10 19v-5h4v5"/></svg>
+          Chi nhánh
+        </a>
+        <a href="staff.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1.2-3.2 3.7-4.8 6.5-4.8s5.3 1.6 6.5 4.8"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 15.5c1.6.6 2.8 2 3.5 4.5"/></svg>
+          Nhân viên
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-logout" id="logoutBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>
+          Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Top Header Bar with Search & User Profile -->
+      <header class="top-header">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm đơn hàng, món ăn, khách hàng..." />
+          <span class="search-shortcut">Ctrl K</span>
+        </div>
+
+        <div class="top-actions">
+          <div class="status-badge">
+            <span class="pulse-dot"></span>
+            3 chi nhánh đang mở
+          </div>
+
+          <button class="icon-btn" type="button" aria-label="Thông báo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span class="notif-badge"></span>
+          </button>
+
+          <div class="profile-chip" title="Tài khoản hiện tại">
+            <div class="profile-avatar" id="userAvatar">O</div>
+            <div class="profile-info">
+              <span class="profile-name" id="userName">Chủ nhà hàng</span>
+              <span class="profile-role" id="userRole">Chủ cửa hàng</span>
+            </div>
+            <svg class="profile-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dashboard Title & Filters -->
+      <section class="dashboard-heading">
+        <div>
+          <h1>Tổng quan doanh thu</h1>
+          <p>Hiệu suất kinh doanh và tích điểm khách hàng trên toàn chuỗi nhà hàng.</p>
+        </div>
+
+        <div class="heading-actions">
+          <div class="filter-tabs">
+            <button class="filter-tab" type="button">Hôm nay</button>
+            <button class="filter-tab active" type="button">7 ngày qua</button>
+            <button class="filter-tab" type="button">30 ngày qua</button>
+            <button class="filter-tab" type="button">Năm nay</button>
+          </div>
+
+          <button class="btn-secondary" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Xuất dữ liệu
+          </button>
+        </div>
+      </section>
+
+      <!-- Top Section: 3 Metric Cards (Revenue, Orders, Customer Count) -->
+      <section class="metrics-grid">
+        <!-- Metric 1: Revenue -->
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Tổng doanh thu</span>
+            <div class="metric-icon-wrap metric-icon-blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value">128.450.000 ₫</div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge trend-up">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              +14.8%
+            </span>
+            <span class="trend-period">so với tuần trước</span>
+          </div>
+        </article>
+
+        <!-- Metric 2: Orders -->
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Tổng đơn hàng</span>
+            <div class="metric-icon-wrap metric-icon-green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value">1.428 <span style="font-size: 20px; font-weight: 600; color: var(--muted);">đơn</span></div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge trend-up">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              +8.2%
+            </span>
+            <span class="trend-period">so với tuần trước (TB 89.9k/đơn)</span>
+          </div>
+        </article>
+
+        <!-- Metric 3: Customer Count -->
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Khách hàng</span>
+            <div class="metric-icon-wrap metric-icon-purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value">3.890 <span style="font-size: 20px; font-weight: 600; color: var(--muted);">khách</span></div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge trend-up">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              +12.5%
+            </span>
+            <span class="trend-period">+340 khách mới tuần này</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Sleek Weekly Sales Line Chart Card -->
+      <section class="chart-card">
+        <div class="chart-header">
+          <div class="chart-info">
+            <h2>Doanh số bán hàng tuần này</h2>
+            <p>Dữ liệu doanh thu thực tế từ Thứ 2 đến Chủ nhật, so sánh cùng kỳ tuần trước.</p>
+          </div>
+
+          <div class="chart-controls">
+            <div class="chart-legend">
+              <div class="legend-item">
+                <span class="legend-dot this-week"></span>
+                <span>Tuần này (128.5M ₫)</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot last-week"></span>
+                <span>Tuần trước (112.0M ₫)</span>
+              </div>
+            </div>
+
+            <div class="chart-pill-selector">
+              <button class="chart-pill active" data-metric="revenue" type="button">Doanh thu</button>
+              <button class="chart-pill" data-metric="orders" type="button">Số lượng đơn</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-viewport">
+          <!-- Dynamic interactive tooltip -->
+          <div class="chart-tooltip" id="chartTooltip">
+            <div class="tooltip-date" id="tooltipDate">Thứ 6 (Tuần này)</div>
+            <div class="tooltip-value" id="tooltipValue">24.8M ₫ (268 đơn)</div>
+            <div class="tooltip-sub" id="tooltipSub">Tăng trưởng: +18.4%</div>
+          </div>
+
+          <!-- Crisp SVG Chart -->
+          <svg class="chart-svg" id="salesSvg" viewBox="0 0 760 240" preserveAspectRatio="none">
+            <defs>
+              <!-- Primary Blue Gradient Fill -->
+              <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#2f6bff" stop-opacity="0.28" />
+                <stop offset="60%" stop-color="#2f6bff" stop-opacity="0.08" />
+                <stop offset="100%" stop-color="#2f6bff" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+
+            <!-- Horizontal Grid lines & Y-axis labels -->
+            <!-- 30M -->
+            <line x1="50" y1="30" x2="740" y2="30" stroke="#edf2f9" stroke-width="1.2" stroke-dasharray="4 4" />
+            <text x="40" y="34" fill="#94a3b8" font-size="11" text-anchor="end" font-weight="500">30 Tr</text>
+
+            <!-- 20M -->
+            <line x1="50" y1="85" x2="740" y2="85" stroke="#edf2f9" stroke-width="1.2" stroke-dasharray="4 4" />
+            <text x="40" y="89" fill="#94a3b8" font-size="11" text-anchor="end" font-weight="500">20 Tr</text>
+
+            <!-- 10M -->
+            <line x1="50" y1="140" x2="740" y2="140" stroke="#edf2f9" stroke-width="1.2" stroke-dasharray="4 4" />
+            <text x="40" y="144" fill="#94a3b8" font-size="11" text-anchor="end" font-weight="500">10 Tr</text>
+
+            <!-- 0M Base -->
+            <line x1="50" y1="195" x2="740" y2="195" stroke="#e2e8f0" stroke-width="1.5" />
+            <text x="40" y="199" fill="#94a3b8" font-size="11" text-anchor="end" font-weight="500">0 ₫</text>
+
+            <!-- Vertical hover guide line -->
+            <line id="hoverGuide" x1="0" y1="20" x2="0" y2="195" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3" opacity="0" />
+
+            <!-- Comparison Line: Last Week (Dashed Gray) -->
+            <!-- Points: (75, 128), (180, 115), (290, 120), (400, 95), (510, 80), (620, 98), (725, 122) -->
+            <path d="M 75 128 C 130 120, 150 115, 180 115 C 235 115, 260 120, 290 120 C 345 120, 370 95, 400 95 C 455 95, 480 80, 510 80 C 565 80, 590 98, 620 98 C 675 98, 700 122, 725 122" 
+                  fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="5 5" />
+
+            <!-- Area Fill: This Week -->
+            <!-- Points: (75, 117), (180, 102), (290, 110), (400, 88), (510, 58), (620, 76), (725, 105) -->
+            <path d="M 75 117 C 130 108, 150 102, 180 102 C 235 102, 260 110, 290 110 C 345 110, 370 88, 400 88 C 455 88, 480 58, 510 58 C 565 58, 590 76, 620 76 C 675 76, 700 105, 725 105 L 725 195 L 75 195 Z" 
+                  fill="url(#blueGradient)" />
+
+            <!-- Solid Main Line: This Week (Vibrant Blue) -->
+            <path d="M 75 117 C 130 108, 150 102, 180 102 C 235 102, 260 110, 290 110 C 345 110, 370 88, 400 88 C 455 88, 480 58, 510 58 C 565 58, 590 76, 620 76 C 675 76, 700 105, 725 105" 
+                  fill="none" stroke="#2f6bff" stroke-width="3.5" stroke-linecap="round" />
+
+            <!-- Interactive Data Points (7 Days) -->
+            <circle class="data-point" data-index="0" cx="75" cy="117" r="5" fill="#ffffff" stroke="#2f6bff" stroke-width="3" />
+            <circle class="data-point" data-index="1" cx="180" cy="102" r="5" fill="#ffffff" stroke="#2f6bff" stroke-width="3" />
+            <circle class="data-point" data-index="2" cx="290" cy="110" r="5" fill="#ffffff" stroke="#2f6bff" stroke-width="3" />
+            <circle class="data-point" data-index="3" cx="400" cy="88" r="5" fill="#ffffff" stroke="#2f6bff" stroke-width="3" />
+            <circle class="data-point active" data-index="4" cx="510" cy="58" r="6" fill="#2f6bff" stroke="#ffffff" stroke-width="3" />
+            <circle class="data-point" data-index="5" cx="620" cy="76" r="5" fill="#ffffff" stroke="#2f6bff" stroke-width="3" />
+            <circle class="data-point" data-index="6" cx="725" cy="105" r="5" fill="#ffffff" stroke="#2f6bff" stroke-width="3" />
+
+            <!-- X-Axis Day Labels -->
+            <text x="75" y="222" fill="#64748b" font-size="12" text-anchor="middle" font-weight="600">Thứ 2</text>
+            <text x="180" y="222" fill="#64748b" font-size="12" text-anchor="middle" font-weight="600">Thứ 3</text>
+            <text x="290" y="222" fill="#64748b" font-size="12" text-anchor="middle" font-weight="600">Thứ 4</text>
+            <text x="400" y="222" fill="#64748b" font-size="12" text-anchor="middle" font-weight="600">Thứ 5</text>
+            <text x="510" y="222" fill="#2f6bff" font-size="12" text-anchor="middle" font-weight="700">Thứ 6</text>
+            <text x="620" y="222" fill="#64748b" font-size="12" text-anchor="middle" font-weight="600">Thứ 7</text>
+            <text x="725" y="222" fill="#64748b" font-size="12" text-anchor="middle" font-weight="600">Chủ nhật</text>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Lower Details Section: Top Dishes & Branch Performance -->
+      <section class="lower-grid">
+        <!-- Top Selling Items -->
+        <article class="details-card">
+          <div class="details-card-header">
+            <h3>Món bán chạy nhất tuần</h3>
+            <a href="#">Xem thực đơn →</a>
+          </div>
+
+          <table class="dishes-table">
+            <thead>
+              <tr>
+                <th>Món ăn / Đồ uống</th>
+                <th>Số lượng</th>
+                <th>Doanh thu</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div class="dish-item">
+                    <div class="dish-icon">☕</div>
+                    <div class="dish-info">
+                      <strong>Cà phê Muối Đặc Biệt</strong>
+                      <small>Cà phê pha phin truyền thống</small>
+                    </div>
+                  </div>
+                </td>
+                <td><strong>482</strong> ly</td>
+                <td style="font-weight: 700; color: var(--text);">19.280.000 ₫</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="dish-item">
+                    <div class="dish-icon">🍑</div>
+                    <div class="dish-info">
+                      <strong>Trà Đào Cam Sả</strong>
+                      <small>Trà hoa quả giải nhiệt</small>
+                    </div>
+                  </div>
+                </td>
+                <td><strong>364</strong> ly</td>
+                <td style="font-weight: 700; color: var(--text);">16.380.000 ₫</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="dish-item">
+                    <div class="dish-icon">🥐</div>
+                    <div class="dish-info">
+                      <strong>Bánh Croissant Bơ Tỏi</strong>
+                      <small>Bánh nướng trong ngày</small>
+                    </div>
+                  </div>
+                </td>
+                <td><strong>248</strong> cái</td>
+                <td style="font-weight: 700; color: var(--text);">11.160.000 ₫</td>
+              </tr>
+              <tr>
+                <td>
+                  <div class="dish-item">
+                    <div class="dish-icon">🥛</div>
+                    <div class="dish-info">
+                      <strong>Bạc Xỉu Sữa Hạnh Nhân</strong>
+                      <small>Thức uống ít đường</small>
+                    </div>
+                  </div>
+                </td>
+                <td><strong>195</strong> ly</td>
+                <td style="font-weight: 700; color: var(--text);">8.775.000 ₫</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <!-- Branch Performance -->
+        <article class="details-card">
+          <div class="details-card-header">
+            <h3>Doanh thu theo chi nhánh</h3>
+            <a href="branches.html">Quản lý chi nhánh →</a>
+          </div>
+
+          <div class="branch-list">
+            <div class="branch-item">
+              <div class="branch-meta">
+                <span class="branch-name">Chi nhánh Quận 1 (Trụ sở chính)</span>
+                <span class="branch-sales">68.450.000 ₫</span>
+              </div>
+              <div class="branch-bar-bg">
+                <div class="branch-bar-fill" style="width: 53%;"></div>
+              </div>
+              <div class="branch-sub">
+                <span>756 đơn hoàn tất</span>
+                <span>53% tổng doanh thu</span>
+              </div>
+            </div>
+
+            <div class="branch-item">
+              <div class="branch-meta">
+                <span class="branch-name">Chi nhánh Thảo Điền</span>
+                <span class="branch-sales">38.200.000 ₫</span>
+              </div>
+              <div class="branch-bar-bg">
+                <div class="branch-bar-fill" style="width: 30%;"></div>
+              </div>
+              <div class="branch-sub">
+                <span>428 đơn hoàn tất</span>
+                <span>30% tổng doanh thu</span>
+              </div>
+            </div>
+
+            <div class="branch-item">
+              <div class="branch-meta">
+                <span class="branch-name">Chi nhánh Hoàn Kiếm</span>
+                <span class="branch-sales">21.800.000 ₫</span>
+              </div>
+              <div class="branch-bar-bg">
+                <div class="branch-bar-fill" style="width: 17%;"></div>
+              </div>
+              <div class="branch-sub">
+                <span>244 đơn hoàn tất</span>
+                <span>17% tổng doanh thu</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../js/admin/admin.js"></script>
+  <script src="../../js/admin/dashboard.js"></script>
+</body>
+</html>

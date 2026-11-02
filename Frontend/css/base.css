@@ -1,0 +1,36 @@
+/* ==========================================================
+   ChainPoint — Base styles (design tokens + reset)
+   Dùng chung cho tất cả các trang. Import trước CSS riêng của trang.
+   ========================================================== */
+
+:root {
+    --bg: #eef4ff;
+    --bg-accent: #e2ecff;
+    --primary: #2f6bff;
+    --primary-hover: #1f58e8;
+    --primary-soft: #e8efff;
+    --text: #0f1b3d;
+    --muted: #6b7799;
+    --border: #e6ebf5;
+    --card: #ffffff;
+    --surface: #f2f5fb;
+    --radius-lg: 24px;
+    --radius-md: 14px;
+    --shadow: 0 24px 60px -20px rgba(31, 64, 160, 0.22), 0 8px 20px -12px rgba(31, 64, 160, 0.12);
+    --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+a, button, .tab { -webkit-tap-highlight-color: transparent; }
+
+a:focus-visible,
+button:focus-visible { outline: 3px solid rgba(47, 107, 255, .35); outline-offset: 2px; }
+

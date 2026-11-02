@@ -1,0 +1,102 @@
+/* ==========================================================
+   ChainPoint — Admin layout (sidebar + topbar + content)
+   Requires: ../base.css
+   Used by: admin/dashboard.html, admin/branches.html, admin/staff.html
+   ========================================================== */
+
+body { min-height: 100vh; }
+
+.app {
+    display: grid;
+    grid-template-columns: 248px 1fr;
+    min-height: 100vh;
+}
+
+/* ---------- Sidebar ---------- */
+.sidebar {
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    position: sticky; top: 0; height: 100vh;
+}
+
+.logo { display: flex; align-items: center; gap: 10px; padding: 0 8px; text-decoration: none; color: var(--text); }
+.logo-mark {
+    width: 36px; height: 36px; border-radius: 11px;
+    background: linear-gradient(135deg, #4f86ff 0%, #2f6bff 55%, #1c4fd6 100%);
+    display: grid; place-items: center;
+    box-shadow: 0 8px 18px -6px rgba(47,107,255,.55);
+}
+.logo-text { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+.logo-text span { color: var(--primary); }
+
+.nav { display: flex; flex-direction: column; gap: 4px; }
+.nav a {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 12px;
+    border-radius: 12px;
+    color: var(--muted);
+    font-size: 14.5px; font-weight: 600;
+    text-decoration: none;
+    transition: background .2s, color .2s;
+}
+.nav a svg { width: 19px; height: 19px; flex-shrink: 0; }
+.nav a:hover { background: var(--surface); color: var(--text); }
+.nav a.active { background: var(--primary-soft); color: var(--primary); }
+
+.sidebar-footer { margin-top: auto; }
+.btn-logout {
+    width: 100%;
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 12px;
+    border: 0; border-radius: 12px;
+    background: transparent;
+    font: inherit; font-size: 14.5px; font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+}
+.btn-logout:hover { background: #fff1f1; color: #e5484d; }
+.btn-logout svg { width: 19px; height: 19px; }
+
+/* ---------- Main ---------- */
+.main { padding: 28px 36px; display: flex; flex-direction: column; gap: 28px; }
+
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.topbar h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.topbar p { color: var(--muted); font-size: 14.5px; margin-top: 4px; }
+
+.user-chip {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card);
+    padding: 6px 14px 6px 6px;
+    border-radius: 999px;
+    box-shadow: 0 4px 14px -6px rgba(31,64,160,.18);
+    font-size: 14px; font-weight: 600;
+}
+.user-chip .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--primary-soft); color: var(--primary);
+    display: grid; place-items: center; font-weight: 700;
+}
+.user-chip small { display: block; color: var(--muted); font-weight: 500; font-size: 12px; text-transform: capitalize; }
+
+.panel {
+    background: var(--card);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px -18px rgba(31,64,160,.25);
+    padding: 24px;
+}
+.panel-empty { color: var(--muted); font-size: 14.5px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 860px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; flex-direction: row; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .nav { flex-direction: row; flex-wrap: wrap; }
+    .sidebar-footer { margin-top: 0; margin-left: auto; }
+    .main { padding: 20px; }
+}
+

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint — Chi nhánh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/admin/admin.css" />
+</head>
+<body data-area="admin">
+  <div class="app">
+    <aside class="sidebar">
+      <a class="logo" href="dashboard.html">
+        <div class="logo-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 14.5 14.5 9.5" /><path d="M11 6.5 12.8 4.7a4 4 0 0 1 5.6 0l.9.9a4 4 0 0 1 0 5.6L17.5 13" /><path d="M13 17.5 11.2 19.3a4 4 0 0 1-5.6 0l-.9-.9a4 4 0 0 1 0-5.6L6.5 11" /></svg>
+        </div>
+        <div class="logo-text">Chain<span>Point</span></div>
+      </a>
+
+      <nav class="nav" aria-label="Menu chính">
+        <a href="dashboard.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          Tổng quan
+        </a>
+        <a href="branches.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 4l9 5.5"/><path d="M5 10v9h14v-9"/><path d="M10 19v-5h4v5"/></svg>
+          Chi nhánh
+        </a>
+        <a href="staff.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c1.2-3.2 3.7-4.8 6.5-4.8s5.3 1.6 6.5 4.8"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 15.5c1.6.6 2.8 2 3.5 4.5"/></svg>
+          Nhân viên
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-logout" id="logoutBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>
+          Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1>Chi nhánh</h1>
+          <p>Quản lý các cơ sở nhà hàng của bạn.</p>
+        </div>
+        <div class="user-chip">
+          <span class="avatar" id="userAvatar">?</span>
+          <div><span id="userName">—</span><small id="userRole">—</small></div>
+        </div>
+      </header>
+
+      <section class="panel">
+        <p class="panel-empty">Danh sách chi nhánh đang được phát triển.</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../js/admin/admin.js"></script>
+</body>
+</html>
+
