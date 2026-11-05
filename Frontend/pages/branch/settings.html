@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint Branch — Cài đặt Chi nhánh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/admin/admin.css" />
+  <link rel="stylesheet" href="../../css/admin/tables.css" />
+</head>
+<body data-area="branch">
+  <div class="app">
+    <!-- Branch Left Sidebar (9 items) -->
+    <aside class="sidebar">
+      <a class="logo" href="dashboard.html">
+        <div class="logo-mark" aria-hidden="true" style="background:linear-gradient(135deg, #10b981, #059669);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/>
+          </svg>
+        </div>
+        <div class="logo-text">Chain<span>Point</span> <small style="font-size:10px; background:#ecfdf5; color:#059669; padding:2px 6px; border-radius:4px; font-weight:800;">BRANCH</small></div>
+      </a>
+
+      <nav class="nav" id="branchNav" aria-label="Menu Chi nhánh">
+        <!-- Rendered by branch-nav.js -->
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-logout" id="branchLogoutBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>
+          Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="branchCurrentName">Cài đặt chi nhánh</h1>
+          <p>Thông tin hoạt động, hotline, giờ mở cửa và hóa đơn.</p>
+        </div>
+        <div class="user-chip">
+          <div class="avatar" id="branchUserAvatar">M</div>
+          <div><span id="branchUserName">Quản lý</span><small id="branchUserRole" style="color:#059669; font-weight:700;">Quản lý</small></div>
+        </div>
+      </header>
+
+      <!-- Settings Panel -->
+      <section class="panel" style="max-width: 800px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #f1f5f9; padding-bottom:14px;">
+          <div>
+            <h2 style="font-size:18px; font-weight:800; color:var(--text);">Thông tin vận hành</h2>
+            <p style="color:var(--muted); font-size:13px; margin:2px 0 0;">Thông tin hiển thị trên máy POS và hóa đơn thanh toán.</p>
+          </div>
+          <span id="saveNotice" style="display:none; color:#059669; font-weight:800; font-size:13px; background:#ecfdf5; padding:4px 10px; border-radius:6px;">✓ Đã lưu cài đặt!</span>
+        </div>
+
+        <form id="branchSettingsForm" style="display:flex; flex-direction:column; gap:20px;">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="setBranchName">Tên chi nhánh <span style="color:#ef4444">*</span></label>
+              <input type="text" id="setBranchName" required />
+            </div>
+            <div class="form-group">
+              <label for="setBranchCode">Mã chi nhánh <span style="color:#ef4444">*</span></label>
+              <input type="text" id="setBranchCode" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="setBranchAddress">Địa chỉ cơ sở <span style="color:#ef4444">*</span></label>
+            <input type="text" id="setBranchAddress" required />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="setBranchHotline">Hotline liên hệ <span style="color:#ef4444">*</span></label>
+              <input type="text" id="setBranchHotline" required />
+            </div>
+            <div class="form-group">
+              <label for="setManager">Quản lý chi nhánh phụ trách</label>
+              <input type="text" id="setManager" required />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="setOpenTime">Giờ mở cửa</label>
+              <input type="time" id="setOpenTime" value="08:00" />
+            </div>
+            <div class="form-group">
+              <label for="setCloseTime">Giờ đóng cửa</label>
+              <input type="time" id="setCloseTime" value="22:30" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="setVat">Thuế suất GTGT (VAT %)</label>
+              <input type="number" id="setVat" min="0" max="20" value="8" />
+            </div>
+            <div class="form-group">
+              <label for="setBranchStatus">Trạng thái hoạt động</label>
+              <select id="setBranchStatus">
+                <option value="open">Đang mở cửa đón khách</option>
+                <option value="closed">Tạm đóng cửa sửa chữa</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="background:#f8fafc; padding:16px; border-radius:12px; border:1px solid #e2e8f0;">
+            <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:700; font-size:14px; color:var(--text);">
+              <input type="checkbox" id="setAutoPrint" />
+              <span>Tự động in hóa đơn ngay sau khi thanh toán tại POS</span>
+            </label>
+          </div>
+
+          <div style="text-align:right;">
+            <button class="btn-primary" type="submit" style="padding:10px 24px;">Lưu cài đặt</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../js/common/ui.js"></script>
+  <script src="../../js/branch/branch-nav.js"></script>
+  <script src="../../js/branch/settings.js"></script>
+</body>
+</html>

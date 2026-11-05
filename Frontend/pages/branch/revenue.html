@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint Branch — Báo cáo Doanh thu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/admin/admin.css" />
+  <link rel="stylesheet" href="../../css/admin/tables.css" />
+</head>
+<body data-area="branch">
+  <div class="app">
+    <!-- Branch Left Sidebar (9 items) -->
+    <aside class="sidebar">
+      <a class="logo" href="dashboard.html">
+        <div class="logo-mark" aria-hidden="true" style="background:linear-gradient(135deg, #10b981, #059669);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/>
+          </svg>
+        </div>
+        <div class="logo-text">Chain<span>Point</span> <small style="font-size:10px; background:#ecfdf5; color:#059669; padding:2px 6px; border-radius:4px; font-weight:800;">BRANCH</small></div>
+      </a>
+
+      <nav class="nav" id="branchNav" aria-label="Menu Chi nhánh">
+        <!-- Rendered by branch-nav.js -->
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-logout" id="branchLogoutBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>
+          Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="branchCurrentName">Doanh thu</h1>
+          <p>Báo cáo doanh thu thực thu, dòng tiền và cơ cấu món bán chạy.</p>
+        </div>
+        <div class="user-chip">
+          <div class="avatar" id="branchUserAvatar">M</div>
+          <div><span id="branchUserName">Quản lý</span><small id="branchUserRole" style="color:#059669; font-weight:700;">Quản lý</small></div>
+        </div>
+      </header>
+
+      <!-- Stat Cards -->
+      <section class="tables-overview-stats">
+        <div class="table-stat-card">
+          <div class="stat-icon green">💰</div>
+          <div class="stat-details">
+            <h4>Thực thu thực tế</h4>
+            <div class="stat-number" id="statNetRevenue">0 ₫</div>
+          </div>
+        </div>
+        <div class="table-stat-card">
+          <div class="stat-icon blue">💵</div>
+          <div class="stat-details">
+            <h4>Tiền mặt đã thu</h4>
+            <div class="stat-number" id="statCashRevenue">0 ₫</div>
+          </div>
+        </div>
+        <div class="table-stat-card">
+          <div class="stat-icon purple">📱</div>
+          <div class="stat-details">
+            <h4>Chuyển khoản QR</h4>
+            <div class="stat-number" id="statTransferRevenue">0 ₫</div>
+          </div>
+        </div>
+        <div class="table-stat-card">
+          <div class="stat-icon amber">🎁</div>
+          <div class="stat-details">
+            <h4>Giảm trừ Loyalty BHX</h4>
+            <div class="stat-number" id="statLoyaltyDiscount">0 ₫</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Two column breakdown -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+        <!-- Top Selling Items -->
+        <section class="panel">
+          <h2 style="font-size:17px; font-weight:800; color:var(--text); margin-bottom:14px;">Top món ăn bán chạy</h2>
+          <table class="data-table">
+            <thead>
+              <tr style="text-align:left; font-size:11.5px; color:var(--muted); text-transform:uppercase; border-bottom:1px solid #e2e8f0;">
+                <th style="padding:8px 6px;">#</th>
+                <th style="padding:8px 6px;">Tên món</th>
+                <th style="padding:8px 6px;">Đơn giá</th>
+                <th style="padding:8px 6px;">Số lượng</th>
+                <th style="padding:8px 6px; text-align:right;">Doanh số</th>
+              </tr>
+            </thead>
+            <tbody id="topSellingBody">
+              <!-- Rendered by revenue.js -->
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Payment Breakdown Card -->
+        <section class="panel" style="display:flex; flex-direction:column; gap:16px;">
+          <h2 style="font-size:17px; font-weight:800; color:var(--text);">Cơ cấu thanh toán</h2>
+
+          <div style="background:#f8fafc; border-radius:12px; padding:16px; border:1px solid #e2e8f0; display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:13.5px; font-weight:700; margin-bottom:4px;">
+                <span>📱 Chuyển khoản QR (VietQR / Napas)</span>
+                <span style="color:#7c3aed;">62%</span>
+              </div>
+              <div style="height:8px; background:#e2e8f0; border-radius:999px; overflow:hidden;">
+                <div style="height:100%; width:62%; background:#7c3aed; border-radius:999px;"></div>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:13.5px; font-weight:700; margin-bottom:4px;">
+                <span>💵 Tiền mặt tại quầy</span>
+                <span style="color:#2563eb;">38%</span>
+              </div>
+              <div style="height:8px; background:#e2e8f0; border-radius:999px; overflow:hidden;">
+                <div style="height:100%; width:38%; background:#2563eb; border-radius:999px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#ecfdf5; border-radius:12px; padding:16px; border:1px solid #a7f3d0;">
+            <div style="font-weight:800; color:#065f46; font-size:14.5px; margin-bottom:4px;">🎁 Hiệu quả chương trình Loyalty</div>
+            <p style="font-size:13px; color:#047857; margin:0; line-height:1.5;">
+              Khách hàng dùng điểm giúp tăng tỷ lệ quay lại <strong>+24%</strong> và giá trị đơn hàng trung bình đạt <strong>185.000 ₫/đơn</strong> (so với 125.000 ₫ ở khách chưa tham gia).
+            </p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="../../js/common/ui.js"></script>
+  <script src="../../js/branch/branch-nav.js"></script>
+  <script src="../../js/branch/revenue.js"></script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint Owner — Tổng quan chuỗi nhà hàng</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/admin/admin.css" />
+  <link rel="stylesheet" href="../../css/admin/dashboard.css" />
+</head>
+<body data-area="owner">
+  <div class="app">
+    <!-- Owner Left Sidebar -->
+    <aside class="sidebar">
+      <a class="logo" href="dashboard.html">
+        <div class="logo-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.5 14.5 14.5 9.5" /><path d="M11 6.5 12.8 4.7a4 4 0 0 1 5.6 0l.9.9a4 4 0 0 1 0 5.6L17.5 13" />
+            <path d="M13 17.5 11.2 19.3a4 4 0 0 1-5.6 0l-.9-.9a4 4 0 0 1 0-5.6L6.5 11" />
+          </svg>
+        </div>
+        <div class="logo-text">Chain<span>Point</span> <small style="font-size:10px; background:#eef4ff; color:var(--primary); padding:2px 6px; border-radius:4px; font-weight:800;">OWNER</small></div>
+      </a>
+
+      <nav class="nav" aria-label="Menu Chủ chuỗi">
+        <div style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; padding: 4px 12px; letter-spacing: 0.05em;">Toàn Chuỗi</div>
+        <a href="dashboard.html" class="active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+          <span>Tổng quan</span>
+        </a>
+        <a href="branches.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5 12 4l9 5.5"/><path d="M5 10v9h14v-9"/><path d="M10 19v-5h4v5"/></svg>
+          <span>Chi nhánh</span>
+        </a>
+        <a href="revenue-comparison.html">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>So sánh doanh thu</span>
+        </a>
+
+        <div style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; padding: 12px 12px 4px; letter-spacing: 0.05em;">Vào Chi Nhánh</div>
+        <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Qu%E1%BA%ADn%201" class="switch-branch-link" style="color:#1e40af; background:#f0f7ff; border:1px solid #dbeafe;">
+          <span>📍 CN Quận 1</span>
+        </a>
+        <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Th%E1%BA%A3o%20%C4%90i%E1%BB%81n" class="switch-branch-link">
+          <span>📍 CN Thảo Điền</span>
+        </a>
+        <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Ho%C3%A0n%20Ki%E1%BA%BFm" class="switch-branch-link">
+          <span>📍 CN Hoàn Kiếm</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-logout" id="ownerLogoutBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>
+          Đăng xuất Owner
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1>Tổng quan toàn chuỗi</h1>
+          <p>Báo cáo vận hành hợp nhất 3 chi nhánh.</p>
+        </div>
+        <div class="user-chip">
+          <div class="avatar" style="background:linear-gradient(135deg, #4f86ff, #2f6bff); color:#fff; font-weight:800;">👑</div>
+          <div><span id="ownerUserName">Chủ hệ thống</span><small style="color:var(--primary); font-weight:700;">OWNER PORTAL</small></div>
+        </div>
+      </header>
+
+      <!-- KPI Summary Cards -->
+      <section class="metrics-grid">
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Tổng doanh thu toàn chuỗi</span>
+            <div class="metric-icon-wrap metric-icon-blue">💰</div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value">128.450.000 ₫</div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge trend-up">▲ +14.8%</span>
+            <span class="trend-period">so với tuần trước (3 chi nhánh)</span>
+          </div>
+        </article>
+
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Tổng đơn hàng tuần này</span>
+            <div class="metric-icon-wrap metric-icon-green">🧾</div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value">1.428 <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span></div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge trend-up">▲ +8.2%</span>
+            <span class="trend-period">TB 89.900 ₫/đơn</span>
+          </div>
+        </article>
+
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Khách hàng thành viên chuỗi</span>
+            <div class="metric-icon-wrap metric-icon-purple">👥</div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value">3.890 <span style="font-size:20px; font-weight:600; color:var(--muted);">khách</span></div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge trend-up">▲ +12.5%</span>
+            <span class="trend-period">+340 khách mới tuần này</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Revenue by Branch Comparison Cards -->
+      <section class="details-card" style="margin-top: 4px;">
+        <div class="details-card-header">
+          <div>
+            <h3>Doanh thu theo chi nhánh</h3>
+            <p style="font-size: 13px; color: var(--muted); margin-top: 2px;">Truy cập nhanh vào quản trị từng chi nhánh.</p>
+          </div>
+          <a href="revenue-comparison.html" class="btn-secondary" style="text-decoration:none; font-size:13px;">So sánh chi tiết →</a>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 14px;">
+          <!-- Branch 1: Q1 -->
+          <div style="background: #ffffff; border: 1.5px solid #dbeafe; border-radius: 16px; padding: 20px; box-shadow: 0 4px 14px rgba(37,99,235,0.06);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+              <span class="badge badge-primary">CN-Q1</span>
+              <span class="badge badge-success">● Đang mở</span>
+            </div>
+            <h4 style="font-size: 16px; font-weight: 800; color: var(--text);">Chi nhánh Quận 1</h4>
+            <p style="font-size: 12.5px; color: var(--muted); margin-top: 2px;">128 Hai Bà Trưng, Bến Nghé, Q1</p>
+            <div style="font-size: 24px; font-weight: 800; color: var(--primary); margin: 12px 0 6px;">68.450.000 ₫</div>
+            <div style="font-size: 12.5px; color: var(--muted);">756 đơn · <strong>53.3%</strong> tổng doanh thu</div>
+            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2e8f0;">
+              <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Qu%E1%BA%ADn%201" class="btn-primary" style="width:100%; text-decoration:none; justify-content:center; font-size:13px; padding:9px 12px;">
+                Vào quản trị Q1 →
+              </a>
+            </div>
+          </div>
+
+          <!-- Branch 2: Thảo Điền -->
+          <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+              <span class="badge badge-primary">CN-TD</span>
+              <span class="badge badge-success">● Đang mở</span>
+            </div>
+            <h4 style="font-size: 16px; font-weight: 800; color: var(--text);">Chi nhánh Thảo Điền</h4>
+            <p style="font-size: 12.5px; color: var(--muted); margin-top: 2px;">45 Xuân Thủy, Thảo Điền, Thủ Đức</p>
+            <div style="font-size: 24px; font-weight: 800; color: #0f1b3d; margin: 12px 0 6px;">38.200.000 ₫</div>
+            <div style="font-size: 12.5px; color: var(--muted);">428 đơn · <strong>29.7%</strong> tổng doanh thu</div>
+            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2e8f0;">
+              <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Th%E1%BA%A3o%20%C4%90i%E1%BB%81n" class="btn-secondary" style="width:100%; text-decoration:none; justify-content:center; font-size:13px; padding:9px 12px;">
+                Vào quản trị Thảo Điền →
+              </a>
+            </div>
+          </div>
+
+          <!-- Branch 3: Hoàn Kiếm -->
+          <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 20px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+              <span class="badge badge-primary">CN-HK</span>
+              <span class="badge badge-success">● Đang mở</span>
+            </div>
+            <h4 style="font-size: 16px; font-weight: 800; color: var(--text);">Chi nhánh Hoàn Kiếm</h4>
+            <p style="font-size: 12.5px; color: var(--muted); margin-top: 2px;">88 Tràng Tiền, Hoàn Kiếm, Hà Nội</p>
+            <div style="font-size: 24px; font-weight: 800; color: #0f1b3d; margin: 12px 0 6px;">21.800.000 ₫</div>
+            <div style="font-size: 12.5px; color: var(--muted);">244 đơn · <strong>17.0%</strong> tổng doanh thu</div>
+            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2e8f0;">
+              <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Ho%C3%A0n%20Ki%E1%BA%BFm" class="btn-secondary" style="width:100%; text-decoration:none; justify-content:center; font-size:13px; padding:9px 12px;">
+                Vào quản trị Hoàn Kiếm →
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../js/common/ui.js"></script>
+  <script>
+    document.getElementById('ownerLogoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('cp_role');
+      localStorage.removeItem('cp_user');
+      window.location.href = '../auth/owner-login.html';
+    });
+  </script>
+</body>
+</html>
+

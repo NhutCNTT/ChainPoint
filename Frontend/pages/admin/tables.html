@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint — Quản lý vị trí bàn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/admin/admin.css" />
+  <link rel="stylesheet" href="../../css/admin/tables.css" />
+</head>
+<body data-area="admin">
+  <div class="app">
+    <!-- Left Sidebar (Dynamically rendered by admin.js according to user role) -->
+    <aside class="sidebar">
+      <a class="logo" href="dashboard.html">
+        <div class="logo-mark" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.5 14.5 14.5 9.5" />
+            <path d="M11 6.5 12.8 4.7a4 4 0 0 1 5.6 0l.9.9a4 4 0 0 1 0 5.6L17.5 13" />
+            <path d="M13 17.5 11.2 19.3a4 4 0 0 1-5.6 0l-.9-.9a4 4 0 0 1 0-5.6L6.5 11" />
+          </svg>
+        </div>
+        <div class="logo-text">Chain<span>Point</span></div>
+      </a>
+
+      <nav class="nav" id="sidebarNav" aria-label="Menu chính">
+        <!-- Rendered by admin.js -->
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-logout" id="logoutBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>
+          Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1>Quản lý vị trí bàn</h1>
+          <p>Tạo và cấu hình sơ đồ bố trí bàn, sức chứa và phân khu trong nhà hàng.</p>
+        </div>
+        <div class="user-chip" title="Tài khoản hiện tại">
+          <span class="avatar" id="userAvatar">O</span>
+          <div><span id="userName">—</span><small id="userRole">—</small></div>
+        </div>
+      </header>
+
+      <!-- Clear architectural notice linking to POS without duplicating POS features -->
+      <section class="pos-sync-banner">
+        <div>
+          <strong>📌 Quy tắc nghiệp vụ:</strong> Màn hình này chỉ phục vụ tạo và cấu hình vị trí bàn. Nghiệp vụ gọi món, mở bàn, chuyển bàn và thanh toán được thực hiện tại trang POS chuyên biệt.
+        </div>
+        <a href="../../pos/index.html">
+          <span>Truy cập POS bán hàng</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </section>
+
+      <!-- 4 Stat Summary Cards -->
+      <section class="tables-overview-stats">
+        <div class="table-stat-card">
+          <div class="stat-icon blue">🍽️</div>
+          <div class="stat-details">
+            <h4>Tổng số bàn</h4>
+            <div class="stat-number" id="statTotalTables">0</div>
+          </div>
+        </div>
+        <div class="table-stat-card">
+          <div class="stat-icon green">✅</div>
+          <div class="stat-details">
+            <h4>Đang hoạt động</h4>
+            <div class="stat-number" id="statActiveTables">0</div>
+          </div>
+        </div>
+        <div class="table-stat-card">
+          <div class="stat-icon amber">⏸️</div>
+          <div class="stat-details">
+            <h4>Ngừng sử dụng</h4>
+            <div class="stat-number" id="statDisabledTables">0</div>
+          </div>
+        </div>
+        <div class="table-stat-card">
+          <div class="stat-icon purple">👥</div>
+          <div class="stat-details">
+            <h4>Tổng sức chứa</h4>
+            <div class="stat-number"><span id="statTotalSeats">0</span> <small style="font-size: 14px; font-weight: normal; color: var(--muted);">chỗ</small></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Toolbar: Area Filter Tabs + Search + View Mode + Add Button -->
+      <section class="tables-toolbar">
+        <div class="filter-tabs" id="areaFilterTabs">
+          <!-- Dynamic Area tabs -->
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="tables-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="tablesSearchInput" placeholder="Tìm theo mã bàn, tên bàn..." />
+          </div>
+
+          <div class="view-mode-toggle">
+            <button class="view-btn active" id="btnGridView" type="button" title="Xem sơ đồ bố trí bàn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              Sơ đồ
+            </button>
+            <button class="view-btn" id="btnListView" type="button" title="Xem danh sách chi tiết">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              Danh sách
+            </button>
+          </div>
+
+          <button class="btn-primary" id="addTableBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Tạo bàn mới
+          </button>
+        </div>
+      </section>
+
+      <!-- View Containers -->
+      <section id="tablesGridContainer">
+        <!-- Grid rendered by tables.js -->
+      </section>
+
+      <section id="tablesListContainer" hidden>
+        <!-- Table List rendered by tables.js -->
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal Tạo mới & Chỉnh sửa bàn -->
+  <div class="modal-overlay" id="tableFormModal" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="modalTitle">Thêm vị trí bàn mới</h3>
+        <button class="modal-close-btn" id="closeModalBtn" type="button" aria-label="Đóng">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form id="tableForm">
+        <input type="hidden" id="editingOriginalId" value="" />
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="formTableId">Mã bàn <span style="color:#ef4444">*</span></label>
+            <input type="text" id="formTableId" placeholder="VD: A1, B02, VIP-1" required />
+          </div>
+          <div class="form-group">
+            <label for="formTableName">Tên hiển thị <span style="color:#ef4444">*</span></label>
+            <input type="text" id="formTableName" placeholder="VD: Bàn 01, Bàn cửa sổ" required />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="formTableArea">Khu vực <span style="color:#ef4444">*</span></label>
+            <select id="formTableArea" required>
+              <!-- Filled dynamically -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="formTableSeats">Sức chứa (số khách) <span style="color:#ef4444">*</span></label>
+            <select id="formTableSeats" required>
+              <option value="2">2 người (Bàn đôi)</option>
+              <option value="4" selected>4 người (Tiêu chuẩn)</option>
+              <option value="6">6 người (Gia đình)</option>
+              <option value="8">8 người (Bàn tiệc vừa)</option>
+              <option value="10">10 người (Phòng VIP/Nhóm)</option>
+              <option value="12">12+ người (Tiệc lớn)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="formTableStatus">Trạng thái cấu hình</label>
+          <select id="formTableStatus">
+            <option value="active">Đang hoạt động (Hiển thị phục vụ trên POS)</option>
+            <option value="disabled">Ngừng sử dụng (Tạm ẩn khỏi POS / Bảo trì)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="formTableNote">Ghi chú vị trí bàn</label>
+          <input type="text" id="formTableNote" placeholder="VD: Cạnh quầy bar, ổ cắm điện, view ban công..." />
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-secondary" id="cancelModalBtn" type="button">Hủy bỏ</button>
+          <button class="btn-primary" type="submit">Lưu cấu hình</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../../js/admin/admin.js"></script>
+  <script src="../../js/admin/tables.js"></script>
+</body>
+</html>
+

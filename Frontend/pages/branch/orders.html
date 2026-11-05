@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint Branch — Quản lý Đơn hàng</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/admin/admin.css" />
+  <link rel="stylesheet" href="../../css/admin/tables.css" />
+</head>
+<body data-area="branch">
+  <div class="app">
+    <!-- Branch Left Sidebar (9 items) -->
+    <aside class="sidebar">
+      <a class="logo" href="dashboard.html">
+        <div class="logo-mark" aria-hidden="true" style="background:linear-gradient(135deg, #10b981, #059669);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/>
+          </svg>
+        </div>
+        <div class="logo-text">Chain<span>Point</span> <small style="font-size:10px; background:#ecfdf5; color:#059669; padding:2px 6px; border-radius:4px; font-weight:800;">BRANCH</small></div>
+      </a>
+
+      <nav class="nav" id="branchNav" aria-label="Menu Chi nhánh">
+        <!-- Rendered by branch-nav.js -->
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-logout" id="branchLogoutBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>
+          Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="branchCurrentName">Đơn hàng</h1>
+          <p>Lịch sử hóa đơn, phương thức thanh toán và điểm tích lũy.</p>
+        </div>
+        <div class="user-chip">
+          <div class="avatar" id="branchUserAvatar">M</div>
+          <div><span id="branchUserName">Quản lý</span><small id="branchUserRole" style="color:#059669; font-weight:700;">Quản lý</small></div>
+        </div>
+      </header>
+
+      <!-- Stat Cards -->
+      <section class="tables-overview-stats">
+        <div class="table-stat-card">
+          <div class="stat-icon green">💰</div>
+          <div class="stat-details">
+            <h4>Doanh thu đã thu</h4>
+            <div class="stat-number" id="statTotalRevenue">0 ₫</div>
+          </div>
+        </div>
+        <div class="table-stat-card">
+          <div class="stat-icon blue">🧾</div>
+          <div class="stat-details">
+            <h4>Tổng số đơn</h4>
+            <div class="stat-number" id="statTotalOrders">0</div>
+          </div>
+        </div>
+        <div class="table-stat-card">
+          <div class="stat-icon amber">🎁</div>
+          <div class="stat-details">
+            <h4>Điểm thưởng đã dùng</h4>
+            <div class="stat-number" id="statTotalPointsUsed" style="font-size:18px;">0 pts</div>
+          </div>
+        </div>
+        <div class="table-stat-card">
+          <div class="stat-icon purple">✨</div>
+          <div class="stat-details">
+            <h4>Điểm tích lũy mới</h4>
+            <div class="stat-number" id="statTotalPointsEarned" style="font-size:18px;">0 pts</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Toolbar -->
+      <section class="tables-toolbar">
+        <div class="filter-tabs" id="orderFilterTabs">
+          <button type="button" class="filter-tab active" data-status="all">Tất cả</button>
+          <button type="button" class="filter-tab" data-status="paid">Đã thanh toán</button>
+          <button type="button" class="filter-tab" data-status="pending">Chờ thanh toán</button>
+          <button type="button" class="filter-tab" data-status="busy">Đang phục vụ</button>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="tables-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="orderSearchInput" placeholder="Tìm mã đơn, khách, SĐT, bàn..." />
+          </div>
+
+          <a href="../../pos/index.html" class="btn-primary" style="text-decoration:none;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Tạo đơn POS
+          </a>
+        </div>
+      </section>
+
+      <!-- Orders Table Panel -->
+      <section class="panel" style="padding:0; overflow:hidden;">
+        <table class="data-table">
+          <thead>
+            <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0; text-align:left;">
+              <th style="padding:14px 16px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Mã hóa đơn</th>
+              <th style="padding:14px 16px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Thời gian</th>
+              <th style="padding:14px 16px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Khách hàng</th>
+              <th style="padding:14px 16px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Bàn phục vụ</th>
+              <th style="padding:14px 16px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Nhân viên</th>
+              <th style="padding:14px 16px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Tổng thanh toán</th>
+              <th style="padding:14px 16px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Điểm dùng</th>
+              <th style="padding:14px 16px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Điểm tích</th>
+              <th style="padding:14px 16px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Trạng thái</th>
+              <th style="padding:14px 16px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; text-align:right;">Chi tiết</th>
+            </tr>
+          </thead>
+          <tbody id="ordersTableBody">
+            <!-- Rendered by orders.js -->
+          </tbody>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal Chi tiết Đơn hàng -->
+  <div class="modal-overlay" id="orderDetailModal" role="dialog" aria-modal="true">
+    <div class="modal-box" style="max-width: 540px;">
+      <div class="modal-head">
+        <div>
+          <h3>Chi tiết hóa đơn <span id="modalBillId" style="color:var(--primary);">#—</span></h3>
+          <small id="modalTime" style="color:var(--muted);">—</small>
+        </div>
+        <button class="modal-close-btn" id="closeOrderModal" type="button" aria-label="Đóng">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div style="padding: 20px 24px; display:flex; flex-direction:column; gap:16px;">
+        <!-- Info Grid -->
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; background:#f8fafc; padding:12px 16px; border-radius:12px; font-size:13.5px;">
+          <div><strong>Khách hàng:</strong> <span id="modalCustName">—</span></div>
+          <div><strong>Số điện thoại:</strong> <span id="modalCustPhone">—</span></div>
+          <div><strong>Vị trí bàn:</strong> <span id="modalTable">—</span></div>
+          <div><strong>Thu ngân:</strong> <span id="modalStaff">—</span></div>
+          <div><strong>Phương thức:</strong> <span id="modalMethod">—</span></div>
+        </div>
+
+        <!-- Items list -->
+        <div>
+          <h4 style="font-size:13px; font-weight:800; text-transform:uppercase; color:var(--muted); margin-bottom:8px;">Danh sách món ăn</h4>
+          <div id="modalItemsList" style="max-height:180px; overflow-y:auto;">
+            <!-- Items rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Loyalty & Payment Summary -->
+        <div style="background:#f1f5f9; padding:14px 18px; border-radius:12px; font-size:14px; display:flex; flex-direction:column; gap:8px;">
+          <div style="display:flex; justify-content:space-between; color:var(--muted);">
+            <span>Tổng tiền món:</span>
+            <span id="modalGrossTotal" style="font-weight:700; color:var(--text);">0 ₫</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; color:#e11d48;">
+            <span>Giảm trừ điểm Loyalty:</span>
+            <span id="modalDiscount" style="font-weight:700;">-0 ₫</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:17px; font-weight:800; border-top:1px dashed #cbd5e1; padding-top:8px;">
+            <span>Thực thu:</span>
+            <span id="modalNetTotal" style="color:var(--primary);">0 ₫</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:13px; color:#059669; font-weight:700;">
+            <span>Điểm tích lũy từ hóa đơn:</span>
+            <span id="modalEarned">+0 điểm</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../js/common/ui.js"></script>
+  <script src="../../js/branch/branch-nav.js"></script>
+  <script src="../../js/branch/orders.js"></script>
+</body>
+</html>

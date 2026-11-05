@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán tiền mặt | ChainPoint POS</title>
+  <meta name="description" content="Thanh toán tiền mặt: nhập số tiền khách đưa, hệ thống tính tiền thối và lưu hóa đơn.">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/payment.css">
+</head>
+<body>
+  <div class="pay-shell">
+    <header class="pay-head">
+      <button id="btn-back" class="icon-btn back" type="button" aria-label="Quay lại">←</button>
+      <div><h1 id="pay-title">Thanh toán tiền mặt</h1><p id="pay-sub" class="sub"></p></div>
+    </header>
+
+    <div class="pay-body">
+      <section class="glass pay-card" aria-label="Chi tiết bill">
+        <h2>Danh sách món</h2>
+        <div class="sum-list" id="sum-list"></div>
+        <div class="sum-total"><span>Tổng cộng</span><span id="sum-total" class="money">0đ</span></div>
+      </section>
+
+      <section class="glass pay-card cash-panel" aria-label="Nhập tiền khách đưa">
+        <div class="due-box"><small>Tổng tiền cần thanh toán</small><span id="due-amount" class="money">0đ</span></div>
+
+        <div class="field">
+          <label for="received">Số tiền khách đưa</label>
+          <input id="received" class="input big" type="text" inputmode="numeric" placeholder="0" autocomplete="off" autofocus>
+        </div>
+        <div class="quick" id="quick"></div>
+
+        <div id="change-box" class="change-box">
+          <span id="change-label" class="lbl">Tiền thối khách</span>
+          <span id="change-amount" class="money">0đ</span>
+        </div>
+
+        <div class="pay-actions">
+          <button id="btn-cancel" class="btn btn-lg" type="button">Hủy</button>
+          <button id="btn-confirm-cash" class="btn btn-success btn-lg grow" type="button" disabled>✔ Thanh toán</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="../js/common/loyalty-store.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/pay-common.js"></script>
+  <script src="js/payment-cash.js"></script>
+</body>
+</html>
