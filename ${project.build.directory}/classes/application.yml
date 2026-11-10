@@ -1,0 +1,60 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: ChainPoint
+  datasource:
+    url: jdbc:mysql://gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/sys?sslMode=VERIFY_IDENTITY&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&connectTimeout=10000
+    username: pf5fvqEKCvScA6d.root
+    password: 3N5Q8en1yV8esiXO
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: ChainPointHikariCP
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 3000ms
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+blockchain:
+  rpc-url: https://rpc.sepolia.org
+  contract-address: "0x0000000000000000000000000000000000000000"
+  master-wallet-private-key: ""
+  gas-limit: 300000
+cloudinary:
+  cloud-name: your_cloud_name
+  api-key: your_api_key
+  api-secret: your_api_secret
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  health:
+    rabbit:
+      enabled: false
