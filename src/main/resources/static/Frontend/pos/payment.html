@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán & Tích điểm | ChainPoint POS</title>
+  <meta name="description" content="Thanh toán đơn hàng và tích/đổi điểm hội viên theo mô hình Bách Hóa Xanh tại POS.">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/payment.css">
+</head>
+<body>
+  <div class="pay-shell">
+    <header class="pay-head">
+      <button id="btn-back" class="icon-btn back" type="button" aria-label="Quay lại">←</button>
+      <div>
+        <h1 id="pay-title">Thanh toán đơn hàng</h1>
+        <p id="pay-sub" class="sub"></p>
+      </div>
+    </header>
+
+    <div class="pay-body">
+      <!-- Left Column: Bill details & Loyalty Member Program -->
+      <div style="display:flex; flex-direction:column; gap:14px; min-height:0; overflow-y:auto;">
+        
+        <!-- Loyalty Card (Bách Hóa Xanh model) -->
+        <section class="loyalty-card" aria-label="Tích & đổi điểm hội viên">
+          <div class="loyalty-head">
+            <h3><span>🎁</span> Hội viên Loyalty</h3>
+            <span style="font-size:12px; color:var(--muted); font-weight:600;">10.000 ₫ = 1 điểm · 1 điểm = 1.000 ₫</span>
+          </div>
+
+          <!-- Phone lookup input -->
+          <div class="loyalty-search-box">
+            <input type="tel" id="cust-phone-input" placeholder="Số điện thoại khách hàng..." />
+            <button type="button" id="btn-find-cust" class="btn btn-primary" style="padding:10px 16px; font-weight:700;">Tìm kiếm</button>
+            <button type="button" id="btn-quick-add-cust" class="btn btn-secondary" style="padding:10px 14px; font-weight:700; background:#f1f5f9; color:#334155;">+ Thêm mới</button>
+          </div>
+
+          <!-- Customer Found Profile & Points Redeem -->
+          <div id="cust-profile-container" style="display:none;">
+            <div class="cust-profile-box">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <b id="cust-name-display" style="font-size:15px; color:var(--text);">Nguyễn Văn A</b>
+                  <div style="font-size:12.5px; color:var(--muted);" id="cust-phone-display">0901234567</div>
+                </div>
+                <div style="text-align:right;">
+                  <span class="cust-badge-tier" id="cust-tier-display">HỘI VIÊN VÀNG</span>
+                  <div style="font-size:13px; font-weight:800; color:#059669; margin-top:3px;">
+                    Điểm khả dụng: <span id="cust-points-display" style="font-size:16px;">0</span> pts
+                  </div>
+                </div>
+              </div>
+
+              <!-- Redeem input -->
+              <div class="redeem-control">
+                <span style="font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap;">Dùng điểm giảm giá:</span>
+                <input type="number" id="points-to-use" min="0" placeholder="0" />
+                <button type="button" id="btn-use-max-points" class="btn" style="padding:4px 8px; font-size:12px; font-weight:700; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0;">Tối đa</button>
+                <div style="margin-left:auto; text-align:right;">
+                  <span id="discount-preview" style="font-weight:800; color:#e11d48; font-size:14px;">-0đ</span>
+                </div>
+              </div>
+              <div id="loyalty-error-msg" class="loyalty-notice" style="display:none;"></div>
+
+              <!-- Points to earn preview -->
+              <div style="display:flex; justify-content:space-between; font-size:12.5px; color:#047857; font-weight:600; border-top:1px dashed #a7f3d0; padding-top:6px;">
+                <span>Điểm tích lũy thêm sau thanh toán:</span>
+                <span id="points-to-earn">+0 điểm</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bill items -->
+        <section class="glass pay-card" aria-label="Chi tiết bill" style="flex:1;">
+          <h2>Chi tiết hóa đơn</h2>
+          <div class="sum-list" id="sum-list"></div>
+          
+          <div style="display:flex; flex-direction:column; gap:6px; border-top:2px solid var(--border-strong); padding-top:14px; margin-top:8px;">
+            <div style="display:flex; justify-content:space-between; color:var(--muted); font-size:14px;">
+              <span>Tổng tiền món:</span>
+              <span id="bill-gross-total" style="font-weight:700; color:var(--text);">0đ</span>
+            </div>
+            <div id="loyalty-discount-row" style="display:none; justify-content:space-between; color:#e11d48; font-size:14px;">
+              <span>Giảm trừ điểm Loyalty:</span>
+              <span id="bill-discount-val" style="font-weight:700;">-0đ</span>
+            </div>
+            <div class="sum-total" style="border:0; padding:4px 0 0; margin:0;">
+              <span>Tổng thanh toán thực tế</span>
+              <span id="sum-total" class="money">0đ</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Select Payment Method -->
+      <section class="method-col" aria-label="Phương thức thanh toán">
+        <a id="method-cash" class="method-card cash" href="#">
+          <span class="ico">💵</span>
+          <h3>Tiền mặt</h3>
+          <p>Tính tiền thối tự động</p>
+        </a>
+        <a id="method-transfer" class="method-card transfer" href="#">
+          <span class="ico">📱</span>
+          <h3>Chuyển khoản</h3>
+          <p>Quét mã VietQR tự động</p>
+        </a>
+      </section>
+    </div>
+  </div>
+
+  <!-- Quick Add Customer Modal -->
+  <div class="modal-overlay" id="quickAddCustModal" role="dialog" aria-modal="true" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:999; place-items:center;">
+    <div style="background:#ffffff; width:100%; max-width:440px; border-radius:18px; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.2); animation:fade-up .3s;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="font-size:18px; font-weight:800; color:var(--text); margin:0;">Đăng ký hội viên mới</h3>
+        <button type="button" id="close-quick-cust" style="background:transparent; border:0; font-size:22px; cursor:pointer; color:var(--muted);">&times;</button>
+      </div>
+      <form id="quickAddCustForm" style="display:flex; flex-direction:column; gap:14px;">
+        <div>
+          <label style="display:block; font-size:13px; font-weight:700; color:var(--text); margin-bottom:4px;">Số điện thoại <span style="color:#ef4444">*</span></label>
+          <input type="tel" id="quick-cust-phone" required style="width:100%; padding:10px 14px; border:1px solid var(--border-strong); border-radius:10px; font-size:14px; box-sizing:border-box;" />
+        </div>
+        <div>
+          <label style="display:block; font-size:13px; font-weight:700; color:var(--text); margin-bottom:4px;">Họ và tên <span style="color:#ef4444">*</span></label>
+          <input type="text" id="quick-cust-name" placeholder="VD: Nguyễn Văn An" required style="width:100%; padding:10px 14px; border:1px solid var(--border-strong); border-radius:10px; font-size:14px; box-sizing:border-box;" />
+        </div>
+        <div>
+          <label style="display:block; font-size:13px; font-weight:700; color:var(--text); margin-bottom:4px;">Ngày sinh (Nhận điểm tri ân)</label>
+          <input type="date" id="quick-cust-dob" style="width:100%; padding:10px 14px; border:1px solid var(--border-strong); border-radius:10px; font-size:14px; box-sizing:border-box;" />
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:10px;">
+          <button type="button" id="cancel-quick-cust" class="btn" style="padding:10px 16px;">Hủy bỏ</button>
+          <button type="submit" class="btn btn-primary" style="padding:10px 20px; font-weight:700;">Đăng ký hội viên</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/common/loyalty-store.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/pay-common.js"></script>
+  <script src="js/payment.js"></script>
+</body>
+</html>

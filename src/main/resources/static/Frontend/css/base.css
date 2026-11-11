@@ -1,0 +1,103 @@
+/* ==========================================================
+   ChainPoint — Design tokens + reset
+   Nạp đầu tiên trên mọi trang (trừ POS có token riêng tương thích).
+   ========================================================== */
+
+:root {
+    /* ---- Brand ---- */
+    --primary: #2f6bff;
+    --primary-hover: #1f58e8;
+    --primary-soft: #eaf0ff;
+    --primary-ring: rgba(47, 107, 255, 0.16);
+
+    /* ---- Neutrals ---- */
+    --bg: #f4f7fc;
+    --bg-accent: #e6eeff;
+    --card: #ffffff;
+    --surface: #f5f7fb;          /* nền phụ: header bảng, input, hover */
+    --border: #e6ebf3;
+    --border-strong: #d5dde9;
+    --text: #0f1b3d;
+    --text-2: #3c4a6b;
+    --muted: #6b7799;
+    --faint: #9aa5c0;
+
+    /* ---- Trạng thái (ý nghĩa thống nhất toàn hệ thống) ---- */
+    --success: #16a34a;  --success-soft: #eaf8ef;   /* hoạt động, đã thanh toán, cộng điểm */
+    --warning: #c27803;  --warning-soft: #fff6e0;   /* chờ xử lý, tạm hết */
+    --danger:  #dc2626;  --danger-soft:  #fdecec;   /* khóa, xóa, trừ điểm */
+    --info:    #2f6bff;  --info-soft:    #eaf0ff;   /* đang phục vụ, thông tin */
+    --neutral: #5b6785;  --neutral-soft: #eef1f6;   /* ngừng sử dụng, mặc định */
+    --accent:  #7c3aed;  --accent-soft:  #f3edff;   /* hạng thành viên cao */
+
+    /* ---- Typography ---- */
+    --font: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --fs-xs: 12px;    /* caption, header bảng */
+    --fs-sm: 13px;    /* nội dung phụ */
+    --fs-base: 14px;  /* nội dung chính */
+    --fs-md: 16px;    /* tiêu đề khu vực */
+    --fs-lg: 18px;    /* tiêu đề modal */
+    --fs-xl: 24px;    /* tiêu đề trang */
+    --fs-2xl: 28px;   /* số liệu KPI */
+    --fw-regular: 400;
+    --fw-medium: 500;
+    --fw-semibold: 600;
+    --fw-bold: 700;
+
+    /* ---- Spacing (lưới 4px) ---- */
+    --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+    --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+
+    /* ---- Radius ---- */
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-full: 999px;
+    --radius-md: var(--r-md);    /* alias cũ */
+    --radius-lg: 20px;           /* alias cũ (thẻ đăng nhập) */
+
+    /* ---- Shadow ---- */
+    --shadow-sm: 0 1px 2px rgba(15, 27, 61, 0.04), 0 1px 3px rgba(15, 27, 61, 0.05);
+    --shadow-md: 0 8px 24px -8px rgba(15, 27, 61, 0.16);
+    --shadow-lg: 0 24px 60px -16px rgba(15, 27, 61, 0.28);
+    --shadow: var(--shadow-lg);  /* alias cũ */
+
+    /* ---- Layout ---- */
+    --sidebar-w: 248px;
+    --z-sidebar: 50;
+    --z-dropdown: 80;
+    --z-modal: 100;
+    --z-toast: 120;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+    font-family: var(--font);
+    font-size: var(--fs-base);
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+}
+
+img, svg { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--primary); }
+
+a, button, .tab { -webkit-tap-highlight-color: transparent; }
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible { outline: 3px solid var(--primary-ring); outline-offset: 2px; }
+
+.sr-only {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+[hidden] { display: none !important; }
