@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint Branch — Tổng quan chi nhánh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/admin/admin.css" />
+  <link rel="stylesheet" href="../../css/admin/dashboard.css" />
+</head>
+<body data-area="branch">
+  <div class="app">
+    <!-- Branch Left Sidebar (9 items) -->
+    <aside class="sidebar">
+      <a class="logo" href="dashboard.html">
+        <div class="logo-mark" aria-hidden="true" style="background:linear-gradient(135deg, #10b981, #059669);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/>
+          </svg>
+        </div>
+        <div class="logo-text">Chain<span>Point</span> <small style="font-size:10px; background:#ecfdf5; color:#059669; padding:2px 6px; border-radius:4px; font-weight:800;">BRANCH</small></div>
+      </a>
+
+      <nav class="nav" id="branchNav" aria-label="Menu Chi nhánh">
+        <!-- Rendered by branch-nav.js with 9 items -->
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-logout" id="branchLogoutBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>
+          Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="branchCurrentName">Chi nhánh Quận 1 (Trụ sở)</h1>
+          <p>Vận hành cơ sở, bán hàng và tích điểm khách hàng.</p>
+        </div>
+        <div class="user-chip">
+          <div class="avatar" id="branchUserAvatar">M</div>
+          <div><span id="branchUserName">Quản lý cơ sở</span><small id="branchUserRole" style="color:#059669; font-weight:700;">Quản lý</small></div>
+        </div>
+      </header>
+
+      <!-- KPI Summary Cards -->
+      <section class="metrics-grid">
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Doanh thu chi nhánh</span>
+            <div class="metric-icon-wrap metric-icon-blue">💰</div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value">68.450.000 ₫</div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge trend-up">▲ +16.2%</span>
+            <span class="trend-period">so với tuần trước</span>
+          </div>
+        </article>
+
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Số lượng đơn hàng</span>
+            <div class="metric-icon-wrap metric-icon-green">🧾</div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value">756 <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span></div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge trend-up">▲ +9.4%</span>
+            <span class="trend-period">TB 90.500 ₫/đơn</span>
+          </div>
+        </article>
+
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Bàn đang phục vụ / Tổng số</span>
+            <div class="metric-icon-wrap metric-icon-purple">🍽️</div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value">8 <span style="font-size:20px; font-weight:600; color:var(--muted);">/ 22 bàn</span></div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge" style="background:#eef4ff; color:#2563eb;">36.3% công suất</span>
+            <span class="trend-period">14 bàn đang trống</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Quick Action Navigation Hub for Branch -->
+      <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <a href="tables.html" class="table-card" style="text-decoration:none; padding:18px; border-color:#dbeafe;">
+          <div style="font-size:24px; margin-bottom:8px;">🍽️</div>
+          <strong style="color:var(--text); font-size:15px;">Quản lý bàn</strong>
+          <small style="color:var(--muted); margin-top:2px;">Cấu hình vị trí & sơ đồ bàn</small>
+        </a>
+        <a href="menu.html" class="table-card" style="text-decoration:none; padding:18px; border-color:#dbeafe;">
+          <div style="font-size:24px; margin-bottom:8px;">📋</div>
+          <strong style="color:var(--text); font-size:15px;">Thực đơn</strong>
+          <small style="color:var(--muted); margin-top:2px;">Món ăn & giá bán</small>
+        </a>
+        <a href="orders.html" class="table-card" style="text-decoration:none; padding:18px; border-color:#dbeafe;">
+          <div style="font-size:24px; margin-bottom:8px;">🧾</div>
+          <strong style="color:var(--text); font-size:15px;">Đơn hàng</strong>
+          <small style="color:var(--muted); margin-top:2px;">Hóa đơn & thanh toán</small>
+        </a>
+        <a href="loyalty.html" class="table-card" style="text-decoration:none; padding:18px; border-color:#fef08a; background:#fefce8;">
+          <div style="font-size:24px; margin-bottom:8px;">🎁</div>
+          <strong style="color:#854d0e; font-size:15px;">Tích điểm Loyalty</strong>
+          <small style="color:#a16207; margin-top:2px;">Mô hình Bách Hóa Xanh</small>
+        </a>
+      </section>
+
+      <!-- Chart & Details -->
+      <section class="chart-card" style="margin-top: 8px;">
+        <div class="chart-header">
+          <div class="chart-info">
+            <h2>Doanh số trong tuần</h2>
+            <p>Doanh thu ghi nhận theo ngày qua máy POS.</p>
+          </div>
+          <a href="../../pos/index.html" class="btn-primary" style="background:#059669; text-decoration:none; font-size:13px;">
+            Mở POS Bán hàng
+          </a>
+        </div>
+
+        <div style="background:#f8fafc; border-radius:14px; padding:20px; border:1px solid #eef2f8;">
+          <div style="display:grid; grid-template-columns: repeat(7, 1fr); gap:12px; text-align:center;">
+            <div style="background:#fff; padding:12px; border-radius:10px; border:1px solid #e2e8f0;">
+              <small style="color:var(--muted);">Thứ 2</small>
+              <div style="font-weight:800; font-size:14px; color:var(--text); margin-top:4px;">7.8M ₫</div>
+              <small style="color:#10b981; font-weight:700;">84 đơn</small>
+            </div>
+            <div style="background:#fff; padding:12px; border-radius:10px; border:1px solid #e2e8f0;">
+              <small style="color:var(--muted);">Thứ 3</small>
+              <div style="font-weight:800; font-size:14px; color:var(--text); margin-top:4px;">9.2M ₫</div>
+              <small style="color:#10b981; font-weight:700;">98 đơn</small>
+            </div>
+            <div style="background:#fff; padding:12px; border-radius:10px; border:1px solid #e2e8f0;">
+              <small style="color:var(--muted);">Thứ 4</small>
+              <div style="font-weight:800; font-size:14px; color:var(--text); margin-top:4px;">8.5M ₫</div>
+              <small style="color:#10b981; font-weight:700;">92 đơn</small>
+            </div>
+            <div style="background:#fff; padding:12px; border-radius:10px; border:1px solid #e2e8f0;">
+              <small style="color:var(--muted);">Thứ 5</small>
+              <div style="font-weight:800; font-size:14px; color:var(--text); margin-top:4px;">10.4M ₫</div>
+              <small style="color:#10b981; font-weight:700;">115 đơn</small>
+            </div>
+            <div style="background:#eff6ff; padding:12px; border-radius:10px; border:1.5px solid #2563eb;">
+              <small style="color:#2563eb; font-weight:700;">Thứ 6</small>
+              <div style="font-weight:800; font-size:14px; color:#2563eb; margin-top:4px;">13.6M ₫</div>
+              <small style="color:#2563eb; font-weight:700;">145 đơn</small>
+            </div>
+            <div style="background:#fff; padding:12px; border-radius:10px; border:1px solid #e2e8f0;">
+              <small style="color:var(--muted);">Thứ 7</small>
+              <div style="font-weight:800; font-size:14px; color:var(--text); margin-top:4px;">11.2M ₫</div>
+              <small style="color:#10b981; font-weight:700;">124 đơn</small>
+            </div>
+            <div style="background:#fff; padding:12px; border-radius:10px; border:1px solid #e2e8f0;">
+              <small style="color:var(--muted);">Chủ nhật</small>
+              <div style="font-weight:800; font-size:14px; color:var(--text); margin-top:4px;">7.75M ₫</div>
+              <small style="color:#10b981; font-weight:700;">98 đơn</small>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../js/common/ui.js"></script>
+  <script src="../../js/branch/branch-nav.js"></script>
+</body>
+</html>
+

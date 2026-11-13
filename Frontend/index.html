@@ -2,64 +2,264 @@
 <html lang="vi">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chọn bàn | ChainPoint POS</title>
-  <meta name="description"
-    content="ChainPoint POS thu ngân: chọn bàn để gọi món, theo dõi trạng thái bàn theo từng khu vực.">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/layout.css">
-  <link rel="stylesheet" href="css/tables.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint — Chọn cổng đăng nhập</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/base.css" />
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--sp-6) var(--sp-4);
+      background:
+        radial-gradient(900px 500px at 15% 10%, #f6f9ff 0%, transparent 60%),
+        radial-gradient(800px 600px at 85% 90%, #e2ecff 0%, transparent 60%),
+        var(--bg);
+    }
+
+    .portal-box {
+      width: 100%;
+      max-width: 860px;
+      text-align: center;
+    }
+
+    .portal-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: var(--sp-4);
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .portal-logo .logo-mark {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--primary);
+      display: grid;
+      place-items: center;
+    }
+
+    .portal-logo .logo-text {
+      font-size: 22px;
+      font-weight: var(--fw-bold);
+      letter-spacing: -0.01em;
+    }
+
+    .portal-logo .logo-text span {
+      color: var(--primary);
+    }
+
+    .portal-heading h1 {
+      font-size: clamp(24px, 3.5vw, 32px);
+      font-weight: var(--fw-bold);
+      letter-spacing: -0.02em;
+      margin-bottom: var(--sp-2);
+    }
+
+    .portal-heading p {
+      font-size: var(--fs-base);
+      color: var(--muted);
+      max-width: 520px;
+      margin: 0 auto var(--sp-6);
+    }
+
+    .portal-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-5);
+      text-align: left;
+    }
+
+    .portal-card {
+      background: var(--card);
+      border-radius: var(--r-lg);
+      padding: var(--sp-6);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--sp-5);
+      text-decoration: none;
+      color: inherit;
+      transition: border-color .15s, transform .15s, box-shadow .15s;
+    }
+
+    .portal-card:hover {
+      transform: translateY(-2px);
+      border-color: #cbd8f5;
+      box-shadow: var(--shadow-md);
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+    }
+
+    .card-icon.blue {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .card-icon.emerald {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .card-content h2 {
+      font-size: var(--fs-lg);
+      font-weight: var(--fw-bold);
+      color: var(--text);
+      margin-top: var(--sp-3);
+      margin-bottom: 4px;
+    }
+
+    .card-content p {
+      font-size: var(--fs-sm);
+      color: var(--muted);
+      margin-bottom: var(--sp-4);
+    }
+
+    .card-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: var(--fs-sm);
+      color: var(--text-2);
+      font-weight: var(--fw-medium);
+    }
+
+    .card-features li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-features li span {
+      color: var(--success);
+      font-weight: var(--fw-bold);
+    }
+
+    .card-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 42px;
+      padding: 0 var(--sp-4);
+      border-radius: 10px;
+      font-weight: var(--fw-semibold);
+      font-size: var(--fs-sm);
+      transition: background .15s, color .15s;
+    }
+
+    .portal-card.owner .card-action {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .portal-card.owner:hover .card-action {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .portal-card.pos .card-action {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .portal-card.pos:hover .card-action {
+      background: var(--success);
+      color: #ffffff;
+    }
+
+    @media (max-width: 767px) {
+      .portal-cards {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 
 <body>
-  <div class="app-shell">
-    <!-- Trái: hamburger menu -->
-    <aside class="rail rail-left">
-      <button id="btn-hamburger" class="icon-btn" type="button" aria-label="Mở menu">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-          stroke-linecap="round">
-          <path d="M4 7h16M4 12h16M4 17h16" />
+  <div class="portal-box">
+    <div class="portal-logo">
+      <div class="logo-mark">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.5 14.5 14.5 9.5" />
+          <path d="M11 6.5 12.8 4.7a4 4 0 0 1 5.6 0l.9.9a4 4 0 0 1 0 5.6L17.5 13" />
+          <path d="M13 17.5 11.2 19.3a4 4 0 0 1-5.6 0l-.9-.9a4 4 0 0 1 0-5.6L6.5 11" />
         </svg>
-      </button>
-      <div class="brand-mark" title="ChainPoint">CP</div>
-    </aside>
+      </div>
+      <div class="logo-text">Chain<span>Point</span></div>
+    </div>
 
-    <!-- Giữa: chọn bàn -->
-    <main class="main">
-      <header class="page-head">
+    <div class="portal-heading">
+      <h1>Chọn cổng đăng nhập</h1>
+      <p>Hệ thống quản lý chuỗi nhà hàng đa chi nhánh & POS bán hàng</p>
+    </div>
+
+    <div class="portal-cards">
+      <!-- CỔNG 1: OWNER LOGIN -->
+      <a class="portal-card owner" href="pages/auth/owner-login.html">
         <div>
-          <h1>Chọn bàn</h1>
-          <p class="sub">Chạm vào bàn để gọi món hoặc xem lại order</p>
+          <div class="card-icon blue"></div>
+          <div class="card-content">
+            <h2>Chủ chuỗi (Owner)</h2>
+            <p>Quản trị điều hành toàn bộ hệ thống đa chi nhánh</p>
+            <ul class="card-features">
+              <li><span>✓</span> Quản lý và tạo mới chi nhánh</li>
+              <li><span>✓</span> Doanh thu tổng & so sánh hiệu quả</li>
+              <li><span>✓</span> Truy cập khu vực từng chi nhánh</li>
+            </ul>
+          </div>
         </div>
-        <div class="clock"><span id="clock-time">--:--</span><small id="clock-date"></small></div>
-      </header>
-
-      <section class="glass main-panel" aria-label="Danh sách bàn">
-        <div class="table-toolbar">
-          <div class="area-tabs" id="area-tabs" role="tablist"></div>
-          <ul class="legend" aria-label="Chú thích">
-            <li><i class="dot free"></i>Trống <b id="count-free">0</b></li>
-            <li><i class="dot busy"></i>Đang dùng <b id="count-busy">0</b></li>
-            <li><i class="dot pending"></i>Chờ thanh toán <b id="count-pending">0</b></li>
-          </ul>
+        <div class="card-action">
+          <span>Vào cổng Chủ chuỗi</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </div>
-        <div class="table-grid" id="table-grid"></div>
-      </section>
-    </main>
+      </a>
 
-    <!-- Phải: điều hướng -->
-    <nav class="rail rail-right" aria-label="Điều hướng chính">
-      <a id="nav-tables" class="nav-btn active" href="index.html"><span class="ico">🍽️</span>Chọn bàn</a>
-      <a id="nav-pending" class="nav-btn" href="pending.html"><span class="ico">🧾</span>Chờ thanh toán<b
-          id="pending-count" class="nav-badge" data-zero="true">0</b></a>
-    </nav>
+      <!-- CỔNG 2: POS LOGIN -->
+      <a class="portal-card pos" href="pages/auth/pos-login.html">
+        <div>
+          <div class="card-icon emerald">⚡</div>
+          <div class="card-content">
+            <h2>Chi nhánh & POS</h2>
+            <p>Dành cho Quản lý cơ sở và Thu ngân bán hàng</p>
+            <ul class="card-features">
+              <li><span>✓</span> Máy POS bán hàng & thanh toán hóa đơn</li>
+              <li><span>✓</span> Quản lý bàn, menu, đơn hàng và nhân sự</li>
+              <li><span>✓</span> Tích & đổi điểm Loyalty Bách Hóa Xanh</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card-action">
+          <span>Vào cổng Chi nhánh & POS</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </div>
+      </a>
+    </div>
   </div>
-
-  <script src="js/data.js"></script>
-  <script src="js/store.js"></script>
-  <script src="js/common.js"></script>
-  <script src="js/index.js"></script>
 </body>
 
 </html>

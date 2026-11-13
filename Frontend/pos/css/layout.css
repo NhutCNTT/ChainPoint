@@ -1,0 +1,70 @@
+/* ============ App shell: [left rail] [main] [right nav] ============ */
+.app-shell {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) 132px;
+  gap: 16px;
+  height: 100vh;
+  padding: 16px;
+}
+
+.rail {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 16px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+.rail-left .brand-mark { margin-top: auto; }
+.rail-left .icon-btn { width: 56px; height: 56px; }
+
+.rail-right { justify-content: flex-start; gap: 12px; padding: 14px 12px; }
+
+.nav-btn {
+  position: relative;
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 22px 6px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: #ffffff;
+  text-align: center; font-weight: 600; font-size: 13px; color: var(--muted);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+  transition: transform .2s var(--ease), background .2s, color .2s, box-shadow .25s, border-color .2s;
+}
+.nav-btn .ico { font-size: 30px; line-height: 1; }
+.nav-btn:hover { transform: translateY(-3px); background: var(--blue-light); border-color: var(--accent-1); color: var(--accent-1); }
+.nav-btn.active { background: var(--accent-grad); color: #fff; border-color: transparent; box-shadow: var(--accent-glow); }
+.nav-badge {
+  position: absolute; top: 8px; right: 10px;
+  min-width: 24px; height: 24px; padding: 0 7px;
+  display: grid; place-items: center;
+  border-radius: 999px; font-size: 12px; font-weight: 800;
+  background: var(--danger); color: #fff;
+  box-shadow: 0 0 0 3px #ffffff;
+}
+.nav-badge[data-zero="true"] { display: none; }
+
+.main {
+  min-width: 0; min-height: 0;
+  display: flex; flex-direction: column; gap: 14px;
+  animation: fade-up .5s var(--ease);
+}
+.main-panel {
+  flex: 1; min-height: 0;
+  padding: 20px;
+  overflow: auto;
+}
+
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.page-head h1 { font-size: 28px; font-weight: 700; color: var(--text); }
+.page-head .sub { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.clock { font-family: var(--font-display); font-size: 22px; font-weight: 600; text-align: right; color: var(--text); }
+.clock small { display: block; font-family: var(--font); font-size: 12px; color: var(--muted); font-weight: 400; }
+
+/* ============ Responsive ============ */
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: 64px minmax(0, 1fr) 96px; gap: 10px; padding: 10px; }
+  .nav-btn { font-size: 11px; padding: 16px 2px; }
+  .nav-btn .ico { font-size: 24px; }
+}

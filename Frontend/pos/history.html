@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lịch sử hóa đơn | ChainPoint POS</title>
+  <meta name="description" content="Xem lại hóa đơn đã thanh toán, lọc theo khoảng ngày và xem chi tiết từng hóa đơn.">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/payment.css">
+  <link rel="stylesheet" href="css/history.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail rail-left">
+      <button id="btn-hamburger" class="icon-btn" type="button" aria-label="Mở menu">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <div class="brand-mark" title="ChainPoint">CP</div>
+    </aside>
+
+    <main class="main">
+      <header class="page-head">
+        <div>
+          <h1>Lịch sử hóa đơn</h1>
+          <p class="sub">Tra cứu hóa đơn đã thanh toán theo ngày</p>
+        </div>
+        <div class="filter-bar glass">
+          <label class="f-field">Từ ngày<input id="date-from" class="input" type="date"></label>
+          <label class="f-field">Đến ngày<input id="date-to" class="input" type="date"></label>
+          <button id="btn-today" class="btn" type="button">Hôm nay</button>
+          <button id="btn-7days" class="btn" type="button">7 ngày</button>
+          <button id="btn-all" class="btn" type="button">Tất cả</button>
+        </div>
+      </header>
+
+      <div class="stats">
+        <div class="stat glass"><span>Số hóa đơn</span><b id="stat-count">0</b></div>
+        <div class="stat glass"><span>Tiền mặt</span><b id="stat-cash" class="money">0đ</b></div>
+        <div class="stat glass"><span>Chuyển khoản</span><b id="stat-transfer" class="money">0đ</b></div>
+        <div class="stat glass accent"><span>Tổng doanh thu</span><b id="stat-total" class="money">0đ</b></div>
+      </div>
+
+      <section class="history-body">
+        <div class="glass main-panel history-list" id="history-list" aria-label="Danh sách hóa đơn"></div>
+        <aside class="glass main-panel history-detail" id="history-detail" aria-label="Chi tiết hóa đơn"></aside>
+      </section>
+    </main>
+
+    <nav class="rail rail-right" aria-label="Điều hướng chính">
+      <a id="nav-tables" class="nav-btn" href="index.html"><span class="ico">🍽️</span>Chọn bàn</a>
+      <a id="nav-pending" class="nav-btn" href="pending.html"><span class="ico">🧾</span>Chờ thanh toán<b id="pending-count" class="nav-badge" data-zero="true">0</b></a>
+    </nav>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/history.js"></script>
+</body>
+</html>

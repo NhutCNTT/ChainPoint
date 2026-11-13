@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chọn món | ChainPoint POS</title>
+  <meta name="description" content="Gọi món theo bàn: chọn danh mục, thêm món, ghi chú, lưu, tạm tính hoặc thanh toán.">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/order.css">
+</head>
+<body>
+  <div class="order-shell">
+    <!-- Trái: phân loại món -->
+    <aside class="glass cat-panel" aria-label="Phân loại món">
+      <div class="cat-head"><div class="brand-mark">CP</div><span>Thực đơn</span></div>
+      <ul class="cat-list" id="cat-list"></ul>
+    </aside>
+
+    <!-- Giữa: món ăn -->
+    <main class="menu-panel">
+      <header class="menu-head">
+        <h1 id="page-title">Chọn món</h1>
+        <div class="search-box">
+          <span>🔍</span>
+          <input id="menu-search" class="input" type="search" placeholder="Tìm món…" autocomplete="off">
+        </div>
+      </header>
+      <section class="glass menu-scroll" aria-label="Danh sách món">
+        <div class="menu-grid" id="menu-grid"></div>
+      </section>
+    </main>
+
+    <!-- Phải: món đã chọn -->
+    <aside class="glass cart-panel" aria-label="Món đã chọn">
+      <div class="cart-head">
+        <div>
+          <h2 id="cart-table">Bàn</h2>
+          <p id="cart-sub" class="cart-sub"></p>
+        </div>
+        <span id="cart-status" class="badge badge-busy">Đang dùng</span>
+      </div>
+
+      <ul class="cart-list" id="cart-list"></ul>
+
+      <div class="cart-foot">
+        <div class="cart-sum">
+          <span>Tổng cộng <small id="cart-count"></small></span>
+          <span id="cart-total" class="money">0đ</span>
+        </div>
+        <div class="cart-actions">
+          <button id="btn-exit" class="btn btn-danger" type="button">↩ Thoát</button>
+          <button id="btn-save" class="btn" type="button">💾 Lưu</button>
+          <button id="btn-temp" class="btn btn-warn" type="button">🧮 Tạm tính</button>
+          <button id="btn-pay" class="btn btn-primary" type="button">💳 Thanh toán</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/order.js"></script>
+</body>
+</html>

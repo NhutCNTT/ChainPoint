@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint — Đăng nhập POS & Chi nhánh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/auth/login.css" />
+</head>
+<body>
+  <main class="layout">
+    <!-- Left Hero -->
+    <section class="hero" aria-label="Giới thiệu ChainPoint POS">
+      <div class="hero-art">
+        <img src="../../assets/images/login-illustration.jpg" alt="Vận hành tại quầy POS" />
+      </div>
+      <div class="hero-copy">
+        <div class="hero-badge"><span class="dot"></span> Cổng vận hành chi nhánh & POS</div>
+        <h1>Vận hành tại quầy, <span>phục vụ nhanh chóng.</span></h1>
+        <p>Bán hàng tại máy POS, quản lý bàn ăn, kiểm soát thực đơn và áp dụng tích điểm hội viên Bách Hóa Xanh theo chi nhánh.</p>
+      </div>
+    </section>
+
+    <!-- Right Login Card -->
+    <section class="card-wrap">
+      <div class="card">
+        <div class="logo">
+          <div class="logo-mark" style="background: var(--success);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/>
+            </svg>
+          </div>
+          <div class="logo-text">Chain<span>Point</span> <small class="logo-tag" style="background: var(--success-soft); color: var(--success);">POS</small></div>
+        </div>
+
+        <h2>Đăng nhập chi nhánh</h2>
+        <p class="subtitle">Dành cho Quản lý cơ sở và Thu ngân bán hàng</p>
+
+        <!-- Role Tabs -->
+        <div class="tabs" role="tablist" aria-label="Vai trò" data-active="cashier" id="posRoleTabs">
+          <span class="tab-indicator" aria-hidden="true"></span>
+          <button class="tab" role="tab" aria-selected="false" data-role="manager" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            Quản lý
+          </button>
+          <button class="tab" role="tab" aria-selected="true" data-role="cashier" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
+            Thu ngân
+          </button>
+        </div>
+
+        <form class="login-form" id="posLoginForm" novalidate>
+          <div class="field">
+            <label for="posBranch">Chi nhánh làm việc</label>
+            <div class="input-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9.5 12 4l9 5.5"/><path d="M5 10v9h14v-9"/><path d="M10 19v-5h4v5"/></svg>
+              <select id="posBranch" name="branch">
+                <option value="Chi nhánh Quận 1" selected>Chi nhánh Quận 1 (Trụ sở)</option>
+                <option value="Chi nhánh Thảo Điền">Chi nhánh Thảo Điền</option>
+                <option value="Chi nhánh Hoàn Kiếm">Chi nhánh Hoàn Kiếm</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="posUsername">Tên đăng nhập</label>
+            <div class="input-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"/></svg>
+              <input type="text" id="posUsername" name="username" placeholder="Nhập tên đăng nhập" autocomplete="username" required value="cashier_q1" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="posPassword">Mật khẩu</label>
+            <div class="input-wrap">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+              <input type="password" id="posPassword" name="password" placeholder="Nhập mật khẩu" autocomplete="current-password" required value="123456" />
+              <button type="button" class="toggle-password" id="togglePosPasswordBtn" aria-label="Hiện mật khẩu">
+                <svg class="icon-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="icon-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.8 9.8 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <p class="form-error" id="posFormError" role="alert" hidden></p>
+
+          <button class="btn-primary" type="submit" id="posSubmitBtn" style="background: var(--success);">
+            Vào màn hình POS
+          </button>
+        </form>
+
+        <div style="text-align: center; margin-top: var(--sp-4); font-size: var(--fs-sm); color: var(--muted);">
+          Chủ chuỗi nhà hàng?
+          <a href="owner-login.html" style="color: var(--primary); font-weight: var(--fw-semibold); text-decoration: none; margin-left: 4px;">
+            Đăng nhập Owner →
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const tabs = document.getElementById('posRoleTabs');
+    const uInput = document.getElementById('posUsername');
+    const pInput = document.getElementById('posPassword');
+    const branchSelect = document.getElementById('posBranch');
+    const errEl = document.getElementById('posFormError');
+    const submitBtn = document.getElementById('posSubmitBtn');
+    const toggleBtn = document.getElementById('togglePosPasswordBtn');
+
+    let currentRole = 'cashier';
+
+    tabs.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        currentRole = tab.dataset.role;
+        tabs.dataset.active = currentRole;
+        tabs.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t === tab));
+
+        if (currentRole === 'manager') {
+          uInput.value = 'manager_q1';
+          submitBtn.textContent = 'Vào Quản lý Chi nhánh →';
+          submitBtn.style.background = 'var(--primary)';
+        } else {
+          uInput.value = 'cashier_q1';
+          submitBtn.textContent = 'Vào màn hình POS';
+          submitBtn.style.background = 'var(--success)';
+        }
+      });
+    });
+
+    toggleBtn.addEventListener('click', () => {
+      const isPwd = pInput.type === 'password';
+      pInput.type = isPwd ? 'text' : 'password';
+      toggleBtn.classList.toggle('is-visible', isPwd);
+    });
+
+    document.getElementById('posLoginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const username = uInput.value.trim();
+      const password = pInput.value;
+      const branch = branchSelect.value;
+
+      if (!username || !password) {
+        errEl.textContent = 'Vui lòng nhập tên đăng nhập và mật khẩu.';
+        errEl.hidden = false;
+        return;
+      }
+
+      localStorage.setItem('cp_role', currentRole);
+      localStorage.setItem('cp_user', username);
+      localStorage.setItem('cp_branch', branch);
+      sessionStorage.setItem('cp_role', currentRole);
+      sessionStorage.setItem('cp_user', username);
+      sessionStorage.setItem('cp_branch', branch);
+
+      if (currentRole === 'manager') {
+        window.location.href = '../branch/dashboard.html';
+      } else {
+        window.location.href = '../../pos/index.html';
+      }
+    });
+  </script>
+</body>
+</html>
