@@ -1,236 +1,119 @@
-// ChainPoint — Quản lý Đơn hàng Chi nhánh (Kèm thông tin Tích & Dùng điểm Loyalty)
-// Used by: pages/branch/orders.html
+// ChainPoint — Quản lý Đơn hàng Chi nhánh
+// Kết nối trực tiếp với MySQL Backend API & Quyền hoàn tiền Quản lý (Manager/Owner)
 
 (function () {
-    const K_ORDERS = 'pos.orders';
-    const K_PENDING = 'pos.pending';
-    const K_HISTORY = 'pos.history';
-
-    function read(k, fallback) {
-        try {
-            const v = JSON.parse(localStorage.getItem(k));
-            return v ?? fallback;
-        } catch {
-            return fallback;
-        }
-    }
+    let ordersList = [];
+    let currentStatusFilter = 'all';
+    let searchQuery = '';
 
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
 
-    // Mock initial completed orders if pos.history is empty
-    const DEFAULT_HISTORY = [
-        {
-            billId: 'HD80000008',
-            tableId: 'A1',
-            tableName: 'Bàn 01',
-            customerName: 'Nguyễn Thị Minh Hằng',
-            phone: '0901234567',
-            staff: 'Thu ngân 01 (Thảo)',
-            items: [
-                { id: 'm01', name: 'Bò lúc lắc', price: 129000, qty: 1 },
-                { id: 'm11', name: 'Coca-Cola', price: 20000, qty: 1 },
-                { id: 'm24', name: 'Khăn lạnh', price: 3000, qty: 1 }
-            ],
-            total: 152000,
-            pointsUsed: 0,
-            discountVND: 0,
-            pointsEarned: 15,
-            paidAmount: 152000,
-            method: 'cash',
-            status: 'paid',
-            paidAt: '2026-11-02T11:42:00Z'
-        },
-        {
-            billId: 'HD80000007',
-            tableId: 'A3',
-            tableName: 'Bàn 03',
-            customerName: 'Lê Văn Hoàng',
-            phone: '0912345678',
-            staff: 'Thu ngân 01 (Thảo)',
-            items: [
-                { id: 'm02', name: 'Gà nướng mật ong', price: 119000, qty: 1 },
-                { id: 'm07', name: 'Salad Caesar', price: 69000, qty: 1 },
-                { id: 'm12', name: 'Trà đào cam sả', price: 45000, qty: 2 }
-            ],
-            total: 278000,
-            pointsUsed: 20, // 20 điểm = 20.000 ₫
-            discountVND: 20000,
-            pointsEarned: 25,
-            paidAmount: 258000,
-            method: 'transfer',
-            status: 'paid',
-            paidAt: '2026-11-02T10:05:00Z'
-        },
-        {
-            billId: 'HD80000006',
-            tableId: 'B2',
-            tableName: 'Bàn 2.2',
-            customerName: 'Phạm Thu Trang',
-            phone: '0988776655',
-            staff: 'Thu ngân 02 (Long)',
-            items: [
-                { id: 'm06', name: 'Lẩu thái hải sản', price: 289000, qty: 1 },
-                { id: 'm05', name: 'Tôm rang muối', price: 139000, qty: 1 }
-            ],
-            total: 428000,
-            pointsUsed: 40,
-            discountVND: 40000,
-            pointsEarned: 38,
-            paidAmount: 388000,
-            method: 'transfer',
-            status: 'paid',
-            paidAt: '2026-11-01T20:15:00Z'
-        },
-        {
-            billId: 'HD80000005',
-            tableId: 'C1',
-            tableName: 'Vườn 01',
-            customerName: 'Khách vãng lai',
-            phone: '—',
-            staff: 'Thu ngân 01 (Thảo)',
-            items: [
-                { id: 'm04', name: 'Mì Ý hải sản', price: 99000, qty: 2 },
-                { id: 'm13', name: 'Cà phê sữa đá', price: 35000, qty: 2 }
-            ],
-            total: 268000,
-            pointsUsed: 0,
-            discountVND: 0,
-            pointsEarned: 0,
-            paidAmount: 268000,
-            method: 'cash',
-            status: 'paid',
-            paidAt: '2026-11-01T18:30:00Z'
-        }
-    ];
+    const tbody = document.getElementById('ordersTableBody');
+    const filterTabsContainer = document.getElementById('orderFilterTabs');
+    const searchInput = document.getElementById('orderSearchInput');
 
-    function getAllOrders() {
-        const activeOrders = read(K_ORDERS, {});
-        const pendingOrders = read(K_PENDING, []);
-        let historyOrders = read(K_HISTORY, null);
+    // Stats
+    const statTotalOrders = document.getElementById('statTotalOrders');
+    const statTotalRevenue = document.getElementById('statTotalRevenue');
+    const statTotalPointsUsed = document.getElementById('statTotalPointsUsed');
+    const statTotalPointsEarned = document.getElementById('statTotalPointsEarned');
 
-        if (!historyOrders || historyOrders.length === 0) {
-            historyOrders = DEFAULT_HISTORY;
-            localStorage.setItem(K_HISTORY, JSON.stringify(DEFAULT_HISTORY));
-        }
+    // Modal elements
+    const detailModal = document.getElementById('orderDetailModal');
+    const closeOrderModal = document.getElementById('closeOrderModal');
 
-        const list = [];
-
-        // 1. Đang phục vụ tại bàn
-        Object.values(activeOrders).forEach(o => {
-            const total = (o.items || []).reduce((sum, i) => sum + i.price * i.qty, 0);
-            list.push({
-                billId: o.billId || 'HD-NEW',
-                tableId: o.tableId,
-                tableName: o.tableName || `Bàn ${o.tableId}`,
-                customerName: o.customerName || 'Khách tại bàn',
-                phone: o.customerPhone || '—',
-                staff: o.staff || 'Thu ngân chi nhánh',
-                items: o.items || [],
-                total,
-                pointsUsed: 0,
-                pointsEarned: Math.floor(total / 10000),
-                paidAmount: total,
-                status: 'busy',
-                statusLabel: 'Đang phục vụ',
-                method: 'Chưa thanh toán',
-                time: o.openedAt ? new Date(o.openedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'Vừa tạo'
-            });
-        });
-
-        // 2. Chờ thanh toán
-        pendingOrders.forEach(p => {
-            const total = p.total || (p.items || []).reduce((sum, i) => sum + i.price * i.qty, 0);
-            list.push({
-                billId: p.billId,
-                tableId: p.tableId,
-                tableName: p.tableName || `Bàn ${p.tableId}`,
-                customerName: p.customerName || 'Khách thanh toán',
-                phone: p.customerPhone || '—',
-                staff: p.staff || 'Thu ngân chi nhánh',
-                items: p.items || [],
-                total,
-                pointsUsed: p.pointsUsed || 0,
-                pointsEarned: Math.floor((total - (p.discountVND || 0)) / 10000),
-                paidAmount: total - (p.discountVND || 0),
-                status: 'pending',
-                statusLabel: p.method === 'transfer' ? 'Chờ QR chuyển khoản' : 'Chờ tiền mặt',
-                method: p.method === 'transfer' ? 'Chuyển khoản QR' : 'Tiền mặt',
-                time: p.createdAt ? new Date(p.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'Vừa tạo'
-            });
-        });
-
-        // 3. Đã thanh toán
-        historyOrders.forEach(h => {
-            const total = h.total || (h.items || []).reduce((sum, i) => sum + i.price * i.qty, 0);
-            const ptsUsed = h.pointsUsed || 0;
-            const ptsEarned = h.pointsEarned ?? Math.floor((total - (h.discountVND || 0)) / 10000);
-            list.push({
-                billId: h.billId,
-                tableId: h.tableId,
-                tableName: h.tableName || `Bàn ${h.tableId}`,
-                customerName: h.customerName || 'Khách vãng lai',
-                phone: h.phone || '—',
-                staff: h.staff || 'Thu ngân chi nhánh',
-                items: h.items || [],
-                total,
-                pointsUsed: ptsUsed,
-                pointsEarned: ptsEarned,
-                paidAmount: h.paidAmount || (total - (h.discountVND || 0)),
-                status: 'paid',
-                statusLabel: 'Đã thanh toán',
-                method: h.method === 'transfer' ? 'Chuyển khoản QR' : 'Tiền mặt',
-                time: h.paidAt ? new Date(h.paidAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '—'
-            });
-        });
-
-        return list;
+    function checkIsManagerOrOwner() {
+        const role = (sessionStorage.getItem('cp_role') || '').toLowerCase();
+        return role.includes('manager') || role.includes('owner');
     }
 
-    let orders = getAllOrders();
-    let currentFilter = 'all';
-    let searchQuery = '';
+    async function loadOrders() {
+        try {
+            const branchId = sessionStorage.getItem('cp_branch_id') || '';
+            const endpoint = branchId ? `/orders?branchId=${branchId}` : '/orders';
 
-    const tbody = document.getElementById('ordersTableBody');
-    const searchInput = document.getElementById('orderSearchInput');
-    const filterTabs = document.getElementById('orderFilterTabs');
-    const detailModal = document.getElementById('orderDetailModal');
+            let data;
+            if (window.API) {
+                data = await window.API.get(endpoint);
+            } else {
+                const res = await fetch(`http://localhost:8080/api/v1${endpoint}`);
+                data = await res.json();
+            }
+
+            ordersList = data.map(b => ({
+                billId: b.billCode,
+                tableId: b.tableCode,
+                tableName: `Bàn ${b.tableCode}`,
+                customerName: b.customerName || 'Khách vãng lai',
+                phone: b.customerPhone || '—',
+                staff: b.cashierUsername || 'Thu ngân',
+                items: (b.items || []).map(i => ({
+                    id: i.productId,
+                    name: i.productName,
+                    price: i.unitPrice,
+                    qty: i.quantity,
+                    subtotal: i.subtotal
+                })),
+                grossAmount: b.grossAmount,
+                discountVND: b.discountAmount || 0,
+                pointsUsed: b.pointsUsed || 0,
+                pointsEarned: b.pointsEarned || 0,
+                paidAmount: b.finalAmount,
+                status: b.status || 'paid',
+                statusLabel: b.status === 'paid' ? 'Đã thanh toán' : (b.status === 'refunded' ? 'Đã hoàn tiền' : 'Đang xử lý'),
+                method: b.paymentMethod === 'transfer' ? 'Chuyển khoản VietQR' : 'Tiền mặt',
+                billHash: b.billHash,
+                blockchainTxHash: b.blockchainTxHash,
+                createdAt: b.createdAt,
+                time: b.createdAt ? new Date(b.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : 'Hôm nay'
+            }));
+        } catch (e) {
+            console.error('Không thể tải đơn hàng từ MySQL API:', e);
+            ordersList = [];
+        }
+
+        updateStats();
+        render();
+    }
 
     function updateStats() {
-        const paidOrders = orders.filter(o => o.status === 'paid');
-        const revenue = paidOrders.reduce((sum, o) => sum + o.paidAmount, 0);
-        const totalPointsUsed = paidOrders.reduce((sum, o) => sum + (o.pointsUsed || 0), 0);
-        const totalPointsEarned = paidOrders.reduce((sum, o) => sum + (o.pointsEarned || 0), 0);
-        const activeCount = orders.filter(o => o.status === 'busy' || o.status === 'pending').length;
+        const total = ordersList.length;
+        const paid = ordersList.filter(o => o.status === 'paid');
+        const revenue = paid.reduce((sum, o) => sum + Number(o.paidAmount || 0), 0);
+        const totalUsed = ordersList.reduce((sum, o) => sum + Number(o.pointsUsed || 0), 0);
+        const totalEarned = ordersList.reduce((sum, o) => sum + Number(o.pointsEarned || 0), 0);
 
-        const statRev = document.getElementById('statTotalRevenue');
-        const statCount = document.getElementById('statTotalOrders');
-        const statPtsUsed = document.getElementById('statTotalPointsUsed');
-        const statPtsEarned = document.getElementById('statTotalPointsEarned');
-
-        if (statRev) statRev.textContent = formatVND(revenue);
-        if (statCount) statCount.textContent = orders.length;
-        if (statPtsUsed) statPtsUsed.textContent = `${totalPointsUsed} pts (${formatVND(totalPointsUsed * 1000)})`;
-        if (statPtsEarned) statPtsEarned.textContent = `+${totalPointsEarned} pts`;
+        if (statTotalOrders) statTotalOrders.textContent = total;
+        if (statTotalRevenue) statTotalRevenue.textContent = formatVND(revenue);
+        if (statTotalPointsUsed) statTotalPointsUsed.textContent = totalUsed + ' pts';
+        if (statTotalPointsEarned) statTotalPointsEarned.textContent = totalEarned + ' pts';
     }
 
-    function renderOrders() {
-        if (!tbody) return;
-
-        const filtered = orders.filter(o => {
-            const matchFilter = currentFilter === 'all' || o.status === currentFilter;
-            const matchSearch = !searchQuery ||
-                o.billId.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                o.tableName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                o.phone.includes(searchQuery);
-            return matchFilter && matchSearch;
+    function getFilteredOrders() {
+        return ordersList.filter(o => {
+            const matchStatus = currentStatusFilter === 'all' || o.status === currentStatusFilter;
+            const q = searchQuery.toLowerCase().trim();
+            const matchSearch = !q ||
+                o.billId.toLowerCase().includes(q) ||
+                o.tableName.toLowerCase().includes(q) ||
+                o.customerName.toLowerCase().includes(q) ||
+                o.phone.includes(q);
+            return matchStatus && matchSearch;
         });
+    }
+
+    function render() {
+        if (!tbody) return;
+        const filtered = getFilteredOrders();
+        const isManager = checkIsManagerOrOwner();
 
         if (filtered.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="9" style="text-align:center; padding:40px; color:var(--muted);">
-                        Không tìm thấy đơn hàng nào phù hợp với bộ lọc hiện tại.
+                    <td colspan="10" style="padding: 48px; text-align: center; color: var(--muted);">
+                        <div style="font-size: 32px; margin-bottom: 8px;">🧾</div>
+                        <div style="font-weight: 700; font-size: 15px;">Chưa có đơn hàng nào trong Database</div>
+                        <p style="font-size: 13px; margin-top: 4px;">Thực hiện thanh toán đơn hàng trên POS để đồng bộ dữ liệu vào MySQL.</p>
                     </td>
                 </tr>
             `;
@@ -239,112 +122,196 @@
 
         tbody.innerHTML = filtered.map(o => {
             const isPaid = o.status === 'paid';
-            const isBusy = o.status === 'busy';
-            const statusBadge = isPaid
-                ? `<span style="background:#ecfdf5; color:#059669; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;">✓ ${o.statusLabel}</span>`
-                : isBusy
-                ? `<span style="background:#eff6ff; color:#2563eb; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;">🍽️ ${o.statusLabel}</span>`
-                : `<span style="background:#fffbeb; color:#d97706; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;">⏳ ${o.statusLabel}</span>`;
+            const isRefunded = o.status === 'refunded';
+
+            let statusBadge = `<span class="badge badge-warning">⚡ ${o.statusLabel}</span>`;
+            if (isPaid) {
+                statusBadge = `<span class="badge badge-success">✓ Đã thanh toán</span>`;
+            } else if (isRefunded) {
+                statusBadge = `<span class="badge badge-danger">↩ Đã hoàn tiền</span>`;
+            }
+
+            const pointsUsedBadge = o.pointsUsed > 0
+                ? `<span style="color: #ef4444; font-weight:700;">-${o.pointsUsed} pts</span>`
+                : '—';
+
+            const pointsEarnedBadge = o.pointsEarned > 0
+                ? `<span style="color: #10b981; font-weight:700;">+${o.pointsEarned} pts</span>`
+                : '—';
+
+            let actionButtons = `
+                <div style="display:flex; justify-content:flex-end; gap:6px;">
+                    <button class="action-icon-btn btn-view-detail" data-id="${o.billId}" title="Xem chi tiết">
+                        👁️
+                    </button>
+            `;
+
+            if (isPaid) {
+                if (isManager) {
+                    actionButtons += `
+                        <button class="btn btn-sm btn-refund" data-id="${o.billId}" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecaca; padding:4px 8px; border-radius:6px; font-size:11.5px; font-weight:700; cursor:pointer;" title="Quản lý hoàn tiền">
+                            ↩ Hoàn tiền
+                        </button>
+                    `;
+                } else {
+                    actionButtons += `
+                        <button class="btn btn-sm" disabled style="opacity:0.5; background:#f1f5f9; color:#94a3b8; border:1px solid #cbd5e1; padding:4px 8px; border-radius:6px; font-size:11px;" title="Chỉ Quản lý mới được hoàn tiền">
+                            🔒 Hoàn tiền
+                        </button>
+                    `;
+                }
+            } else if (isRefunded) {
+                actionButtons += `
+                    <span style="font-size:11px; color:#ef4444; font-weight:600; padding:4px 0;">Đã hoàn trả</span>
+                `;
+            }
+
+            actionButtons += `</div>`;
 
             return `
                 <tr>
-                    <td style="font-family:monospace; font-weight:800; color:var(--primary);">${o.billId}</td>
-                    <td style="font-size:13px; color:var(--muted);">${o.time}</td>
+                    <td><code>${o.billId}</code></td>
+                    <td><small style="color:var(--muted);">${o.time}</small></td>
                     <td>
-                        <div style="font-weight:700; color:var(--text);">${o.customerName}</div>
-                        <small style="color:var(--muted); font-size:12px;">SĐT: ${o.phone}</small>
+                        <div style="font-weight: 600;">${o.customerName}</div>
+                        <div style="font-size: 11px; color: var(--muted);">${o.phone}</div>
                     </td>
+                    <td><strong>${o.tableName}</strong></td>
+                    <td><small>${o.staff}</small></td>
                     <td>
-                        <span style="background:#f1f5f9; color:#334155; font-weight:700; padding:3px 8px; border-radius:6px; font-size:12.5px;">
-                            ${o.tableName}
-                        </span>
+                        <div style="font-weight: 800; color: var(--primary);">${formatVND(o.paidAmount)}</div>
+                        <div style="font-size: 10.5px; color: var(--muted);">${o.method}</div>
                     </td>
-                    <td style="font-size:13px; color:#475569;">${o.staff}</td>
-                    <td style="font-weight:800; color:var(--text);">${formatVND(o.paidAmount)}</td>
-                    <td>
-                        ${o.pointsUsed > 0
-                            ? `<span style="color:#e11d48; font-weight:700; font-size:12.5px;">-${o.pointsUsed} pts (-${formatVND(o.pointsUsed * 1000)})</span>`
-                            : `<span style="color:#94a3b8; font-size:12px;">0</span>`}
-                    </td>
-                    <td>
-                        ${o.pointsEarned > 0
-                            ? `<span style="color:#059669; font-weight:700; font-size:12.5px;">+${o.pointsEarned} pts</span>`
-                            : `<span style="color:#94a3b8; font-size:12px;">0</span>`}
-                    </td>
+                    <td>${pointsUsedBadge}</td>
+                    <td>${pointsEarnedBadge}</td>
                     <td>${statusBadge}</td>
-                    <td style="text-align:right;">
-                        <button type="button" class="btn-view-order" data-id="${o.billId}" style="background:#eef4ff; color:var(--primary); border:0; padding:6px 12px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer;">
-                            Chi tiết
-                        </button>
-                    </td>
+                    <td style="text-align:right;">${actionButtons}</td>
                 </tr>
             `;
         }).join('');
 
-        // Attach view detail click
-        document.querySelectorAll('.btn-view-order').forEach(btn => {
+        bindTableEvents();
+    }
+
+    function bindTableEvents() {
+        document.querySelectorAll('.btn-view-detail').forEach(btn => {
             btn.onclick = () => {
                 const billId = btn.getAttribute('data-id');
-                const target = orders.find(o => o.billId === billId);
-                if (target) showDetail(target);
+                openDetailModal(billId);
+            };
+        });
+
+        document.querySelectorAll('.btn-refund').forEach(btn => {
+            btn.onclick = async () => {
+                const billId = btn.getAttribute('data-id');
+                await handleRefund(billId);
             };
         });
     }
 
-    function showDetail(o) {
-        if (!detailModal) return;
-        document.getElementById('modalBillId').textContent = o.billId;
-        document.getElementById('modalCustName').textContent = o.customerName;
-        document.getElementById('modalCustPhone').textContent = o.phone;
-        document.getElementById('modalStaff').textContent = o.staff;
-        document.getElementById('modalTable').textContent = o.tableName;
-        document.getElementById('modalMethod').textContent = o.method;
-        document.getElementById('modalTime').textContent = o.time;
+    async function handleRefund(billId) {
+        if (!checkIsManagerOrOwner()) {
+            alert('🚫 QUYỀN BỊ TỪ CHỐI:\nChỉ Quản lý (Manager) hoặc Chủ nhà hàng (Owner) mới có quyền hoàn tiền hóa đơn!');
+            return;
+        }
 
-        const itemsHtml = o.items.map(i => `
-            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e2e8f0; font-size:13.5px;">
-                <div>
-                    <strong>${i.name}</strong> × ${i.qty}
-                    ${i.note ? `<div style="font-size:12px; color:var(--muted);">📝 ${i.note}</div>` : ''}
+        const reason = prompt(`⚠️ XÁC NHẬN HOÀN TIỀN CHO HÓA ĐƠN #${billId}\n\nVui lòng nhập lý do hoàn tiền (VD: Khách đổi món, lỗi phục vụ, hủy đơn):`, 'Khách hủy món / sự cố phục vụ');
+        if (!reason || !reason.trim()) {
+            return;
+        }
+
+        const confirmed = confirm(`Bạn có chắc chắn muốn HOÀN TIỀN hóa đơn #${billId}?\n\n• Điểm đã dùng sẽ hoàn trả lại cho khách\n• Điểm đã tích sẽ được thu hồi\n• Tồn kho món ăn sẽ được tự động cộng lại vào cơ sở dữ liệu MySQL\n• Giao dịch sẽ được ghi vết trên Blockchain Smart Contract`);
+        if (!confirmed) return;
+
+        try {
+            const payload = {
+                managerUsername: sessionStorage.getItem('cp_user') || 'manager',
+                reason: reason.trim()
+            };
+
+            let result;
+            if (window.API) {
+                result = await window.API.post(`/orders/${billId}/refund`, payload);
+            } else {
+                const res = await fetch(`http://localhost:8080/api/v1/orders/${billId}/refund`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || 'Lỗi hoàn tiền');
+                }
+                result = await res.json();
+            }
+
+            alert(`✅ HOÀN TIỀN THÀNH CÔNG!\n\n• Mã đơn: ${result.billCode}\n• Tiền hoàn lại: ${formatVND(result.actualRefundAmount)}\n• Điểm hoàn trả: +${result.pointsRestored} pts\n• Điểm thu hồi: -${result.pointsRevoked} pts\n• Người duyệt: ${result.processedBy || 'Quản lý'}\n• Blockchain Tx: ${result.blockchainTxHash ? result.blockchainTxHash.substring(0, 16) + '...' : 'Ghi nhận sổ cái'}`);
+
+            await loadOrders();
+        } catch (err) {
+            console.error('Lỗi khi hoàn tiền:', err);
+            alert('❌ Không thể hoàn tiền: ' + (err.message || err));
+        }
+    }
+
+    function openDetailModal(billId) {
+        const order = ordersList.find(o => o.billId === billId);
+        if (!order || !detailModal) return;
+
+        document.getElementById('modalBillId').textContent = '#' + order.billId;
+        document.getElementById('modalTime').textContent = order.createdAt ? new Date(order.createdAt).toLocaleString('vi-VN') : '—';
+        document.getElementById('modalCustName').textContent = order.customerName;
+        document.getElementById('modalCustPhone').textContent = order.phone;
+        document.getElementById('modalTable').textContent = order.tableName;
+        document.getElementById('modalStaff').textContent = order.staff;
+        document.getElementById('modalMethod').textContent = order.method;
+
+        const itemsContainer = document.getElementById('modalItemsList');
+        if (itemsContainer) {
+            itemsContainer.innerHTML = order.items.map(item => `
+                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e2e8f0; font-size:13.5px;">
+                    <div><strong>${item.name}</strong> × ${item.qty}</div>
+                    <div style="font-weight:700;">${formatVND(item.subtotal || (item.price * item.qty))}</div>
                 </div>
-                <div style="font-weight:700;">${formatVND(i.price * i.qty)}</div>
-            </div>
-        `).join('');
-        document.getElementById('modalItemsList').innerHTML = itemsHtml || '<div style="color:var(--muted);">Không có món</div>';
+            `).join('');
+        }
 
-        document.getElementById('modalGrossTotal').textContent = formatVND(o.total);
-        document.getElementById('modalDiscount').textContent = o.pointsUsed > 0 ? `-${formatVND(o.pointsUsed * 1000)} (${o.pointsUsed} điểm)` : '0 ₫';
-        document.getElementById('modalNetTotal').textContent = formatVND(o.paidAmount);
-        document.getElementById('modalEarned').textContent = `+${o.pointsEarned} điểm`;
+        document.getElementById('modalGrossTotal').textContent = formatVND(order.grossAmount || order.paidAmount);
+        document.getElementById('modalDiscount').textContent = order.discountVND > 0 ? `-${formatVND(order.discountVND)} (${order.pointsUsed} pts)` : '0 ₫';
+        document.getElementById('modalNetTotal').textContent = formatVND(order.paidAmount);
+        document.getElementById('modalEarned').textContent = order.pointsEarned > 0 ? `+${order.pointsEarned} điểm (Loyalty CPL)` : '0 điểm';
 
         detailModal.classList.add('active');
     }
 
-    // Modal Close
-    const closeBtn = document.getElementById('closeOrderModal');
-    if (closeBtn) closeBtn.onclick = () => detailModal.classList.remove('active');
-
-    // Filter tabs
-    if (filterTabs) {
-        filterTabs.querySelectorAll('.filter-tab').forEach(btn => {
-            btn.onclick = () => {
-                filterTabs.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentFilter = btn.getAttribute('data-status');
-                renderOrders();
-            };
-        });
+    function closeDetail() {
+        if (detailModal) detailModal.classList.remove('active');
     }
 
-    // Search
-    if (searchInput) {
-        searchInput.oninput = (e) => {
-            searchQuery = e.target.value.trim();
-            renderOrders();
+    if (closeOrderModal) closeOrderModal.onclick = closeDetail;
+    if (detailModal) {
+        detailModal.onclick = (e) => {
+            if (e.target === detailModal) closeDetail();
         };
     }
 
-    updateStats();
-    renderOrders();
-})();
+    if (filterTabsContainer) {
+        filterTabsContainer.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                filterTabsContainer.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentStatusFilter = tab.dataset.status || 'all';
+                render();
+            });
+        });
+    }
 
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            render();
+        });
+    }
+
+    loadOrders();
+})();

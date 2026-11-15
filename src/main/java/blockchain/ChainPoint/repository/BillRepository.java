@@ -46,4 +46,8 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate
     );
+
+    List<Bill> findByBranchIdOrderByCreatedAtDesc(Long branchId);
+
+    List<Bill> findAllByOrderByCreatedAtDesc();
 }

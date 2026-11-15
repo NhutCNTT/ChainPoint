@@ -1,9 +1,7 @@
 // ChainPoint — Quản lý Thực đơn (Menu) Chi nhánh
-// Used by: pages/branch/menu.html
+// Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
 
 (function () {
-    const STORAGE_KEY = 'cp_branch_menu';
-
     const CATEGORIES = [
         { id: 'all', name: 'Tất cả danh mục', icon: '✨' },
         { id: 'hot', name: 'Món nóng', icon: '🔥' },
@@ -13,49 +11,7 @@
         { id: 'other', name: 'Món ăn kèm', icon: '🍚' }
     ];
 
-    const DEFAULT_MENU = [
-        { id: 'm01', cat: 'hot', name: 'Bò lúc lắc', price: 129000, emoji: '🥩', status: 'available', soldCount: 342 },
-        { id: 'm02', cat: 'hot', name: 'Gà nướng mật ong', price: 119000, emoji: '🍗', status: 'available', soldCount: 289 },
-        { id: 'm03', cat: 'hot', name: 'Cá hồi áp chảo', price: 169000, emoji: '🐟', status: 'available', soldCount: 154 },
-        { id: 'm04', cat: 'hot', name: 'Mì Ý hải sản', price: 99000, emoji: '🍝', status: 'available', soldCount: 412 },
-        { id: 'm05', cat: 'hot', name: 'Tôm rang muối', price: 139000, emoji: '🍤', status: 'available', soldCount: 198 },
-        { id: 'm06', cat: 'hot', name: 'Lẩu thái hải sản', price: 289000, emoji: '🍲', status: 'available', soldCount: 88 },
-        { id: 'm07', cat: 'cold', name: 'Salad Caesar', price: 69000, emoji: '🥗', status: 'available', soldCount: 260 },
-        { id: 'm08', cat: 'cold', name: 'Gỏi cuốn tôm thịt', price: 55000, emoji: '🌯', status: 'available', soldCount: 310 },
-        { id: 'm09', cat: 'cold', name: 'Gỏi ngó sen', price: 79000, emoji: '🥬', status: 'available', soldCount: 175 },
-        { id: 'm10', cat: 'cold', name: 'Sashimi cá hồi', price: 159000, emoji: '🍣', status: 'out_of_stock', soldCount: 95 },
-        { id: 'm11', cat: 'drink', name: 'Coca-Cola', price: 20000, emoji: '🥤', status: 'available', soldCount: 620 },
-        { id: 'm12', cat: 'drink', name: 'Trà đào cam sả', price: 45000, emoji: '🍑', status: 'available', soldCount: 480 },
-        { id: 'm13', cat: 'drink', name: 'Cà phê sữa đá', price: 35000, emoji: '☕', status: 'available', soldCount: 390 },
-        { id: 'm14', cat: 'drink', name: 'Nước ép cam', price: 42000, emoji: '🍊', status: 'available', soldCount: 210 },
-        { id: 'm15', cat: 'drink', name: 'Sinh tố bơ', price: 48000, emoji: '🥑', status: 'available', soldCount: 165 },
-        { id: 'm16', cat: 'drink', name: 'Bia Tiger', price: 30000, emoji: '🍺', status: 'available', soldCount: 540 },
-        { id: 'm17', cat: 'dessert', name: 'Bánh flan caramel', price: 29000, emoji: '🍮', status: 'available', soldCount: 230 },
-        { id: 'm18', cat: 'dessert', name: 'Kem 3 vị', price: 39000, emoji: '🍨', status: 'available', soldCount: 195 },
-        { id: 'm19', cat: 'dessert', name: 'Tiramisu', price: 59000, emoji: '🍰', status: 'available', soldCount: 140 },
-        { id: 'm20', cat: 'dessert', name: 'Trái cây theo mùa', price: 65000, emoji: '🍉', status: 'out_of_stock', soldCount: 110 },
-        { id: 'm21', cat: 'other', name: 'Cơm trắng', price: 10000, emoji: '🍚', status: 'available', soldCount: 780 },
-        { id: 'm22', cat: 'other', name: 'Khoai tây chiên', price: 49000, emoji: '🍟', status: 'available', soldCount: 350 },
-        { id: 'm23', cat: 'other', name: 'Bánh mì bơ tỏi', price: 35000, emoji: '🥖', status: 'available', soldCount: 220 },
-        { id: 'm24', cat: 'other', name: 'Khăn lạnh', price: 3000, emoji: '🧻', status: 'available', soldCount: 1200 }
-    ];
-
-    function loadMenu() {
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) return JSON.parse(raw);
-        } catch (e) {
-            console.error(e);
-        }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_MENU));
-        return DEFAULT_MENU;
-    }
-
-    function saveMenu(list) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    }
-
-    let menu = loadMenu();
+    let menu = [];
     let currentCategory = 'all';
     let searchQuery = '';
 
@@ -71,11 +27,50 @@
     const modalTitle = document.getElementById('dishModalTitle');
     const editingIdInput = document.getElementById('editingDishId');
 
+    async function loadMenu() {
+        try {
+            const branchId = sessionStorage.getItem('cp_branch_id') || 1;
+            if (window.API) {
+                const res = await window.API.get(`/products?branchId=${branchId}`);
+                menu = res.map(p => ({
+                    id: p.code || ('m' + p.id),
+                    realId: p.id,
+                    cat: p.category || 'other',
+                    name: p.name,
+                    price: p.price,
+                    emoji: p.emoji || '🍲',
+                    status: p.status || 'available',
+                    soldCount: 0
+                }));
+            } else {
+                const res = await fetch(`http://localhost:8080/api/v1/products?branchId=${branchId}`);
+                const products = await res.json();
+                menu = products.map(p => ({
+                    id: p.code || ('m' + p.id),
+                    realId: p.id,
+                    cat: p.category || 'other',
+                    name: p.name,
+                    price: p.price,
+                    emoji: p.emoji || '🍲',
+                    status: p.status || 'available',
+                    soldCount: 0
+                }));
+            }
+        } catch (e) {
+            console.error('Không thể tải thực đơn từ MySQL API:', e);
+            menu = [];
+        }
+
+        updateStats();
+        renderCategoryTabs();
+        renderMenu();
+    }
+
     function updateStats() {
         const total = menu.length;
         const available = menu.filter(m => m.status === 'available').length;
         const out = menu.filter(m => m.status === 'out_of_stock').length;
-        const avgPrice = total > 0 ? Math.round(menu.reduce((sum, m) => sum + m.price, 0) / total) : 0;
+        const avgPrice = total > 0 ? Math.round(menu.reduce((sum, m) => sum + Number(m.price || 0), 0) / total) : 0;
 
         const statTotal = document.getElementById('statTotalDishes');
         const statActive = document.getElementById('statActiveDishes');
@@ -124,106 +119,79 @@
     function renderMenu() {
         const filtered = getFilteredMenu();
 
-        if (tableContainer) {
+        if (gridContainer) {
             if (filtered.length === 0) {
-                tableContainer.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align:center; padding:40px; color:var(--muted);">
-                            Không tìm thấy món ăn nào phù hợp với bộ lọc.
-                        </td>
-                    </tr>
+                gridContainer.innerHTML = `
+                    <div style="grid-column: 1 / -1; padding: 48px; text-align: center; color: var(--muted); background: var(--card); border-radius: 12px; border: 1px dashed var(--border);">
+                        <div style="font-size: 36px; margin-bottom: 8px;">🍽️</div>
+                        <div style="font-weight: 700; font-size: 16px;">Không tìm thấy món ăn nào</div>
+                        <p style="font-size: 13px; margin-top: 4px;">Thử chọn danh mục khác hoặc thêm món mới vào Database.</p>
+                    </div>
                 `;
             } else {
-                tableContainer.innerHTML = filtered.map(item => {
-                    const catObj = CATEGORIES.find(c => c.id === item.cat) || { name: item.cat, icon: '🍽️' };
+                gridContainer.innerHTML = filtered.map(item => {
                     const isAvailable = item.status === 'available';
                     return `
-                        <tr>
-                            <td style="font-weight:700; color:var(--primary); font-family:monospace;">#${item.id}</td>
-                            <td>
-                                <div style="display:flex; align-items:center; gap:12px;">
-                                    <span style="font-size:26px; width:40px; height:40px; background:#f1f5f9; border-radius:10px; display:grid; place-items:center;">${item.emoji || '🍽️'}</span>
-                                    <div>
-                                        <div style="font-weight:700; color:var(--text); font-size:14.5px;">${item.name}</div>
-                                        <small style="color:var(--muted);">Đã bán: ${item.soldCount || 0} suất</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span style="background:#f1f5f9; color:#475569; padding:4px 10px; border-radius:999px; font-size:12.5px; font-weight:600;">
-                                    ${catObj.icon} ${catObj.name}
+                        <div class="dish-card ${isAvailable ? '' : 'is-out-of-stock'}">
+                            <div class="dish-card-header">
+                                <span class="dish-emoji">${item.emoji}</span>
+                                <span class="badge ${isAvailable ? 'badge-success' : 'badge-danger'}">
+                                    ${isAvailable ? '● Đang bán' : '✕ Hết hàng'}
                                 </span>
-                            </td>
-                            <td style="font-weight:800; color:var(--text); font-size:15px;">${formatVND(item.price)}</td>
-                            <td>
-                                <button type="button" class="btn-toggle-stock" data-id="${item.id}" style="border:0; cursor:pointer; font-size:12px; font-weight:700; padding:4px 10px; border-radius:999px; background:${isAvailable ? '#ecfdf5' : '#fff1f2'}; color:${isAvailable ? '#059669' : '#e11d48'};">
-                                    ${isAvailable ? '● Đang phục vụ' : '○ Tạm hết món'}
+                            </div>
+                            <div class="dish-card-body">
+                                <span class="dish-code">${item.id}</span>
+                                <h3 class="dish-name">${item.name}</h3>
+                                <div class="dish-price">${formatVND(item.price)}</div>
+                            </div>
+                            <div class="dish-card-footer">
+                                <button type="button" class="btn-toggle-stock" data-id="${item.realId || item.id}">
+                                    ${isAvailable ? 'Báo hết hàng' : 'Mở bán lại'}
                                 </button>
-                            </td>
-                            <td style="text-align:right;">
-                                <div style="display:flex; justify-content:flex-end; gap:6px;">
-                                    <button type="button" class="btn-edit-dish" data-id="${item.id}" style="background:#eef4ff; color:var(--primary); border:0; padding:6px 10px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer;">
-                                        Sửa
-                                    </button>
-                                    <button type="button" class="btn-del-dish" data-id="${item.id}" style="background:#fee2e2; color:#dc2626; border:0; padding:6px 10px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer;">
-                                        Xóa
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                                <button type="button" class="action-icon-btn btn-edit-dish" data-id="${item.id}" title="Sửa món">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </button>
+                            </div>
+                        </div>
                     `;
                 }).join('');
             }
         }
 
-        attachActions();
+        bindEvents();
     }
 
-    function attachActions() {
-        // Toggle stock
+    function bindEvents() {
         document.querySelectorAll('.btn-toggle-stock').forEach(btn => {
-            btn.onclick = () => {
+            btn.onclick = async () => {
                 const id = btn.getAttribute('data-id');
-                const target = menu.find(m => m.id === id);
-                if (target) {
-                    target.status = target.status === 'available' ? 'out_of_stock' : 'available';
-                    saveMenu(menu);
-                    updateStats();
-                    renderMenu();
+                try {
+                    if (window.API) {
+                        await window.API.patch(`/products/${id}/toggle-status`);
+                    } else {
+                        await fetch(`http://localhost:8080/api/v1/products/${id}/toggle-status`, { method: 'PATCH' });
+                    }
+                    await loadMenu();
+                } catch (e) {
+                    alert('Lỗi cập nhật trạng thái món: ' + e.message);
                 }
             };
         });
 
-        // Edit
         document.querySelectorAll('.btn-edit-dish').forEach(btn => {
             btn.onclick = () => {
                 const id = btn.getAttribute('data-id');
-                const target = menu.find(m => m.id === id);
-                if (target) openEditModal(target);
-            };
-        });
-
-        // Delete
-        document.querySelectorAll('.btn-del-dish').forEach(btn => {
-            btn.onclick = () => {
-                const id = btn.getAttribute('data-id');
-                const target = menu.find(m => m.id === id);
-                if (target && confirm(`Bạn có chắc muốn xóa món "${target.name}" khỏi thực đơn chi nhánh?`)) {
-                    menu = menu.filter(m => m.id !== id);
-                    saveMenu(menu);
-                    updateStats();
-                    renderCategoryTabs();
-                    renderMenu();
-                }
+                openEditModal(id);
             };
         });
     }
 
-    function openEditModal(dish = null) {
-        if (!modal) return;
-        if (dish) {
+    function openEditModal(dishId) {
+        if (dishId) {
+            const dish = menu.find(m => m.id === dishId);
+            if (!dish) return;
             modalTitle.textContent = 'Chỉnh sửa món ăn';
-            editingIdInput.value = dish.id;
+            editingIdInput.value = dish.realId || dish.id;
             document.getElementById('dishId').value = dish.id;
             document.getElementById('dishId').disabled = true;
             document.getElementById('dishName').value = dish.name;
@@ -259,42 +227,54 @@
     if (cancelBtn) cancelBtn.onclick = closeModal;
 
     if (dishForm) {
-        dishForm.onsubmit = (e) => {
+        dishForm.onsubmit = async (e) => {
             e.preventDefault();
             const editId = editingIdInput.value;
-            const id = document.getElementById('dishId').value.trim();
+            const code = document.getElementById('dishId').value.trim();
             const name = document.getElementById('dishName').value.trim();
             const cat = document.getElementById('dishCat').value;
-            const price = parseInt(document.getElementById('dishPrice').value, 10) || 0;
+            const price = parseFloat(document.getElementById('dishPrice').value) || 0;
             const emoji = document.getElementById('dishEmoji').value.trim() || '🍽️';
             const status = document.getElementById('dishStatus').value;
 
-            if (editId) {
-                const target = menu.find(m => m.id === editId);
-                if (target) {
-                    target.name = name;
-                    target.cat = cat;
-                    target.price = price;
-                    target.emoji = emoji;
-                    target.status = status;
-                }
-            } else {
-                menu.unshift({
-                    id: id || ('m' + (menu.length + 1)),
-                    cat,
-                    name,
-                    price,
-                    emoji,
-                    status,
-                    soldCount: 0
-                });
-            }
+            const payload = {
+                code,
+                name,
+                category: cat,
+                price,
+                emoji,
+                status,
+                stockQuantity: 100,
+                branchId: Number(sessionStorage.getItem('cp_branch_id')) || 1
+            };
 
-            saveMenu(menu);
-            updateStats();
-            renderCategoryTabs();
-            renderMenu();
-            closeModal();
+            try {
+                if (editId) {
+                    if (window.API) {
+                        await window.API.put(`/products/${editId}`, payload);
+                    } else {
+                        await fetch(`http://localhost:8080/api/v1/products/${editId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                    }
+                } else {
+                    if (window.API) {
+                        await window.API.post('/products', payload);
+                    } else {
+                        await fetch('http://localhost:8080/api/v1/products', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                    }
+                }
+                closeModal();
+                await loadMenu();
+            } catch (err) {
+                alert('Lỗi lưu món ăn vào Database: ' + err.message);
+            }
         };
     }
 
@@ -305,9 +285,6 @@
         };
     }
 
-    // Init
-    updateStats();
-    renderCategoryTabs();
-    renderMenu();
+    // Tải dữ liệu ban đầu
+    loadMenu();
 })();
-

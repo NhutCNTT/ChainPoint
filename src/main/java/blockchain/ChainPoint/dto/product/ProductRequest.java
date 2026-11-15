@@ -50,4 +50,6 @@ public class ProductRequest {
     private Integer stockQuantity = 0;
 
     private String imageUrl;
+
+    private Long branchId;
 }

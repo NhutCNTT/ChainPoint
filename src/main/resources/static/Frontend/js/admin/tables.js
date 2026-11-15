@@ -1,79 +1,18 @@
 // ChainPoint — Quản lý bàn & Sơ đồ vị trí nhà hàng
-// Used by: pages/admin/tables.html
+// Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
 
 (function () {
-    const STORAGE_KEY = 'cp_configured_tables';
-    const AREAS_KEY = 'cp_areas';
-
-    // Dữ liệu khu vực mặc định
     const DEFAULT_AREAS = [
         { id: 'f1', name: 'Tầng 1 (Sảnh chính)' },
         { id: 'f2', name: 'Tầng 2 (Phòng lạnh)' },
         { id: 'garden', name: 'Khu Sân Vườn' }
     ];
 
-    // Dữ liệu bàn mẫu khởi tạo nếu chưa có trong localStorage
-    const DEFAULT_TABLES = [
-        // Tầng 1
-        { id: 'A1', name: 'Bàn 01', area: 'f1', seats: 4, status: 'active', note: 'Gần cửa sổ sảnh chính' },
-        { id: 'A2', name: 'Bàn 02', area: 'f1', seats: 4, status: 'active', note: '' },
-        { id: 'A3', name: 'Bàn 03', area: 'f1', seats: 6, status: 'active', note: 'Bàn dài gia đình' },
-        { id: 'A4', name: 'Bàn 04', area: 'f1', seats: 4, status: 'active', note: '' },
-        { id: 'A5', name: 'Bàn 05', area: 'f1', seats: 4, status: 'active', note: '' },
-        { id: 'A6', name: 'Bàn 06', area: 'f1', seats: 6, status: 'active', note: '' },
-        { id: 'A7', name: 'Bàn 07', area: 'f1', seats: 4, status: 'disabled', note: 'Đang bảo dưỡng ghế' },
-        { id: 'A8', name: 'Bàn VIP 1', area: 'f1', seats: 8, status: 'active', note: 'Phòng riêng Tầng 1' },
-
-        // Tầng 2
-        { id: 'B1', name: 'Bàn 2.1', area: 'f2', seats: 2, status: 'active', note: 'Bàn đôi cặp đôi' },
-        { id: 'B2', name: 'Bàn 2.2', area: 'f2', seats: 4, status: 'active', note: '' },
-        { id: 'B3', name: 'Bàn 2.3', area: 'f2', seats: 2, status: 'active', note: '' },
-        { id: 'B4', name: 'Bàn 2.4', area: 'f2', seats: 4, status: 'active', note: '' },
-        { id: 'B5', name: 'Bàn 2.5', area: 'f2', seats: 4, status: 'active', note: '' },
-        { id: 'B6', name: 'Bàn 2.6', area: 'f2', seats: 6, status: 'active', note: '' },
-        { id: 'B7', name: 'Bàn 2.7', area: 'f2', seats: 4, status: 'active', note: '' },
-        { id: 'B8', name: 'Bàn VIP 2', area: 'f2', seats: 10, status: 'active', note: 'Phòng tiệc lớn' },
-
-        // Sân vườn
-        { id: 'C1', name: 'Vườn 01', area: 'garden', seats: 4, status: 'active', note: 'Dưới tán cây' },
-        { id: 'C2', name: 'Vườn 02', area: 'garden', seats: 8, status: 'active', note: 'Bàn tiệc ngoài trời' },
-        { id: 'C3', name: 'Vườn 03', area: 'garden', seats: 4, status: 'active', note: '' },
-        { id: 'C4', name: 'Vườn 04', area: 'garden', seats: 4, status: 'active', note: '' },
-        { id: 'C5', name: 'Vườn 05', area: 'garden', seats: 6, status: 'disabled', note: 'Khu vực che mưa sửa chữa' },
-        { id: 'C6', name: 'Vườn 06', area: 'garden', seats: 4, status: 'active', note: '' }
-    ];
-
-    function loadTables() {
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            if (raw) return JSON.parse(raw);
-        } catch (e) {
-            console.error(e);
-        }
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_TABLES));
-        return DEFAULT_TABLES;
-    }
-
-    function saveTables(tables) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tables));
-    }
-
-    function loadAreas() {
-        try {
-            const raw = localStorage.getItem(AREAS_KEY);
-            if (raw) return JSON.parse(raw);
-        } catch (e) {
-            console.error(e);
-        }
-        localStorage.setItem(AREAS_KEY, JSON.stringify(DEFAULT_AREAS));
-        return DEFAULT_AREAS;
-    }
-
-    let tables = loadTables();
-    let areas = loadAreas();
+    let tables = [];
+    let areas = DEFAULT_AREAS;
     let currentAreaFilter = 'all';
     let currentSearch = '';
-    let currentViewMode = 'grid'; // 'grid' (sơ đồ) | 'list' (danh sách)
+    let currentViewMode = 'grid';
 
     // DOM Elements
     const gridContainer = document.getElementById('tablesGridContainer');
@@ -97,42 +36,51 @@
     const statDisabled = document.getElementById('statDisabledTables');
     const statSeats = document.getElementById('statTotalSeats');
 
-    function updateStats() {
-        if (statTotal) statTotal.textContent = tables.length;
-        const activeCount = tables.filter(t => t.status === 'active').length;
-        const disabledCount = tables.filter(t => t.status === 'disabled').length;
-        const totalSeats = tables.reduce((sum, t) => sum + (parseInt(t.seats, 10) || 0), 0);
+    async function loadTables() {
+        try {
+            if (window.API) {
+                const res = await window.API.get('/tables');
+                tables = res.map(t => ({
+                    id: t.code,
+                    realId: t.id,
+                    name: t.name || ('Bàn ' + t.code),
+                    area: t.area || 'f1',
+                    seats: t.seats || 4,
+                    status: t.status || 'active',
+                    note: t.note || ''
+                }));
+            } else {
+                const res = await fetch('http://localhost:8080/api/v1/tables');
+                const list = await res.json();
+                tables = list.map(t => ({
+                    id: t.code,
+                    realId: t.id,
+                    name: t.name || ('Bàn ' + t.code),
+                    area: t.area || 'f1',
+                    seats: t.seats || 4,
+                    status: t.status || 'active',
+                    note: t.note || ''
+                }));
+            }
+        } catch (e) {
+            console.error('Không thể nạp dữ liệu bàn từ MySQL API:', e);
+            tables = [];
+        }
 
-        if (statActive) statActive.textContent = activeCount;
-        if (statDisabled) statDisabled.textContent = disabledCount;
-        if (statSeats) statSeats.textContent = totalSeats;
+        updateStats();
+        populateAreaSelect();
+        renderAreaFilterTabs();
+        render();
     }
 
-    function renderAreaFilterTabs() {
-        if (!areaTabsContainer) return;
-        const totalAll = tables.length;
-        let html = `
-            <button class="filter-tab ${currentAreaFilter === 'all' ? 'active' : ''}" data-area="all" type="button">
-                Tất cả khu vực (${totalAll})
-            </button>
-        `;
-        areas.forEach(a => {
-            const count = tables.filter(t => t.area === a.id).length;
-            html += `
-                <button class="filter-tab ${currentAreaFilter === a.id ? 'active' : ''}" data-area="${a.id}" type="button">
-                    ${a.name} (${count})
-                </button>
-            `;
-        });
-        areaTabsContainer.innerHTML = html;
-
-        areaTabsContainer.querySelectorAll('.filter-tab').forEach(btn => {
-            btn.addEventListener('click', () => {
-                currentAreaFilter = btn.dataset.area;
-                renderAreaFilterTabs();
-                render();
-            });
-        });
+    function updateStats() {
+        if (statTotal) statTotal.textContent = tables.length;
+        if (statActive) statActive.textContent = tables.filter(t => t.status === 'active').length;
+        if (statDisabled) statDisabled.textContent = tables.filter(t => t.status === 'disabled').length;
+        if (statSeats) {
+            const sumSeats = tables.reduce((acc, t) => acc + (t.status === 'active' ? (parseInt(t.seats, 10) || 0) : 0), 0);
+            statSeats.textContent = sumSeats;
+        }
     }
 
     function populateAreaSelect() {
@@ -140,173 +88,57 @@
         formTableArea.innerHTML = areas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
     }
 
-    function filterTablesList() {
-        return tables.filter(t => {
-            const matchArea = currentAreaFilter === 'all' || t.area === currentAreaFilter;
-            const q = currentSearch.toLowerCase().trim();
-            const matchSearch = !q || t.id.toLowerCase().includes(q) || t.name.toLowerCase().includes(q) || (t.note && t.note.toLowerCase().includes(q));
-            return matchArea && matchSearch;
-        });
-    }
-
-    function renderGrid(filtered) {
-        if (!gridContainer) return;
-        if (filtered.length === 0) {
-            gridContainer.innerHTML = `
-                <div class="empty-tables-box">
-                    <div class="empty-icon">🍽️</div>
-                    <h3>Không tìm thấy bàn nào</h3>
-                    <p>Không có vị trí bàn nào khớp với bộ lọc hiện tại. Hãy thử chọn khu vực khác hoặc thêm bàn mới.</p>
-                    <button class="btn-primary" type="button" id="emptyAddBtn">+ Tạo bàn mới</button>
-                </div>
-            `;
-            const emptyBtn = document.getElementById('emptyAddBtn');
-            if (emptyBtn) emptyBtn.addEventListener('click', openAddModal);
-            return;
-        }
-
-        // Group by area
-        const displayAreas = currentAreaFilter === 'all' ? areas : areas.filter(a => a.id === currentAreaFilter);
-
-        let html = '';
-        displayAreas.forEach(area => {
-            const areaTables = filtered.filter(t => t.area === area.id);
-            if (areaTables.length === 0) return;
-
-            html += `
-                <div class="area-section">
-                    <div class="area-header">
-                        <div class="area-title">
-                            <span>📍 ${area.name}</span>
-                            <span class="area-count">${areaTables.length} bàn</span>
-                        </div>
-                    </div>
-                    <div class="table-cards-grid">
-            `;
-
-            areaTables.forEach(t => {
-                const isActive = t.status === 'active';
-                html += `
-                    <div class="table-card ${!isActive ? 'is-disabled' : ''}" data-id="${t.id}">
-                        <div class="table-card-top">
-                            <div>
-                                <div class="table-card-id">${t.id}</div>
-                                <div class="table-card-name">${t.name}</div>
-                            </div>
-                            <span class="badge ${isActive ? 'badge-success' : 'badge-neutral'}">
-                                ${isActive ? '● Đang hoạt động' : '⏸ Ngừng sử dụng'}
-                            </span>
-                        </div>
-
-                        <div class="table-card-meta">
-                            <span class="seats-tag" title="Sức chứa bàn">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                                ${t.seats} chỗ ngồi
-                            </span>
-                            ${t.note ? `<span style="font-size:12px; color:var(--muted);">${t.note}</span>` : ''}
-                        </div>
-
-                        <div class="table-card-actions">
-                            <button class="action-icon-btn btn-toggle-status" data-id="${t.id}" title="${isActive ? 'Ngừng sử dụng bàn' : 'Kích hoạt lại bàn'}" type="button">
-                                ${isActive 
-                                    ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="10" y1="15" x2="10" y2="9"/><line x1="14" y1="15" x2="14" y2="9"/></svg>`
-                                    : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>`
-                                }
-                            </button>
-                            <button class="action-icon-btn btn-edit-table" data-id="${t.id}" title="Chỉnh sửa thông tin bàn" type="button">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            </button>
-                            <button class="action-icon-btn danger btn-delete-table" data-id="${t.id}" title="Xóa bàn" type="button">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            html += `
-                    </div>
-                </div>
-            `;
-        });
-
-        gridContainer.innerHTML = html;
-        bindCardActionButtons();
-    }
-
-    function renderList(filtered) {
-        if (!listContainer) return;
-        if (filtered.length === 0) {
-            listContainer.innerHTML = `
-                <div class="empty-tables-box">
-                    <h3>Không tìm thấy bàn nào</h3>
-                    <p>Không có vị trí bàn nào khớp với bộ lọc.</p>
-                </div>
-            `;
-            return;
-        }
-
+    function renderAreaFilterTabs() {
+        if (!areaTabsContainer) return;
+        const totalCount = tables.length;
         let html = `
-            <div class="data-table-card">
-                <div class="table-responsive">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Mã bàn</th>
-                                <th>Tên hiển thị</th>
-                                <th>Khu vực</th>
-                                <th>Sức chứa</th>
-                                <th>Trạng thái</th>
-                                <th>Ghi chú</th>
-                                <th style="text-align: right;">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+            <button class="area-tab ${currentAreaFilter === 'all' ? 'active' : ''}" data-area="all" type="button">
+                <span>Tất cả khu vực</span>
+                <span class="area-count">${totalCount}</span>
+            </button>
         `;
 
-        filtered.forEach(t => {
-            const areaObj = areas.find(a => a.id === t.area) || { name: t.area };
-            const isActive = t.status === 'active';
+        areas.forEach(a => {
+            const count = tables.filter(t => t.area === a.id).length;
+            const isActive = currentAreaFilter === a.id ? 'active' : '';
             html += `
-                <tr>
-                    <td><strong>${t.id}</strong></td>
-                    <td style="font-weight: 600;">${t.name}</td>
-                    <td><span class="badge badge-primary">${areaObj.name}</span></td>
-                    <td><strong>${t.seats}</strong> người</td>
-                    <td>
-                        <span class="badge ${isActive ? 'badge-success' : 'badge-neutral'}">
-                            ${isActive ? 'Đang hoạt động' : 'Ngừng sử dụng'}
-                        </span>
-                    </td>
-                    <td style="color:var(--muted); font-size:13px;">${t.note || '—'}</td>
-                    <td style="text-align: right;">
-                        <button class="btn-secondary btn-toggle-status" data-id="${t.id}" style="padding: 6px 12px; font-size: 12px; margin-right: 6px;" type="button">
-                            ${isActive ? 'Tạm ngưng' : 'Kích hoạt'}
-                        </button>
-                        <button class="btn-secondary btn-edit-table" data-id="${t.id}" style="padding: 6px 12px; font-size: 12px; margin-right: 6px;" type="button">
-                            Sửa
-                        </button>
-                        <button class="btn-danger-outline btn-delete-table" data-id="${t.id}" style="padding: 6px 12px; font-size: 12px;" type="button">
-                            Xóa
-                        </button>
-                    </td>
-                </tr>
+                <button class="area-tab ${isActive}" data-area="${a.id}" type="button">
+                    <span>${a.name}</span>
+                    <span class="area-count">${count}</span>
+                </button>
             `;
         });
 
-        html += `
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        `;
-        listContainer.innerHTML = html;
-        bindCardActionButtons();
+        areaTabsContainer.innerHTML = html;
+        areaTabsContainer.querySelectorAll('.area-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                currentAreaFilter = tab.dataset.area;
+                renderAreaFilterTabs();
+                render();
+            });
+        });
+    }
+
+    function getFilteredTables() {
+        return tables.filter(t => {
+            const areaMatch = currentAreaFilter === 'all' || t.area === currentAreaFilter;
+            const q = currentSearch.toLowerCase().trim();
+            const searchMatch = !q ||
+                t.name.toLowerCase().includes(q) ||
+                t.id.toLowerCase().includes(q) ||
+                (t.note && t.note.toLowerCase().includes(q));
+            return areaMatch && searchMatch;
+        });
+    }
+
+    function getAreaName(areaId) {
+        const a = areas.find(x => x.id === areaId);
+        return a ? a.name : areaId;
     }
 
     function render() {
-        const filtered = filterTablesList();
         updateStats();
+        const filtered = getFilteredTables();
 
         if (currentViewMode === 'grid') {
             if (gridContainer) gridContainer.hidden = false;
@@ -317,86 +149,135 @@
             if (listContainer) listContainer.hidden = false;
             renderList(filtered);
         }
+
+        bindActionButtons();
     }
 
-    function bindCardActionButtons() {
-        // Toggle status (Ngừng sử dụng / Kích hoạt lại)
-        document.querySelectorAll('.btn-toggle-status').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.dataset.id;
-                const table = tables.find(t => t.id === id);
-                if (!table) return;
+    function renderGrid(list) {
+        if (!gridContainer) return;
+        if (list.length === 0) {
+            gridContainer.innerHTML = `
+                <div class="empty-tables-box">
+                    <div class="empty-icon">🍽️</div>
+                    <h3>Không tìm thấy bàn nào</h3>
+                    <p>Thử tìm kiếm với từ khóa khác hoặc tạo thêm bàn mới vào Database.</p>
+                </div>
+            `;
+            return;
+        }
 
-                const willDisable = table.status === 'active';
-                const confirmMsg = willDisable
-                    ? `Bạn có chắc chắn muốn NGỪNG SỬ DỤNG bàn "${table.id} - ${table.name}"? Bàn này sẽ tạm ẩn khỏi màn hình POS.`
-                    : `Kích hoạt lại bàn "${table.id} - ${table.name}" để sẵn sàng phục vụ trên POS?`;
+        gridContainer.innerHTML = list.map(t => {
+            const isActive = t.status === 'active';
+            const badgeClass = isActive ? 'badge-success' : 'badge-neutral';
+            const badgeText = isActive ? '● Đang phục vụ' : '⏸ Tạm ngừng';
 
-                if (confirm(confirmMsg)) {
-                    table.status = willDisable ? 'disabled' : 'active';
-                    saveTables(tables);
-                    render();
-                }
-            });
-        });
+            return `
+                <div class="table-card ${!isActive ? 'is-disabled' : ''}">
+                    <div class="table-card-top">
+                        <div class="table-code-badge">${t.id}</div>
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="table-card-name">${t.name}</div>
+                    <div class="table-card-meta">
+                        <div class="table-meta-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                            <span>${getAreaName(t.area)}</span>
+                        </div>
+                        <div class="table-meta-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <span>${t.seats} chỗ ngồi</span>
+                        </div>
+                    </div>
+                    ${t.note ? `<div class="table-card-note">💡 ${t.note}</div>` : ''}
+                    <div class="table-card-actions">
+                        <button class="action-icon-btn btn-edit-table" data-id="${t.id}" title="Chỉnh sửa bàn" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
+                        <button class="action-icon-btn btn-delete-table" data-id="${t.realId || t.id}" title="Xóa bàn" type="button" style="color: var(--danger, #ef4444);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
 
-        // Edit
+    function renderList(list) {
+        const tbody = document.getElementById('tablesTableBody');
+        if (!tbody) return;
+
+        if (list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 32px; color: var(--muted);">Không có bàn nào phù hợp.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = list.map(t => `
+            <tr>
+                <td><code>${t.id}</code></td>
+                <td><strong>${t.name}</strong></td>
+                <td>${getAreaName(t.area)}</td>
+                <td>${t.seats} chỗ</td>
+                <td><span class="badge ${t.status === 'active' ? 'badge-success' : 'badge-neutral'}">${t.status === 'active' ? 'Hoạt động' : 'Tạm ngừng'}</span></td>
+                <td>${t.note || '—'}</td>
+                <td>
+                    <div style="display:flex; gap:6px;">
+                        <button class="action-icon-btn btn-edit-table" data-id="${t.id}" title="Sửa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                        <button class="action-icon-btn btn-delete-table" data-id="${t.realId || t.id}" title="Xóa" style="color:var(--danger, #ef4444);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function bindActionButtons() {
         document.querySelectorAll('.btn-edit-table').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const id = btn.dataset.id;
-                openEditModal(id);
-            });
+            btn.addEventListener('click', () => openEditModal(btn.dataset.id));
         });
 
-        // Delete
         document.querySelectorAll('.btn-delete-table').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
+            btn.addEventListener('click', async () => {
                 const id = btn.dataset.id;
-                const table = tables.find(t => t.id === id);
-                if (!table) return;
-
-                if (confirm(`Xác nhận XÓA VĨNH VIỄN bàn "${table.id} - ${table.name}" khỏi hệ thống?`)) {
-                    tables = tables.filter(t => t.id !== id);
-                    saveTables(tables);
-                    renderAreaFilterTabs();
-                    render();
+                if (confirm('Bạn có chắc muốn xóa bàn này khỏi Database?')) {
+                    try {
+                        if (window.API) {
+                            await window.API.delete(`/tables/${id}`);
+                        } else {
+                            await fetch(`http://localhost:8080/api/v1/tables/${id}`, { method: 'DELETE' });
+                        }
+                        await loadTables();
+                    } catch (err) {
+                        alert('Lỗi xóa bàn: ' + err.message);
+                    }
                 }
             });
         });
     }
 
-    // Modal Add / Edit
     function openAddModal() {
         editingOriginalId.value = '';
-        modalTitle.textContent = 'Thêm vị trí bàn mới';
-        formTableId.value = '';
+        modalTitle.textContent = 'Thêm bàn mới';
+        formTableId.value = 'A' + (tables.length + 1);
         formTableId.disabled = false;
-        formTableName.value = '';
+        formTableName.value = 'Bàn ' + (tables.length + 1);
+        formTableArea.value = currentAreaFilter !== 'all' ? currentAreaFilter : 'f1';
         formTableSeats.value = '4';
         formTableStatus.value = 'active';
         formTableNote.value = '';
-        if (currentAreaFilter !== 'all') {
-            formTableArea.value = currentAreaFilter;
-        }
         tableFormModal.classList.add('is-open');
-        formTableId.focus();
     }
 
-    function openEditModal(id) {
-        const table = tables.find(t => t.id === id);
+    function openEditModal(tableId) {
+        const table = tables.find(t => t.id === tableId);
         if (!table) return;
 
-        editingOriginalId.value = table.id;
-        modalTitle.textContent = `Chỉnh sửa bàn: ${table.id}`;
+        editingOriginalId.value = table.realId || table.id;
+        modalTitle.textContent = `Chỉnh sửa: ${table.name}`;
         formTableId.value = table.id;
-        formTableId.disabled = false;
+        formTableId.disabled = true;
         formTableName.value = table.name;
         formTableArea.value = table.area;
-        formTableSeats.value = table.seats || 4;
-        formTableStatus.value = table.status || 'active';
+        formTableSeats.value = table.seats;
+        formTableStatus.value = table.status;
         formTableNote.value = table.note || '';
         tableFormModal.classList.add('is-open');
     }
@@ -405,53 +286,57 @@
         tableFormModal.classList.remove('is-open');
     }
 
-    // Form Submit
     if (tableForm) {
-        tableForm.addEventListener('submit', (e) => {
+        tableForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const originalId = editingOriginalId.value;
-            const id = formTableId.value.trim().toUpperCase();
+            const realId = editingOriginalId.value;
+            const code = formTableId.value.trim().toUpperCase();
             const name = formTableName.value.trim();
             const area = formTableArea.value;
             const seats = parseInt(formTableSeats.value, 10) || 4;
             const status = formTableStatus.value;
             const note = formTableNote.value.trim();
 
-            if (!id) return alert('Vui lòng nhập mã bàn.');
-            if (!name) return alert('Vui lòng nhập tên bàn.');
+            const payload = {
+                code,
+                name,
+                area,
+                seats,
+                status,
+                note,
+                branchId: 1 // Mặc định chi nhánh 1
+            };
 
-            // Check duplicate ID
-            const duplicate = tables.find(t => t.id.toLowerCase() === id.toLowerCase() && t.id !== originalId);
-            if (duplicate) {
-                return alert(`Mã bàn "${id}" đã tồn tại. Vui lòng chọn mã bàn khác.`);
-            }
-
-            if (originalId) {
-                // Update
-                const table = tables.find(t => t.id === originalId);
-                if (table) {
-                    table.id = id;
-                    table.name = name;
-                    table.area = area;
-                    table.seats = seats;
-                    table.status = status;
-                    table.note = note;
+            try {
+                if (realId && !isNaN(Number(realId))) {
+                    if (window.API) {
+                        await window.API.put(`/tables/${realId}`, payload);
+                    } else {
+                        await fetch(`http://localhost:8080/api/v1/tables/${realId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                    }
+                } else {
+                    if (window.API) {
+                        await window.API.post('/tables', payload);
+                    } else {
+                        await fetch('http://localhost:8080/api/v1/tables', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                    }
                 }
-            } else {
-                // Add new
-                tables.push({
-                    id, name, area, seats, status, note
-                });
+                closeModal();
+                await loadTables();
+            } catch (err) {
+                alert('Lỗi lưu bàn vào Database: ' + err.message);
             }
-
-            saveTables(tables);
-            closeModal();
-            renderAreaFilterTabs();
-            render();
         });
     }
 
-    // Modal Close Triggers
     const modalCloseBtn = document.getElementById('closeModalBtn');
     const modalCancelBtn = document.getElementById('cancelModalBtn');
     if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
@@ -462,11 +347,9 @@
         });
     }
 
-    // Add Button Header
     const addTableBtn = document.getElementById('addTableBtn');
     if (addTableBtn) addTableBtn.addEventListener('click', openAddModal);
 
-    // Search input
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             currentSearch = e.target.value;
@@ -474,27 +357,5 @@
         });
     }
 
-    // View toggle buttons
-    const btnGridView = document.getElementById('btnGridView');
-    const btnListView = document.getElementById('btnListView');
-    if (btnGridView && btnListView) {
-        btnGridView.addEventListener('click', () => {
-            currentViewMode = 'grid';
-            btnGridView.classList.add('active');
-            btnListView.classList.remove('active');
-            render();
-        });
-        btnListView.addEventListener('click', () => {
-            currentViewMode = 'list';
-            btnListView.classList.add('active');
-            btnGridView.classList.remove('active');
-            render();
-        });
-    }
-
-    // Initial setup
-    populateAreaSelect();
-    renderAreaFilterTabs();
-    render();
+    loadTables();
 })();
-

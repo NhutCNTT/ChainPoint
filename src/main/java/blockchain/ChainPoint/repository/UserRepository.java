@@ -14,4 +14,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
     boolean existsByUsername(String username);
+
+    @EntityGraph(attributePaths = "branch")
+    java.util.List<User> findByBranchId(Long branchId);
+
+    @EntityGraph(attributePaths = "branch")
+    java.util.List<User> findAll();
+
+    Long countByBranchId(Long branchId);
 }

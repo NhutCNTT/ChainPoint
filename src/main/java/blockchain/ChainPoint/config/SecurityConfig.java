@@ -93,7 +93,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
-                                "/api/v1/auth/**",
+                                "/api/v1/**",
                                 "/actuator/**",
                                 "/error",
                                 "/favicon.ico",

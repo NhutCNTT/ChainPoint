@@ -1,36 +1,10 @@
-/* Dữ liệu mock & đồng bộ cấu hình từ Quản lý bàn */
+/* Dữ liệu danh mục & nạp dữ liệu Bàn từ MySQL Database */
 
 const AREAS = [
   { id: 'f1', name: 'Tầng 1' },
   { id: 'f2', name: 'Tầng 2' },
   { id: 'garden', name: 'Sân vườn' }
 ];
-
-function getAppTables() {
-  try {
-    const raw = localStorage.getItem('cp_configured_tables');
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      // Chỉ lấy các bàn đang hoạt động phục vụ trên POS (loại bỏ bàn đã ngừng sử dụng)
-      const active = parsed.filter(t => t.status !== 'disabled').map(t => ({
-        id: t.id,
-        name: t.name,
-        area: t.area,
-        seats: parseInt(t.seats, 10) || 4
-      }));
-      if (active.length > 0) return active;
-    }
-  } catch (e) {
-    console.error(e);
-  }
-  return [
-    ...Array.from({ length: 8 }, (_, i) => ({ id: 'A' + (i + 1), name: 'Bàn ' + (i + 1), area: 'f1', seats: i % 3 === 0 ? 6 : 4 })),
-    ...Array.from({ length: 8 }, (_, i) => ({ id: 'B' + (i + 1), name: 'Bàn 2.' + (i + 1), area: 'f2', seats: i % 2 === 0 ? 4 : 2 })),
-    ...Array.from({ length: 6 }, (_, i) => ({ id: 'C' + (i + 1), name: 'Vườn ' + (i + 1), area: 'garden', seats: i % 2 === 0 ? 8 : 4 }))
-  ];
-}
-
-const TABLES = getAppTables();
 
 const CATEGORIES = [
   { id: 'all', name: 'Tất cả', icon: '✨' },
@@ -41,32 +15,62 @@ const CATEGORIES = [
   { id: 'other', name: 'Khác', icon: '🍚' }
 ];
 
-const MENU = [
-  { id: 'm01', cat: 'hot', name: 'Bò lúc lắc', price: 129000, emoji: '🥩' },
-  { id: 'm02', cat: 'hot', name: 'Gà nướng mật ong', price: 119000, emoji: '🍗' },
-  { id: 'm03', cat: 'hot', name: 'Cá hồi áp chảo', price: 169000, emoji: '🐟' },
-  { id: 'm04', cat: 'hot', name: 'Mì Ý hải sản', price: 99000, emoji: '🍝' },
-  { id: 'm05', cat: 'hot', name: 'Tôm rang muối', price: 139000, emoji: '🍤' },
-  { id: 'm06', cat: 'hot', name: 'Lẩu thái hải sản', price: 289000, emoji: '🍲' },
-  { id: 'm07', cat: 'cold', name: 'Salad Caesar', price: 69000, emoji: '🥗' },
-  { id: 'm08', cat: 'cold', name: 'Gỏi cuốn tôm thịt', price: 55000, emoji: '🌯' },
-  { id: 'm09', cat: 'cold', name: 'Gỏi ngó sen', price: 79000, emoji: '🥬' },
-  { id: 'm10', cat: 'cold', name: 'Sashimi cá hồi', price: 159000, emoji: '🍣' },
-  { id: 'm11', cat: 'drink', name: 'Coca-Cola', price: 20000, emoji: '🥤' },
-  { id: 'm12', cat: 'drink', name: 'Trà đào cam sả', price: 45000, emoji: '🍑' },
-  { id: 'm13', cat: 'drink', name: 'Cà phê sữa đá', price: 35000, emoji: '☕' },
-  { id: 'm14', cat: 'drink', name: 'Nước ép cam', price: 42000, emoji: '🍊' },
-  { id: 'm15', cat: 'drink', name: 'Sinh tố bơ', price: 48000, emoji: '🥑' },
-  { id: 'm16', cat: 'drink', name: 'Bia Tiger', price: 30000, emoji: '🍺' },
-  { id: 'm17', cat: 'dessert', name: 'Bánh flan caramel', price: 29000, emoji: '🍮' },
-  { id: 'm18', cat: 'dessert', name: 'Kem 3 vị', price: 39000, emoji: '🍨' },
-  { id: 'm19', cat: 'dessert', name: 'Tiramisu', price: 59000, emoji: '🍰' },
-  { id: 'm20', cat: 'dessert', name: 'Trái cây theo mùa', price: 65000, emoji: '🍉' },
-  { id: 'm21', cat: 'other', name: 'Cơm trắng', price: 10000, emoji: '🍚' },
-  { id: 'm22', cat: 'other', name: 'Khoai tây chiên', price: 49000, emoji: '🍟' },
-  { id: 'm23', cat: 'other', name: 'Bánh mì bơ tỏi', price: 35000, emoji: '🥖' },
-  { id: 'm24', cat: 'other', name: 'Khăn lạnh', price: 3000, emoji: '🧻' }
-];
+// Khởi tạo rỗng — Dữ liệu hoàn toàn phụ thuộc vào Cơ sở dữ liệu MySQL
+let MENU = [];
+let TABLES = [];
+
+const POS_API_BASE = (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '') 
+  ? 'http://localhost:8080/api/v1' 
+  : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
+
+// Nạp danh sách món ăn từ Backend MySQL theo chi nhánh
+async function fetchMenuFromDatabase() {
+  try {
+    const branchId = sessionStorage.getItem('cp_branch_id') || 1;
+    const url = `${POS_API_BASE}/products?branchId=${branchId}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        MENU = data.map(p => ({
+          id: p.code || ('m' + p.id),
+          realId: p.id,
+          cat: p.category || 'other',
+          name: p.name,
+          price: p.price,
+          emoji: p.emoji || '🍽️'
+        }));
+      }
+    }
+  } catch (e) {
+    console.warn('Không thể nạp thực đơn từ MySQL:', e);
+  }
+}
+
+// Nạp danh sách bàn từ Backend MySQL theo chi nhánh
+async function fetchTablesFromDatabase() {
+  try {
+    const branchId = sessionStorage.getItem('cp_branch_id') || 1;
+    const url = `${POS_API_BASE}/tables?branchId=${branchId}`;
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        TABLES = data.filter(t => t.status !== 'disabled').map(t => ({
+          id: t.code,
+          name: t.name || ('Bàn ' + t.code),
+          area: t.area || 'f1',
+          seats: parseInt(t.seats, 10) || 4
+        }));
+      }
+    }
+  } catch (e) {
+    console.warn('Không thể nạp danh sách bàn từ MySQL:', e);
+  }
+}
+
+fetchMenuFromDatabase();
+fetchTablesFromDatabase();
 
 const getMenuItem = (id) => MENU.find((m) => m.id === id);
 const getTable = (id) => TABLES.find((t) => t.id === id);

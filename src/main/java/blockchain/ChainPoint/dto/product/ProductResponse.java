@@ -37,5 +37,8 @@ public class ProductResponse implements Serializable {
 
     private String emoji;
 
+    private Long branchId;
+    private String branchName;
+
     private LocalDateTime createdAt;
 }

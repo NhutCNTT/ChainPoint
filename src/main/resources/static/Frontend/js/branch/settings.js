@@ -1,74 +1,89 @@
 // ChainPoint — Cài đặt thông tin vận hành Chi nhánh
-// Used by: pages/branch/settings.html
+// Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
 
 (function () {
-    const STORAGE_KEY = 'cp_branch_settings';
-    const currentBranch = sessionStorage.getItem('cp_branch') || localStorage.getItem('cp_branch') || 'Chi nhánh Quận 1';
-
-    const DEFAULT_SETTINGS = {
-        name: currentBranch,
-        code: 'CN-Q1',
-        address: '123 Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
-        hotline: '028 3822 9999',
-        openTime: '08:00',
-        closeTime: '22:30',
-        manager: 'Nguyễn Văn Nam',
-        vat: 8,
-        autoPrint: true,
-        status: 'open'
-    };
-
-    function loadSettings() {
-        try {
-            const raw = localStorage.getItem(STORAGE_KEY + '_' + currentBranch);
-            if (raw) return JSON.parse(raw);
-        } catch (e) {
-            console.error(e);
-        }
-        return DEFAULT_SETTINGS;
-    }
-
-    function saveSettings(data) {
-        localStorage.setItem(STORAGE_KEY + '_' + currentBranch, JSON.stringify(data));
-    }
+    const currentBranchName = sessionStorage.getItem('cp_branch') || 'Chi nhánh Quận 1';
+    let currentBranchId = sessionStorage.getItem('cp_branch_id') || 1;
 
     const form = document.getElementById('branchSettingsForm');
     const notice = document.getElementById('saveNotice');
 
-    if (form) {
-        const s = loadSettings();
-        document.getElementById('setBranchName').value = s.name;
-        document.getElementById('setBranchCode').value = s.code;
-        document.getElementById('setBranchAddress').value = s.address;
-        document.getElementById('setBranchHotline').value = s.hotline;
-        document.getElementById('setOpenTime').value = s.openTime;
-        document.getElementById('setCloseTime').value = s.closeTime;
-        document.getElementById('setManager').value = s.manager;
-        document.getElementById('setVat').value = s.vat;
-        document.getElementById('setAutoPrint').checked = s.autoPrint;
-        document.getElementById('setBranchStatus').value = s.status;
+    async function loadBranchSettings() {
+        try {
+            let branch;
+            if (window.API) {
+                // Tải chi nhánh theo ID hoặc tìm theo tên
+                const branches = await window.API.get('/branches');
+                branch = branches.find(b => String(b.id) === String(currentBranchId) || b.name === currentBranchName) || branches[0];
+            } else {
+                const res = await fetch('http://localhost:8080/api/v1/branches');
+                const branches = await res.json();
+                branch = branches.find(b => String(b.id) === String(currentBranchId) || b.name === currentBranchName) || branches[0];
+            }
 
-        form.onsubmit = (e) => {
+            if (branch) {
+                currentBranchId = branch.id;
+                sessionStorage.setItem('cp_branch_id', branch.id);
+
+                document.getElementById('setBranchName').value = branch.name || '';
+                document.getElementById('setBranchCode').value = branch.code || '';
+                document.getElementById('setBranchAddress').value = branch.address || '';
+                document.getElementById('setBranchHotline').value = branch.phone || '';
+                
+                const hours = (branch.openHours || '08:00 - 22:30').split('-');
+                document.getElementById('setOpenTime').value = (hours[0] || '08:00').trim();
+                document.getElementById('setCloseTime').value = (hours[1] || '22:30').trim();
+
+                document.getElementById('setManager').value = branch.managerName || '';
+                document.getElementById('setVat').value = branch.vatPercent || 8;
+                document.getElementById('setBranchStatus').value = branch.status || 'open';
+            }
+        } catch (e) {
+            console.warn('Không thể nạp cài đặt chi nhánh từ MySQL API:', e);
+        }
+    }
+
+    if (form) {
+        form.onsubmit = async (e) => {
             e.preventDefault();
-            const data = {
+
+            const openTime = document.getElementById('setOpenTime').value;
+            const closeTime = document.getElementById('setCloseTime').value;
+
+            const payload = {
                 name: document.getElementById('setBranchName').value.trim(),
-                code: document.getElementById('setBranchCode').value.trim(),
+                code: document.getElementById('setBranchCode').value.trim().toUpperCase(),
                 address: document.getElementById('setBranchAddress').value.trim(),
-                hotline: document.getElementById('setBranchHotline').value.trim(),
-                openTime: document.getElementById('setOpenTime').value,
-                closeTime: document.getElementById('setCloseTime').value,
-                manager: document.getElementById('setManager').value.trim(),
-                vat: parseInt(document.getElementById('setVat').value, 10) || 0,
-                autoPrint: document.getElementById('setAutoPrint').checked,
+                phone: document.getElementById('setBranchHotline').value.trim(),
+                openHours: `${openTime} - ${closeTime}`,
+                managerName: document.getElementById('setManager').value.trim(),
+                vatPercent: parseFloat(document.getElementById('setVat').value) || 8.0,
                 status: document.getElementById('setBranchStatus').value
             };
 
-            saveSettings(data);
-            if (notice) {
-                notice.style.display = 'block';
-                setTimeout(() => { notice.style.display = 'none'; }, 3000);
+            try {
+                if (window.API) {
+                    await window.API.put(`/branches/${currentBranchId}`, payload);
+                } else {
+                    await fetch(`http://localhost:8080/api/v1/branches/${currentBranchId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+
+                sessionStorage.setItem('cp_branch', payload.name);
+
+                if (notice) {
+                    notice.textContent = '✓ Đã lưu cài đặt chi nhánh vào Database thành công!';
+                    notice.style.display = 'block';
+                    setTimeout(() => { notice.style.display = 'none'; }, 3000);
+                }
+            } catch (err) {
+                alert('Lỗi khi lưu cài đặt vào Database: ' + err.message);
             }
         };
     }
-})();
 
+    loadBranchSettings();
+})();

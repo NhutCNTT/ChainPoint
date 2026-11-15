@@ -7,6 +7,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -25,7 +26,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "bills")
+@Table(
+        name = "bills",
+        indexes = {
+                @Index(name = "idx_bills_branch_created", columnList = "branch_id, created_at"),
+                @Index(name = "idx_bills_code", columnList = "bill_code", unique = true)
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,11 +47,23 @@ public class Bill {
     @Column(name = "bill_code", nullable = false, unique = true, length = 32)
     private String billCode;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "table_id")
+    private DiningTable table;
+
     @Column(name = "table_code", nullable = false, length = 20)
     private String tableCode;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cashier_id")
+    private User cashier;
+
     @Column(name = "cashier_username", nullable = false, length = 50)
     private String cashierUsername;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 
     @Column(name = "customer_phone", length = 20)
     private String customerPhone;

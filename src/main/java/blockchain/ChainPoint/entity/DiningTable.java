@@ -48,6 +48,10 @@ public class DiningTable {
     @Column(name = "area", length = 30)
     private String area;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "area_id")
+    private Area areaEntity;
+
     @Column(name = "seats", nullable = false)
     private Integer seats;
 

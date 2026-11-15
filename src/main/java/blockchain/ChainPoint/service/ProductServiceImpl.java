@@ -25,28 +25,36 @@ public class ProductServiceImpl implements ProductService {
     private static final String STATUS_OUT_OF_STOCK = "out_of_stock";
 
     private final ProductRepository productRepository;
+    private final blockchain.ChainPoint.repository.BranchRepository branchRepository;
 
     @Override
-    @Cacheable(
-            value = "products",
-            key = "#category != null ? #category : 'all'",
-            condition = "#status == null"
-    )
-    public List<ProductResponse> getAllProducts(String category, String status) {
+    public List<ProductResponse> getAllProducts(Long branchId, String category, String status) {
         List<Product> products;
 
-        if (StringUtils.hasText(category)) {
-            products = productRepository.findByCategoryIgnoreCase(category);
-        } else if (StringUtils.hasText(status)) {
-            products = productRepository.findByStatus(status);
+        if (branchId != null) {
+            if (StringUtils.hasText(category) && StringUtils.hasText(status)) {
+                products = productRepository.findByBranchIdAndCategoryIgnoreCaseAndStatus(branchId, category, status);
+            } else if (StringUtils.hasText(category)) {
+                products = productRepository.findByBranchIdAndCategoryIgnoreCase(branchId, category);
+            } else if (StringUtils.hasText(status)) {
+                products = productRepository.findByBranchIdAndStatus(branchId, status);
+            } else {
+                products = productRepository.findByBranchId(branchId);
+            }
         } else {
-            products = productRepository.findAll();
-        }
+            if (StringUtils.hasText(category)) {
+                products = productRepository.findByCategoryIgnoreCase(category);
+            } else if (StringUtils.hasText(status)) {
+                products = productRepository.findByStatus(status);
+            } else {
+                products = productRepository.findAll();
+            }
 
-        if (StringUtils.hasText(category) && StringUtils.hasText(status)) {
-            products = products.stream()
-                    .filter(product -> status.equalsIgnoreCase(product.getStatus()))
-                    .toList();
+            if (StringUtils.hasText(category) && StringUtils.hasText(status)) {
+                products = products.stream()
+                        .filter(product -> status.equalsIgnoreCase(product.getStatus()))
+                        .toList();
+            }
         }
 
         return products.stream()
@@ -67,10 +75,16 @@ public class ProductServiceImpl implements ProductService {
             throw new DuplicateResourceException("Product code already exists: " + request.getCode());
         }
 
+        Branch branch = null;
+        if (request.getBranchId() != null) {
+            branch = branchRepository.findById(request.getBranchId()).orElse(null);
+        }
+
         Product product = Product.builder()
                 .code(request.getCode())
                 .name(request.getName())
                 .category(request.getCategory())
+                .branch(branch)
                 .price(request.getPrice())
                 .emoji(request.getEmoji())
                 .status(defaultStatus(request.getStatus()))
@@ -90,6 +104,11 @@ public class ProductServiceImpl implements ProductService {
         if (!Objects.equals(product.getCode(), request.getCode())
                 && productRepository.existsByCode(request.getCode())) {
             throw new DuplicateResourceException("Product code already exists: " + request.getCode());
+        }
+
+        if (request.getBranchId() != null) {
+            Branch branch = branchRepository.findById(request.getBranchId()).orElse(null);
+            product.setBranch(branch);
         }
 
         product.setCode(request.getCode());
@@ -139,11 +158,16 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductResponse toResponse(Product product) {
+        Long branchId = product.getBranch() != null ? product.getBranch().getId() : null;
+        String branchName = product.getBranch() != null ? product.getBranch().getName() : null;
+
         return ProductResponse.builder()
                 .id(product.getId())
                 .code(product.getCode())
                 .name(product.getName())
                 .category(product.getCategory())
+                .branchId(branchId)
+                .branchName(branchName)
                 .price(product.getPrice())
                 .status(product.getStatus())
                 .stockQuantity(product.getStockQuantity())

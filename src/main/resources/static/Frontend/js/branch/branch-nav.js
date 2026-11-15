@@ -5,7 +5,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const branchFromUrl = urlParams.get('branch');
     if (branchFromUrl) {
-        localStorage.setItem('cp_branch', branchFromUrl);
+        sessionStorage.setItem('cp_branch', branchFromUrl);
         sessionStorage.setItem('cp_branch', branchFromUrl);
     }
 

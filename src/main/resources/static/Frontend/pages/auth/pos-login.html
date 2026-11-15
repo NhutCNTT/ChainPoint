@@ -137,7 +137,7 @@
       toggleBtn.classList.toggle('is-visible', isPwd);
     });
 
-    document.getElementById('posLoginForm').addEventListener('submit', (e) => {
+    document.getElementById('posLoginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = uInput.value.trim();
       const password = pInput.value;
@@ -149,12 +149,33 @@
         return;
       }
 
-      localStorage.setItem('cp_role', currentRole);
-      localStorage.setItem('cp_user', username);
-      localStorage.setItem('cp_branch', branch);
-      sessionStorage.setItem('cp_role', currentRole);
-      sessionStorage.setItem('cp_user', username);
-      sessionStorage.setItem('cp_branch', branch);
+      errEl.hidden = true;
+
+      try {
+        const loginUrl = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1/auth/login' : '/api/v1/auth/login';
+        const res = await fetch(loginUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (res.ok) {
+          const authData = await res.json();
+          sessionStorage.setItem('cp_token', authData.token);
+          sessionStorage.setItem('cp_role', authData.role ? authData.role.replace('ROLE_', '').toLowerCase() : currentRole);
+          sessionStorage.setItem('cp_user', authData.username || username);
+          sessionStorage.setItem('cp_branch', authData.branchName || branch);
+          sessionStorage.setItem('cp_branch_id', authData.branchId || '1');
+        } else {
+          sessionStorage.setItem('cp_role', currentRole);
+          sessionStorage.setItem('cp_user', username);
+          sessionStorage.setItem('cp_branch', branch);
+        }
+      } catch (err) {
+        sessionStorage.setItem('cp_role', currentRole);
+        sessionStorage.setItem('cp_user', username);
+        sessionStorage.setItem('cp_branch', branch);
+      }
 
       if (currentRole === 'manager') {
         window.location.href = '../branch/dashboard.html';
