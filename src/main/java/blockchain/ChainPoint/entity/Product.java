@@ -17,11 +17,19 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import jakarta.persistence.UniqueConstraint;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "products")
+@Table(
+        name = "products",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_products_branch_code",
+                columnNames = {"branch_id", "code"}
+        )
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,7 +41,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code", nullable = false, unique = true, length = 20)
+    @Column(name = "code", nullable = false, length = 20)
     private String code;
 
     @Column(name = "name", nullable = false, length = 150)

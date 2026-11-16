@@ -2,6 +2,7 @@ package blockchain.ChainPoint.service;
 
 import blockchain.ChainPoint.dto.product.ProductRequest;
 import blockchain.ChainPoint.dto.product.ProductResponse;
+import blockchain.ChainPoint.entity.Branch;
 import blockchain.ChainPoint.entity.Product;
 import blockchain.ChainPoint.exception.DuplicateResourceException;
 import blockchain.ChainPoint.exception.ResourceNotFoundException;
@@ -71,8 +72,9 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public ProductResponse createProduct(ProductRequest request) {
-        if (productRepository.existsByCode(request.getCode())) {
-            throw new DuplicateResourceException("Product code already exists: " + request.getCode());
+        Long branchId = request.getBranchId() != null ? request.getBranchId() : 1L;
+        if (productRepository.existsByBranchIdAndCode(branchId, request.getCode())) {
+            throw new DuplicateResourceException("Product code already exists in this branch: " + request.getCode());
         }
 
         Branch branch = null;
@@ -100,10 +102,11 @@ public class ProductServiceImpl implements ProductService {
     @CacheEvict(value = "products", allEntries = true)
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         Product product = findProduct(id);
+        Long branchId = request.getBranchId() != null ? request.getBranchId() : (product.getBranch() != null ? product.getBranch().getId() : 1L);
 
         if (!Objects.equals(product.getCode(), request.getCode())
-                && productRepository.existsByCode(request.getCode())) {
-            throw new DuplicateResourceException("Product code already exists: " + request.getCode());
+                && productRepository.existsByBranchIdAndCode(branchId, request.getCode())) {
+            throw new DuplicateResourceException("Product code already exists in this branch: " + request.getCode());
         }
 
         if (request.getBranchId() != null) {

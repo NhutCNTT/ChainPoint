@@ -24,7 +24,7 @@ import java.time.LocalDateTime;
         name = "loyalty_transactions",
         indexes = {
                 @Index(name = "idx_loyalty_tx_customer", columnList = "customer_id"),
-                @Index(name = "idx_loyalty_tx_code", columnList = "tx_code", unique = true)
+                @Index(name = "idx_loyalty_tx_code", columnList = "tx_code")
         }
 )
 @Getter

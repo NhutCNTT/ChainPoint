@@ -22,6 +22,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     boolean existsByCode(String code);
 
+    boolean existsByBranchIdAndCode(Long branchId, String code);
+
     List<Product> findByCategoryIgnoreCase(String category);
 
     List<Product> findByStatus(String status);

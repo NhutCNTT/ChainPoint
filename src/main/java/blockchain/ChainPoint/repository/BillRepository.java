@@ -16,7 +16,7 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
 
     Optional<Bill> findByBillCode(String billCode);
 
-    @Query("SELECT COALESCE(SUM(b.finalAmount), 0) FROM Bill b "
+    @Query("SELECT SUM(b.finalAmount) FROM Bill b "
             + "WHERE (:branchId IS NULL OR b.branch.id = :branchId) "
             + "AND b.status = 'paid' "
             + "AND b.createdAt BETWEEN :startDate AND :endDate")

@@ -30,7 +30,7 @@ import java.util.List;
         name = "bills",
         indexes = {
                 @Index(name = "idx_bills_branch_created", columnList = "branch_id, created_at"),
-                @Index(name = "idx_bills_code", columnList = "bill_code", unique = true)
+                @Index(name = "idx_bills_code", columnList = "bill_code")
         }
 )
 @Getter
