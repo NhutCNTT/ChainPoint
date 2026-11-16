@@ -12,7 +12,7 @@
     const getStorage = k => sessionStorage.getItem(k) || localStorage.getItem(k);
     const user = getStorage('cp_user') || 'Quản lý cơ sở';
     const role = getStorage('cp_role') || 'manager';
-    const currentBranch = getStorage('cp_branch') || 'Chi nhánh Quận 1';
+    const currentBranch = getStorage('cp_branch') || '';
 
     const currentFile = location.pathname.split('/').pop() || 'dashboard.html';
 

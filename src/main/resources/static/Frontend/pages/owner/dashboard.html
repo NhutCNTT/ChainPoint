@@ -41,15 +41,9 @@
         </a>
 
         <div style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; padding: 12px 12px 4px; letter-spacing: 0.05em;">Vào Chi Nhánh</div>
-        <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Qu%E1%BA%ADn%201" class="switch-branch-link" style="color:#1e40af; background:#f0f7ff; border:1px solid #dbeafe;">
-          <span>📍 CN Quận 1</span>
-        </a>
-        <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Th%E1%BA%A3o%20%C4%90i%E1%BB%81n" class="switch-branch-link">
-          <span>📍 CN Thảo Điền</span>
-        </a>
-        <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Ho%C3%A0n%20Ki%E1%BA%BFm" class="switch-branch-link">
-          <span>📍 CN Hoàn Kiếm</span>
-        </a>
+        <div id="ownerBranchLinksContainer" style="display:flex; flex-direction:column; gap:4px;">
+          <!-- Nạp động từ MySQL API -->
+        </div>
       </nav>
 
       <div class="sidebar-footer">
@@ -65,7 +59,7 @@
       <header class="topbar">
         <div>
           <h1>Tổng quan toàn chuỗi</h1>
-          <p>Báo cáo vận hành hợp nhất 3 chi nhánh.</p>
+          <p id="ownerSubHeader">Báo cáo vận hành hợp nhất dữ liệu từ MySQL.</p>
         </div>
         <div class="user-chip">
           <div class="avatar" style="background:linear-gradient(135deg, #4f86ff, #2f6bff); color:#fff; font-weight:800;">👑</div>
@@ -81,11 +75,11 @@
             <div class="metric-icon-wrap metric-icon-blue">💰</div>
           </div>
           <div class="metric-body">
-            <div class="metric-value">128.450.000 ₫</div>
+            <div class="metric-value" id="ownerTotalRevenue">0 ₫</div>
           </div>
           <div class="metric-footer">
-            <span class="trend-badge trend-up">▲ +14.8%</span>
-            <span class="trend-period">so với tuần trước (3 chi nhánh)</span>
+            <span class="trend-badge trend-up">▲ +0.0%</span>
+            <span class="trend-period" id="ownerBranchCountLabel">Số liệu thực tế từ MySQL</span>
           </div>
         </article>
 
@@ -95,11 +89,11 @@
             <div class="metric-icon-wrap metric-icon-green">🧾</div>
           </div>
           <div class="metric-body">
-            <div class="metric-value">1.428 <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span></div>
+            <div class="metric-value" id="ownerTotalOrders">0 <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span></div>
           </div>
           <div class="metric-footer">
-            <span class="trend-badge trend-up">▲ +8.2%</span>
-            <span class="trend-period">TB 89.900 ₫/đơn</span>
+            <span class="trend-badge trend-up">▲ +0.0%</span>
+            <span class="trend-period">Dữ liệu đơn từ Database</span>
           </div>
         </article>
 
@@ -109,11 +103,11 @@
             <div class="metric-icon-wrap metric-icon-purple">👥</div>
           </div>
           <div class="metric-body">
-            <div class="metric-value">3.890 <span style="font-size:20px; font-weight:600; color:var(--muted);">khách</span></div>
+            <div class="metric-value" id="ownerTotalCustomers">0 <span style="font-size:20px; font-weight:600; color:var(--muted);">khách</span></div>
           </div>
           <div class="metric-footer">
-            <span class="trend-badge trend-up">▲ +12.5%</span>
-            <span class="trend-period">+340 khách mới tuần này</span>
+            <span class="trend-badge trend-up">▲ +0.0%</span>
+            <span class="trend-period">Khách hàng đăng ký hội viên</span>
           </div>
         </article>
       </section>
@@ -128,56 +122,9 @@
           <a href="revenue-comparison.html" class="btn-secondary" style="text-decoration:none; font-size:13px;">So sánh chi tiết →</a>
         </div>
 
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 14px;">
-          <!-- Branch 1: Q1 -->
-          <div style="background: #ffffff; border: 1.5px solid #dbeafe; border-radius: 16px; padding: 20px; box-shadow: 0 4px 14px rgba(37,99,235,0.06);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-              <span class="badge badge-primary">CN-Q1</span>
-              <span class="badge badge-success">● Đang mở</span>
-            </div>
-            <h4 style="font-size: 16px; font-weight: 800; color: var(--text);">Chi nhánh Quận 1</h4>
-            <p style="font-size: 12.5px; color: var(--muted); margin-top: 2px;">128 Hai Bà Trưng, Bến Nghé, Q1</p>
-            <div style="font-size: 24px; font-weight: 800; color: var(--primary); margin: 12px 0 6px;">68.450.000 ₫</div>
-            <div style="font-size: 12.5px; color: var(--muted);">756 đơn · <strong>53.3%</strong> tổng doanh thu</div>
-            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2e8f0;">
-              <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Qu%E1%BA%ADn%201" class="btn-primary" style="width:100%; text-decoration:none; justify-content:center; font-size:13px; padding:9px 12px;">
-                Vào quản trị Q1 →
-              </a>
-            </div>
-          </div>
-
-          <!-- Branch 2: Thảo Điền -->
-          <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 20px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-              <span class="badge badge-primary">CN-TD</span>
-              <span class="badge badge-success">● Đang mở</span>
-            </div>
-            <h4 style="font-size: 16px; font-weight: 800; color: var(--text);">Chi nhánh Thảo Điền</h4>
-            <p style="font-size: 12.5px; color: var(--muted); margin-top: 2px;">45 Xuân Thủy, Thảo Điền, Thủ Đức</p>
-            <div style="font-size: 24px; font-weight: 800; color: #0f1b3d; margin: 12px 0 6px;">38.200.000 ₫</div>
-            <div style="font-size: 12.5px; color: var(--muted);">428 đơn · <strong>29.7%</strong> tổng doanh thu</div>
-            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2e8f0;">
-              <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Th%E1%BA%A3o%20%C4%90i%E1%BB%81n" class="btn-secondary" style="width:100%; text-decoration:none; justify-content:center; font-size:13px; padding:9px 12px;">
-                Vào quản trị Thảo Điền →
-              </a>
-            </div>
-          </div>
-
-          <!-- Branch 3: Hoàn Kiếm -->
-          <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 20px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
-              <span class="badge badge-primary">CN-HK</span>
-              <span class="badge badge-success">● Đang mở</span>
-            </div>
-            <h4 style="font-size: 16px; font-weight: 800; color: var(--text);">Chi nhánh Hoàn Kiếm</h4>
-            <p style="font-size: 12.5px; color: var(--muted); margin-top: 2px;">88 Tràng Tiền, Hoàn Kiếm, Hà Nội</p>
-            <div style="font-size: 24px; font-weight: 800; color: #0f1b3d; margin: 12px 0 6px;">21.800.000 ₫</div>
-            <div style="font-size: 12.5px; color: var(--muted);">244 đơn · <strong>17.0%</strong> tổng doanh thu</div>
-            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2e8f0;">
-              <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Ho%C3%A0n%20Ki%E1%BA%BFm" class="btn-secondary" style="width:100%; text-decoration:none; justify-content:center; font-size:13px; padding:9px 12px;">
-                Vào quản trị Hoàn Kiếm →
-              </a>
-            </div>
+        <div id="ownerBranchesGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 14px;">
+          <div style="text-align: center; padding: 36px; color: var(--muted); grid-column: 1 / -1;">
+            Chưa có chi nhánh nào trong Cơ sở Dữ liệu. <a href="branches.html" style="color:var(--primary); font-weight:700;">Tạo chi nhánh mới →</a>
           </div>
         </div>
       </section>
@@ -186,12 +133,97 @@
 
   <script src="../../js/common/ui.js"></script>
   <script>
+    const API_BASE = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1' : '/api/v1';
+    const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
+
+    const user = sessionStorage.getItem('cp_user') || localStorage.getItem('cp_user') || 'Chủ hệ thống';
+    const uEl = document.getElementById('ownerUserName');
+    if (uEl) uEl.textContent = user;
+
+    async function loadOwnerDashboard() {
+      try {
+        // 1. Tải metrics tổng từ MySQL
+        const mRes = await fetch(`${API_BASE}/admin/dashboard/metrics`);
+        if (mRes.ok) {
+          const m = await mRes.json();
+          document.getElementById('ownerTotalRevenue').textContent = formatVND(m.totalRevenue || 0);
+          document.getElementById('ownerTotalOrders').innerHTML = `${(m.totalOrders || 0).toLocaleString('vi-VN')} <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span>`;
+          document.getElementById('ownerTotalCustomers').innerHTML = `${(m.totalCustomers || 0).toLocaleString('vi-VN')} <span style="font-size:20px; font-weight:600; color:var(--muted);">khách</span>`;
+        }
+
+        // 2. Tải danh sách chi nhánh thực tế từ MySQL
+        const bRes = await fetch(`${API_BASE}/branches`);
+        if (bRes.ok) {
+          const branches = await bRes.json();
+          renderOwnerBranches(branches);
+        }
+      } catch (err) {
+        console.warn('Lỗi nạp dữ liệu Owner Dashboard từ MySQL:', err);
+      }
+    }
+
+    function renderOwnerBranches(branches) {
+      const linksContainer = document.getElementById('ownerBranchLinksContainer');
+      const gridContainer = document.getElementById('ownerBranchesGrid');
+      const subHeader = document.getElementById('ownerSubHeader');
+      const branchCountLabel = document.getElementById('ownerBranchCountLabel');
+
+      if (subHeader) subHeader.textContent = `Báo cáo vận hành hợp nhất ${branches.length} chi nhánh từ MySQL.`;
+      if (branchCountLabel) branchCountLabel.textContent = `${branches.length} chi nhánh đang hoạt động`;
+
+      if (!branches || branches.length === 0) {
+        if (linksContainer) linksContainer.innerHTML = '<span style="font-size:12px; color:#94a3b8; padding:4px 12px;">Chưa có chi nhánh</span>';
+        if (gridContainer) gridContainer.innerHTML = '<div style="text-align:center; padding:36px; color:var(--muted); grid-column:1/-1;">Chưa có chi nhánh nào trong Database. <a href="branches.html" style="color:var(--primary); font-weight:700;">Tạo chi nhánh mới →</a></div>';
+        return;
+      }
+
+      // Render Sidebar Branch Quick Links
+      if (linksContainer) {
+        linksContainer.innerHTML = branches.map(b => `
+          <a href="../branch/dashboard.html?branchId=${b.id}&branch=${encodeURIComponent(b.name)}" class="switch-branch-link" style="color:#1e40af; background:#f0f7ff; border:1px solid #dbeafe; margin-bottom:2px;">
+            <span>📍 ${b.name}</span>
+          </a>
+        `).join('');
+      }
+
+      // Render Branch Cards
+      if (gridContainer) {
+        const totalChainRev = branches.reduce((acc, b) => acc + (b.weeklyRevenue || 0), 0) || 1;
+        gridContainer.innerHTML = branches.map(b => {
+          const rev = b.weeklyRevenue || 0;
+          const pct = totalChainRev > 0 ? ((rev / totalChainRev) * 100).toFixed(1) : '0.0';
+          const isOpen = b.status === 'open';
+
+          return `
+            <div style="background: #ffffff; border: 1.5px solid #dbeafe; border-radius: 16px; padding: 20px; box-shadow: 0 4px 14px rgba(37,99,235,0.06);">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;">
+                <span class="badge badge-primary">${b.code || 'CN'}</span>
+                <span class="badge ${isOpen ? 'badge-success' : 'badge-neutral'}">${isOpen ? '● Đang mở' : '⏸ Tạm đóng'}</span>
+              </div>
+              <h4 style="font-size: 16px; font-weight: 800; color: var(--text);">${b.name}</h4>
+              <p style="font-size: 12.5px; color: var(--muted); margin-top: 2px;">📍 ${b.address || 'Chưa cập nhật địa chỉ'}</p>
+              <div style="font-size: 24px; font-weight: 800; color: var(--primary); margin: 12px 0 6px;">${formatVND(rev)}</div>
+              <div style="font-size: 12.5px; color: var(--muted);">${b.tablesCount || 0} bàn · <strong>${pct}%</strong> doanh thu chuỗi</div>
+              <div style="margin-top: 16px; padding-top: 14px; border-top: 1px dashed #e2e8f0;">
+                <a href="../branch/dashboard.html?branchId=${b.id}&branch=${encodeURIComponent(b.name)}" class="btn-primary" style="width:100%; text-decoration:none; justify-content:center; font-size:13px; padding:9px 12px;">
+                  Vào quản trị cơ sở →
+                </a>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
     document.getElementById('ownerLogoutBtn').addEventListener('click', () => {
-      localStorage.removeItem('cp_role');
-      localStorage.removeItem('cp_user');
+      ['cp_token', 'cp_role', 'cp_user', 'cp_branch', 'cp_branch_id'].forEach(k => {
+        sessionStorage.removeItem(k);
+        localStorage.removeItem(k);
+      });
       window.location.href = '../auth/owner-login.html';
     });
+
+    loadOwnerDashboard();
   </script>
 </body>
 </html>
-

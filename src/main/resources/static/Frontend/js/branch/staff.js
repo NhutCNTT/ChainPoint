@@ -6,8 +6,8 @@
     let currentRoleFilter = 'all';
     let searchQuery = '';
 
-    const currentBranchName = sessionStorage.getItem('cp_branch') || 'Chi nhánh Quận 1';
-    const currentBranchId = sessionStorage.getItem('cp_branch_id') || 1;
+    const currentBranchName = sessionStorage.getItem('cp_branch') || '';
+    const currentBranchId = sessionStorage.getItem('cp_branch_id') || '';
 
     const tbody = document.getElementById('staffTableBody');
     const searchInput = document.getElementById('staffSearchInput');

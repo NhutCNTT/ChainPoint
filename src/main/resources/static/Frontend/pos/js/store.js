@@ -82,8 +82,8 @@ const Store = (() => {
 
     // Gửi dữ liệu thanh toán lưu trực tiếp vào cơ sở dữ liệu MySQL Backend
     try {
-      const cashierUser = sessionStorage.getItem('cp_user') || 'cashier_q1';
-      const branchId = Number(sessionStorage.getItem('cp_branch_id')) || 1;
+      const cashierUser = sessionStorage.getItem('cp_user') || 'Thu ngân';
+      const branchId = Number(sessionStorage.getItem('cp_branch_id')) || null;
 
       // Ánh xạ items sang định dạng Backend DTO
       const checkoutItems = bill.items.map(item => {

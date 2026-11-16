@@ -1,5 +1,5 @@
 // ChainPoint — Login page logic
-// Used by: pages/auth/login.html
+// Dữ liệu kết nối trực tiếp 100% với MySQL Backend API (không dùng mock data)
 
 const tabs = document.querySelector('.tabs');
 const hint = document.querySelector('#roleHint span');
@@ -8,92 +8,115 @@ const passwordInput = document.getElementById('password');
 
 const roleConfigs = {
     owner: {
-        hint: 'Quản lý toàn bộ chuỗi nhà hàng, tạo chi nhánh, xem doanh thu tổng và phân quyền toàn hệ thống.',
-        defaultUser: 'owner'
+        hint: 'Quản lý toàn bộ chuỗi nhà hàng, tạo chi nhánh, xem doanh thu tổng và phân quyền toàn hệ thống.'
     },
     manager: {
-        hint: 'Quản lý chi nhánh được phân công: cấu hình bàn, thực đơn, đơn hàng, POS và nhân sự chi nhánh.',
-        defaultUser: 'manager_q1'
+        hint: 'Quản lý chi nhánh được phân công: cấu hình bàn, thực đơn, đơn hàng, POS và nhân sự chi nhánh.'
     },
     cashier: {
-        hint: 'Nhân viên thu ngân: truy cập POS bán hàng, tạo & xử lý đơn hàng, thực hiện thanh toán hóa đơn.',
-        defaultUser: 'cashier_q1'
+        hint: 'Nhân viên thu ngân: truy cập POS bán hàng, tạo & xử lý đơn hàng, thực hiện thanh toán hóa đơn.'
     }
 };
 
-tabs.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-        const role = tab.dataset.role;
-        tabs.dataset.active = role;
-        tabs.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t === tab));
-        
-        if (roleConfigs[role]) {
-            hint.textContent = roleConfigs[role].hint;
-            if (!usernameInput.value || Object.values(roleConfigs).some(c => c.defaultUser === usernameInput.value)) {
-                usernameInput.value = roleConfigs[role].defaultUser;
+if (tabs) {
+    tabs.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const role = tab.dataset.role;
+            tabs.dataset.active = role;
+            tabs.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t === tab));
+            
+            if (roleConfigs[role] && hint) {
+                hint.textContent = roleConfigs[role].hint;
             }
-        }
+        });
     });
-});
+}
 
 // ---------- Show / hide password ----------
 const toggleBtn = document.getElementById('togglePassword');
-toggleBtn.addEventListener('click', () => {
-    const show = passwordInput.type === 'password';
-    passwordInput.type = show ? 'text' : 'password';
-    toggleBtn.classList.toggle('is-visible', show);
-    toggleBtn.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
-});
+if (toggleBtn && passwordInput) {
+    toggleBtn.addEventListener('click', () => {
+        const show = passwordInput.type === 'password';
+        passwordInput.type = show ? 'text' : 'password';
+        toggleBtn.classList.toggle('is-visible', show);
+        toggleBtn.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+    });
+}
 
 // ---------- Submit ----------
 const form = document.getElementById('loginForm');
 const errorEl = document.getElementById('formError');
 
 function showError(message, input) {
-    errorEl.textContent = message;
-    errorEl.hidden = false;
-    form.querySelectorAll('.input-wrap').forEach(w => w.classList.remove('has-error'));
+    if (errorEl) {
+        errorEl.textContent = message;
+        errorEl.hidden = false;
+    }
+    if (form) {
+        form.querySelectorAll('.input-wrap').forEach(w => w.classList.remove('has-error'));
+    }
     if (input) {
-        input.closest('.input-wrap').classList.add('has-error');
+        input.closest('.input-wrap')?.classList.add('has-error');
         input.focus();
     }
 }
 
 [usernameInput, passwordInput].forEach(input => {
-    input.addEventListener('input', () => {
-        input.closest('.input-wrap').classList.remove('has-error');
-        errorEl.hidden = true;
-    });
-});
-
-form.addEventListener('submit', (e) => {
-    e.preventDefault();
-
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value;
-
-    if (!username) return showError('Vui lòng nhập tên đăng nhập.', usernameInput);
-    if (!password) return showError('Vui lòng nhập mật khẩu.', passwordInput);
-
-    const role = tabs.dataset.active || 'owner';
-    const remember = document.getElementById('remember').checked;
-
-    // Chi nhánh mặc định theo vai trò (khi backend chưa gắn API thật)
-    let branch = 'Tất cả chi nhánh';
-    if (role === 'manager') branch = 'Chi nhánh Quận 1';
-    if (role === 'cashier') branch = 'Chi nhánh Quận 1';
-
-    const storage = remember ? localStorage : sessionStorage;
-    storage.setItem('cp_role', role);
-    storage.setItem('cp_user', username);
-    storage.setItem('cp_branch', branch);
-
-    // Chuyển tới trang chủ theo đúng vai trò:
-    // - owner & manager -> trang Dashboard quản trị
-    // - cashier -> trực tiếp vào trang POS bán hàng
-    if (role === 'cashier') {
-        window.location.href = '../../pos/index.html';
-    } else {
-        window.location.href = '../admin/dashboard.html';
+    if (input) {
+        input.addEventListener('input', () => {
+            input.closest('.input-wrap')?.classList.remove('has-error');
+            if (errorEl) errorEl.hidden = true;
+        });
     }
 });
+
+if (form) {
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+
+        if (!username) return showError('Vui lòng nhập tên đăng nhập.', usernameInput);
+        if (!password) return showError('Vui lòng nhập mật khẩu.', passwordInput);
+
+        const role = tabs ? (tabs.dataset.active || 'owner') : 'owner';
+        const remember = document.getElementById('remember')?.checked;
+
+        const API_BASE = (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '') 
+            ? 'http://localhost:8080/api/v1' 
+            : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const storage = remember ? localStorage : sessionStorage;
+                const userRole = data.role ? data.role.replace('ROLE_', '').toLowerCase() : role;
+                storage.setItem('cp_token', data.accessToken || data.token);
+                storage.setItem('cp_role', userRole);
+                storage.setItem('cp_user', data.fullName || data.username || username);
+                storage.setItem('cp_branch', data.branchName || '');
+                storage.setItem('cp_branch_id', data.branchId || '');
+
+                if (userRole === 'cashier') {
+                    window.location.href = '../../pos/index.html';
+                } else if (userRole === 'manager') {
+                    window.location.href = '../branch/dashboard.html';
+                } else {
+                    window.location.href = '../owner/dashboard.html';
+                }
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                showError(errData.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.');
+            }
+        } catch (err) {
+            showError('Không thể kết nối đến máy chủ Backend.');
+        }
+    });
+}

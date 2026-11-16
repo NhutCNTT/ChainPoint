@@ -138,9 +138,16 @@
     }
 
     // Init
-    renderStats();
-    renderTopMembers();
-    renderTransactions();
-    loadConfigForm();
+    async function init() {
+        if (window.LoyaltyStore && LoyaltyStore.refreshCustomers) {
+            await LoyaltyStore.refreshCustomers();
+        }
+        renderStats();
+        renderTopMembers();
+        renderTransactions();
+        loadConfigForm();
+    }
+
+    init();
 })();
 

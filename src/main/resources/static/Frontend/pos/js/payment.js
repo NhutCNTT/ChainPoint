@@ -202,7 +202,7 @@
         dob,
         points: 0,
         tier: 'Bạc',
-        branch: sessionStorage.getItem('cp_branch') || 'Chi nhánh Quận 1'
+        branch: sessionStorage.getItem('cp_branch') || 'Cửa hàng'
       });
 
       closeQuickModal();

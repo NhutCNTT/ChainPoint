@@ -825,6 +825,39 @@ Tất cả các API đều có tiền tố chuẩn: `http://localhost:8080/api/v
     + Cổng POS Bán hàng: `http://localhost:8080/pos/index.html` hoặc `http://localhost:8080/Frontend/pos/index.html`
   - Các script JS (`api.js`, `store.js`, `data.js`, `payment-transfer.js`, `login.html`) được cấu hình tự động nhận diện host/port (`window.location.origin`), tương thích 100% khi chạy trên cổng 8080 của Spring Boot lẫn Live Server.
 
+### 8.5. Tính năng Đăng Ký Tài Khoản & Khởi Tạo Quán Tự Động (Register & Onboarding)
+* **Giao diện người dùng (Frontend)**:
+  - Trang đăng ký `src/main/resources/static/Frontend/pages/auth/register.html` thiết kế theo chuẩn mẫu giao diện Sapo (Dùng thử miễn phí 7 ngày).
+  - Các trường nhập liệu phong cách bo tròn oval/pill hiện đại:
+    + `Họ tên của bạn` (`fullName`)
+    + `Số điện thoại của bạn` (`phone`, 9-10 chữ số, định danh username)
+    + `Thiết lập mật khẩu` (`password`, có nút ẩn/hiện mật khẩu)
+    + Hàng 2 cột: `Tên quán của bạn` (`restaurantName`) & Dropdown `Bạn ở tỉnh/thành phố nào?` (`province`, đủ 63 tỉnh thành Việt Nam)
+    + Checkbox đồng ý Quy định sử dụng & Chính sách bảo vệ dữ liệu
+    + Nút bấm pill bo tròn lớn `Đăng ký →` kèm hiệu ứng chuyển trạng thái và icon mũi tên động.
+  - Tự động gọi API `POST /api/v1/auth/register`, lưu JWT token & thông tin người dùng vào `sessionStorage`, tự động chuyển hướng vào Dashboard Chủ sở hữu (`../owner/dashboard.html`).
+* **Nghiệp vụ Backend**:
+  - DTO: `RegisterRequest.java` và `RegisterResponse.java`.
+  - Kiểm tra số điện thoại (username) đã đăng ký chưa, nếu trùng ném `DuplicateResourceException` (HTTP 409).
+  - Tự động tạo bản ghi `Branch` mới (mã chi nhánh `CN-xxxx`, tên quán, địa chỉ tỉnh thành, đại diện quản lý, hotline, VAT 8%, status = 'open').
+  - Tự động khởi tạo 1 `Area` mặc định ("Tầng 1" - `KV-T1`) và 2 `DiningTable` mẫu ("Bàn 01", "Bàn 02") thuộc chi nhánh mới để cơ sở có thể dùng ngay máy POS bán hàng.
+  - Tạo tài khoản `User` với quyền hạn Chủ chuỗi (`ROLE_OWNER`), mật khẩu băm an toàn qua `BCryptPasswordEncoder`, liên kết trực tiếp với chi nhánh vừa tạo.
+  - Sinh JWT Access Token tự động (`JwtTokenProvider`) và trả về cho Client đăng nhập tức thì.
+  - Liên kết điều hướng từ: `src/main/resources/static/index.html`, `owner-login.html`, `pos-login.html`.
+
+### 8.6. Làm Sạch Triệt Để Dữ Liệu MySQL & Loại Bỏ Hoàn Toàn Mock Data Trong Mã Nguồn JS
+* **Cơ sở dữ liệu MySQL (TiDB Cloud)**:
+  - Đã thực hiện xóa sạch toàn bộ 100% dữ liệu phát sinh trong cả 11 bảng: `areas`, `bill_details`, `bills`, `branches`, `categories`, `customers`, `dining_tables`, `loyalty_configs`, `loyalty_transactions`, `products`, `users` (tất cả bảng đều về 0 rows).
+  - Cấu trúc bảng (Schema, Primary Keys, Foreign Keys, Indexes) được bảo toàn nguyên vẹn.
+* **Loại bỏ Mock Data trong toàn bộ mã nguồn Frontend**:
+  - `Frontend/js/admin/dashboard.js`: Xóa bỏ đối tượng `branchDatasets` tĩnh (chứa doanh thu giả 128.450.000 ₫, 1.428 đơn, các ngày trong tuần...). Chuyển sang kết nối trực tiếp với API `/api/v1/branches`, `/api/v1/admin/dashboard/metrics` và `/api/v1/admin/dashboard/revenue-chart`. Khi database rỗng, hiển thị trung thực `0 ₫`, `0 đơn`, `0 khách`.
+  - `Frontend/js/admin/orders.js`: Xóa bỏ việc đọc từ `pos.orders`, `pos.pending`, `pos.history` của `localStorage`. Nạp dữ liệu thực tế từ API `/api/v1/orders`.
+  - `Frontend/js/admin/tables.js`: Xóa mảng khu vực tĩnh `DEFAULT_AREAS`, đồng bộ danh sách khu vực và bàn ăn động từ MySQL theo `branchId`.
+  - `Frontend/js/auth/login.js`, `owner-login.html`, `pos-login.html`: Xóa bỏ các giá trị điền sẵn (`value="owner"`, `value="123456"`, `cashier_q1`, `manager_q1`), tích hợp xác thực thực tế qua endpoint `POST /api/v1/auth/login` và nạp động danh sách chi nhánh từ MySQL.
+  - Toàn bộ các file POS (`data.js`, `store.js`, `payment.js`, `payment-cash.js`, `payment-transfer.js`): Xóa bỏ các fallback `Chi nhánh Quận 1`, đồng bộ 100% ngữ cảnh phiên làm việc từ `sessionStorage` và backend MySQL.
+
+
+
 
 ### Giai đoạn 2: Bổ sung Entity & Viết REST API còn thiếu ở Backend
 1. Tạo 4 Entity mới: `Area`, `Category`, `LoyaltyConfig`, `LoyaltyTransaction`.

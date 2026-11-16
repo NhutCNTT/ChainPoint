@@ -46,7 +46,7 @@
             <label for="ownerUsername">Tên đăng nhập</label>
             <div class="input-wrap">
               <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"/></svg>
-              <input type="text" id="ownerUsername" name="username" placeholder="Mặc định: owner" autocomplete="username" required value="owner" />
+              <input type="text" id="ownerUsername" name="username" placeholder="Nhập số điện thoại hoặc tên đăng nhập" autocomplete="username" required />
             </div>
           </div>
 
@@ -54,7 +54,7 @@
             <label for="ownerPassword">Mật khẩu</label>
             <div class="input-wrap">
               <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-              <input type="password" id="ownerPassword" name="password" placeholder="Nhập mật khẩu" autocomplete="current-password" required value="123456" />
+              <input type="password" id="ownerPassword" name="password" placeholder="Nhập mật khẩu" autocomplete="current-password" required />
               <button type="button" class="toggle-password" id="togglePasswordBtn" aria-label="Hiện mật khẩu">
                 <svg class="icon-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
                 <svg class="icon-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.8 9.8 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
@@ -75,11 +75,19 @@
           <button class="btn-primary" type="submit">Đăng nhập</button>
         </form>
 
-        <div style="text-align: center; margin-top: var(--sp-4); font-size: var(--fs-sm); color: var(--muted);">
-          Quản lý hoặc Thu ngân chi nhánh?
-          <a href="pos-login.html" style="color: var(--primary); font-weight: var(--fw-semibold); text-decoration: none; margin-left: 4px;">
-            Đăng nhập POS →
-          </a>
+        <div style="text-align: center; margin-top: var(--sp-4); font-size: var(--fs-sm); color: var(--muted); display: flex; flex-direction: column; gap: 8px;">
+          <div>
+            Chưa có tài khoản?
+            <a href="register.html" style="color: var(--primary); font-weight: var(--fw-semibold); text-decoration: none; margin-left: 4px;">
+              Đăng ký dùng thử miễn phí 7 ngày →
+            </a>
+          </div>
+          <div>
+            Quản lý hoặc Thu ngân chi nhánh?
+            <a href="pos-login.html" style="color: var(--primary); font-weight: var(--fw-semibold); text-decoration: none; margin-left: 4px;">
+              Đăng nhập POS →
+            </a>
+          </div>
         </div>
 
         <div class="card-footer">
@@ -133,22 +141,21 @@
 
         if (res.ok) {
           const authData = await res.json();
-          sessionStorage.setItem('cp_token', authData.token);
-          sessionStorage.setItem('cp_role', 'owner');
-          sessionStorage.setItem('cp_user', authData.username || username);
-          sessionStorage.setItem('cp_branch', 'Toàn chuỗi nhà hàng');
+          sessionStorage.setItem('cp_token', authData.accessToken || authData.token);
+          sessionStorage.setItem('cp_role', (authData.role || 'ROLE_OWNER').replace('ROLE_', '').toLowerCase());
+          sessionStorage.setItem('cp_user', authData.fullName || authData.username || username);
+          sessionStorage.setItem('cp_branch', authData.branchName || 'Toàn chuỗi nhà hàng');
+          sessionStorage.setItem('cp_branch_id', authData.branchId || '');
+          window.location.href = '../owner/dashboard.html';
         } else {
-          sessionStorage.setItem('cp_role', 'owner');
-          sessionStorage.setItem('cp_user', username);
-          sessionStorage.setItem('cp_branch', 'Toàn chuỗi nhà hàng');
+          const errData = await res.json().catch(() => ({}));
+          errEl.textContent = errData.message || 'Tên đăng nhập hoặc mật khẩu không chính xác.';
+          errEl.hidden = false;
         }
       } catch (err) {
-        sessionStorage.setItem('cp_role', 'owner');
-        sessionStorage.setItem('cp_user', username);
-        sessionStorage.setItem('cp_branch', 'Toàn chuỗi nhà hàng');
+        errEl.textContent = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng.';
+        errEl.hidden = false;
       }
-
-      window.location.href = '../owner/dashboard.html';
     });
   </script>
 </body>

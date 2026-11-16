@@ -2,14 +2,8 @@
 // Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
 
 (function () {
-    const DEFAULT_AREAS = [
-        { id: 'f1', name: 'Tầng 1 (Sảnh chính)' },
-        { id: 'f2', name: 'Tầng 2 (Phòng lạnh)' },
-        { id: 'garden', name: 'Khu Sân Vườn' }
-    ];
-
     let tables = [];
-    let areas = DEFAULT_AREAS;
+    let areas = [];
     let currentAreaFilter = 'all';
     let currentSearch = '';
     let currentViewMode = 'grid';
@@ -38,33 +32,32 @@
 
     async function loadTables() {
         try {
+            const branchId = sessionStorage.getItem('cp_branch_id');
+            const endpoint = branchId ? `/tables?branchId=${branchId}` : '/tables';
+            let list = [];
             if (window.API) {
-                const res = await window.API.get('/tables');
-                tables = res.map(t => ({
-                    id: t.code,
-                    realId: t.id,
-                    name: t.name || ('Bàn ' + t.code),
-                    area: t.area || 'f1',
-                    seats: t.seats || 4,
-                    status: t.status || 'active',
-                    note: t.note || ''
-                }));
+                list = await window.API.get(endpoint);
             } else {
-                const res = await fetch('http://localhost:8080/api/v1/tables');
-                const list = await res.json();
-                tables = list.map(t => ({
-                    id: t.code,
-                    realId: t.id,
-                    name: t.name || ('Bàn ' + t.code),
-                    area: t.area || 'f1',
-                    seats: t.seats || 4,
-                    status: t.status || 'active',
-                    note: t.note || ''
-                }));
+                const res = await fetch(`http://localhost:8080/api/v1${endpoint}`);
+                list = await res.json();
             }
+            tables = (Array.isArray(list) ? list : []).map(t => ({
+                id: t.code,
+                realId: t.id,
+                name: t.name || ('Bàn ' + t.code),
+                area: t.area || 'Tầng 1',
+                seats: t.seats || 4,
+                status: t.status || 'active',
+                note: t.note || ''
+            }));
+            const uniqueAreas = [...new Set(tables.map(t => t.area).filter(Boolean))];
+            areas = uniqueAreas.length > 0 
+                ? uniqueAreas.map(a => ({ id: a, name: a })) 
+                : [{ id: 'Tầng 1', name: 'Tầng 1' }];
         } catch (e) {
             console.error('Không thể nạp dữ liệu bàn từ MySQL API:', e);
             tables = [];
+            areas = [];
         }
 
         updateStats();
@@ -259,7 +252,7 @@
         formTableId.value = 'A' + (tables.length + 1);
         formTableId.disabled = false;
         formTableName.value = 'Bàn ' + (tables.length + 1);
-        formTableArea.value = currentAreaFilter !== 'all' ? currentAreaFilter : 'f1';
+        formTableArea.value = currentAreaFilter !== 'all' ? currentAreaFilter : (areas[0] ? areas[0].id : 'Tầng 1');
         formTableSeats.value = '4';
         formTableStatus.value = 'active';
         formTableNote.value = '';
@@ -304,7 +297,7 @@
                 seats,
                 status,
                 note,
-                branchId: 1 // Mặc định chi nhánh 1
+                branchId: Number(sessionStorage.getItem('cp_branch_id')) || 1
             };
 
             try {

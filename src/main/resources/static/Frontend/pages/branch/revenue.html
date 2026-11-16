@@ -110,28 +110,28 @@
             <div>
               <div style="display:flex; justify-content:space-between; font-size:13.5px; font-weight:700; margin-bottom:4px;">
                 <span>📱 Chuyển khoản QR (VietQR / Napas)</span>
-                <span style="color:#7c3aed;">62%</span>
+                <span id="transferPercent" style="color:#7c3aed;">0%</span>
               </div>
               <div style="height:8px; background:#e2e8f0; border-radius:999px; overflow:hidden;">
-                <div style="height:100%; width:62%; background:#7c3aed; border-radius:999px;"></div>
+                <div id="transferBar" style="height:100%; width:0%; background:#7c3aed; border-radius:999px; transition:width 0.3s;"></div>
               </div>
             </div>
 
             <div>
               <div style="display:flex; justify-content:space-between; font-size:13.5px; font-weight:700; margin-bottom:4px;">
                 <span>💵 Tiền mặt tại quầy</span>
-                <span style="color:#2563eb;">38%</span>
+                <span id="cashPercent" style="color:#2563eb;">0%</span>
               </div>
               <div style="height:8px; background:#e2e8f0; border-radius:999px; overflow:hidden;">
-                <div style="height:100%; width:38%; background:#2563eb; border-radius:999px;"></div>
+                <div id="cashBar" style="height:100%; width:0%; background:#2563eb; border-radius:999px; transition:width 0.3s;"></div>
               </div>
             </div>
           </div>
 
           <div style="background:#ecfdf5; border-radius:12px; padding:16px; border:1px solid #a7f3d0;">
             <div style="font-weight:800; color:#065f46; font-size:14.5px; margin-bottom:4px;">🎁 Hiệu quả chương trình Loyalty</div>
-            <p style="font-size:13px; color:#047857; margin:0; line-height:1.5;">
-              Khách hàng dùng điểm giúp tăng tỷ lệ quay lại <strong>+24%</strong> và giá trị đơn hàng trung bình đạt <strong>185.000 ₫/đơn</strong> (so với 125.000 ₫ ở khách chưa tham gia).
+            <p id="loyaltyInsightText" style="font-size:13px; color:#047857; margin:0; line-height:1.5;">
+              Chưa có dữ liệu giao dịch Loyalty từ khách hàng.
             </p>
           </div>
         </section>

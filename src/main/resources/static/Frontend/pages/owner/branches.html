@@ -41,15 +41,9 @@
         </a>
 
         <div style="font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; padding: 12px 12px 4px; letter-spacing: 0.05em;">Vào Chi Nhánh</div>
-        <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Qu%E1%BA%ADn%201" class="switch-branch-link">
-          <span>📍 CN Quận 1</span>
-        </a>
-        <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Th%E1%BA%A3o%20%C4%90i%E1%BB%81n" class="switch-branch-link">
-          <span>📍 CN Thảo Điền</span>
-        </a>
-        <a href="../branch/dashboard.html?branch=Chi%20nh%C3%A1nh%20Ho%C3%A0n%20Ki%E1%BA%BFm" class="switch-branch-link">
-          <span>📍 CN Hoàn Kiếm</span>
-        </a>
+        <div id="ownerBranchLinksContainer" style="display:flex; flex-direction:column; gap:4px;">
+          <!-- Nạp động từ MySQL -->
+        </div>
       </nav>
 
       <div class="sidebar-footer">
@@ -65,7 +59,7 @@
       <header class="topbar">
         <div>
           <h1>Quản lý chi nhánh</h1>
-          <p>Danh sách và cấu hình vận hành các chi nhánh trong chuỗi.</p>
+          <p>Danh sách và cấu hình vận hành các chi nhánh trong chuỗi từ MySQL.</p>
         </div>
         <div class="user-chip">
           <div class="avatar" style="background:linear-gradient(135deg, #4f86ff, #2f6bff); color:#fff; font-weight:800;">👑</div>
@@ -79,28 +73,28 @@
           <div style="width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: #eef4ff; color: var(--primary);">🏢</div>
           <div>
             <div style="font-size: 13px; font-weight: 600; color: var(--muted);">Tổng số chi nhánh</div>
-            <div style="font-size: 22px; font-weight: 800; color: var(--text);" id="statTotalBranches">3</div>
+            <div style="font-size: 22px; font-weight: 800; color: var(--text);" id="statTotalBranches">0</div>
           </div>
         </div>
         <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; border: 1px solid rgba(230, 235, 245, 0.9); box-shadow: 0 4px 16px -6px rgba(31, 64, 160, 0.06); display: flex; align-items: center; gap: 16px;">
           <div style="width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: #eefbf3; color: #16a34a;">🟢</div>
           <div>
             <div style="font-size: 13px; font-weight: 600; color: var(--muted);">Đang mở cửa</div>
-            <div style="font-size: 22px; font-weight: 800; color: var(--text);">3</div>
+            <div style="font-size: 22px; font-weight: 800; color: var(--text);" id="statOpenBranches">0</div>
           </div>
         </div>
         <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; border: 1px solid rgba(230, 235, 245, 0.9); box-shadow: 0 4px 16px -6px rgba(31, 64, 160, 0.06); display: flex; align-items: center; gap: 16px;">
           <div style="width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: #f5f0ff; color: #7c3aed;">🍽️</div>
           <div>
             <div style="font-size: 13px; font-weight: 600; color: var(--muted);">Tổng số bàn</div>
-            <div style="font-size: 22px; font-weight: 800; color: var(--text);">56 bàn</div>
+            <div style="font-size: 22px; font-weight: 800; color: var(--text);" id="statTotalTables">0 bàn</div>
           </div>
         </div>
         <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; border: 1px solid rgba(230, 235, 245, 0.9); box-shadow: 0 4px 16px -6px rgba(31, 64, 160, 0.06); display: flex; align-items: center; gap: 16px;">
           <div style="width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: #fffbeb; color: #d97706;">👥</div>
           <div>
             <div style="font-size: 13px; font-weight: 600; color: var(--muted);">Tổng nhân sự</div>
-            <div style="font-size: 22px; font-weight: 800; color: var(--text);">7 nhân sự</div>
+            <div style="font-size: 22px; font-weight: 800; color: var(--text);" id="statTotalStaff">0 nhân sự</div>
           </div>
         </div>
       </section>

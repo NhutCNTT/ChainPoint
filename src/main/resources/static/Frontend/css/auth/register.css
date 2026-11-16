@@ -1,0 +1,401 @@
+/* ChainPoint Register Page Styling */
+:root {
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-soft: #eff6ff;
+  --primary-ring: rgba(37, 99, 235, 0.25);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #cbd5e1;
+  --border-focus: #3b82f6;
+  --bg-page: #f8fafc;
+  --btn-bg: #94a3b8;
+  --btn-bg-active: #2563eb;
+  --btn-hover: #1e40af;
+  --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: #ffffff;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.register-container {
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 16px;
+}
+
+/* Logo */
+.register-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  text-decoration: none;
+  color: var(--text-main);
+}
+
+.logo-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.logo-badge svg {
+  width: 24px;
+  height: 24px;
+  stroke: #ffffff;
+}
+
+.logo-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.logo-title span {
+  color: #10b981;
+}
+
+/* Headers */
+.register-heading h1 {
+  font-size: 30px;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: -0.5px;
+  margin-bottom: 10px;
+}
+
+.register-heading p {
+  font-size: 15px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 32px;
+}
+
+/* Form */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  text-align: left;
+}
+
+/* Input Wrappers */
+.pill-field {
+  position: relative;
+  width: 100%;
+}
+
+.pill-input {
+  width: 100%;
+  height: 52px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--border-color);
+  padding: 0 24px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text-main);
+  background: #ffffff;
+  outline: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.pill-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.pill-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.15);
+}
+
+.pill-input.has-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* Password Toggle */
+.password-toggle-btn {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  border-radius: 50%;
+  transition: color 0.15s ease;
+}
+
+.password-toggle-btn:hover {
+  color: var(--text-main);
+}
+
+.password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Two Columns Row */
+.form-row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 14px;
+}
+
+/* Custom Select Dropdown */
+.pill-select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.pill-select {
+  width: 100%;
+  height: 52px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--border-color);
+  padding: 0 40px 0 22px;
+  font-size: 14.5px;
+  font-family: inherit;
+  color: var(--text-main);
+  background: #ffffff;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.pill-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.15);
+}
+
+.pill-select-arrow {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+}
+
+/* Terms Checkbox */
+.terms-agreement {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.terms-agreement input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  border-radius: 4px;
+  border: 1.5px solid #cbd5e1;
+  background-color: #fff;
+  cursor: pointer;
+  margin-top: 2px;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.terms-agreement input[type="checkbox"]:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.terms-agreement input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.terms-text {
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: #374151;
+}
+
+.terms-text a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.terms-text a:hover {
+  text-decoration: underline;
+}
+
+/* Error message banner */
+.form-alert {
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  display: none;
+}
+
+.form-alert.alert-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+.form-alert.alert-success {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+}
+
+/* Submit Pill Button */
+.btn-submit-pill {
+  width: 100%;
+  max-width: 380px;
+  height: 56px;
+  margin: 12px auto 0 auto;
+  border-radius: 9999px;
+  border: none;
+  background: #94a3b8; /* Neutral grey as in Sapo image */
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 14px rgba(100, 116, 139, 0.2);
+}
+
+.btn-submit-pill.active,
+.btn-submit-pill:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-submit-pill:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-pill-text {
+  letter-spacing: 0.2px;
+}
+
+.btn-pill-arrow {
+  position: absolute;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #64748b;
+  display: grid;
+  place-items: center;
+  transition: all 0.2s ease;
+}
+
+.btn-submit-pill.active .btn-pill-arrow,
+.btn-submit-pill:hover:not(:disabled) .btn-pill-arrow {
+  color: #2563eb;
+  transform: translateX(2px);
+}
+
+/* Bottom Links */
+.register-footer {
+  margin-top: 28px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.register-footer a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.register-footer a:hover {
+  text-decoration: underline;
+}
+
+.register-help {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.register-help a {
+  color: #64748b;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 540px) {
+  .form-row-2col {
+    grid-template-columns: 1fr;
+  }
+  
+  .register-heading h1 {
+    font-size: 24px;
+  }
+  
+  .btn-submit-pill {
+    max-width: 100%;
+  }
+}

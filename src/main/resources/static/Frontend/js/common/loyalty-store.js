@@ -1,8 +1,7 @@
 // ChainPoint — Loyalty & Customer Data Management (Bách Hóa Xanh Model)
-// Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
+// Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn mock data
 
 const LoyaltyStore = (() => {
-    // Cấu hình quy đổi điểm Bách Hóa Xanh chuẩn hóa
     const DEFAULT_CONFIG = {
         earnRatioVND: 10000,        // 10.000 ₫ mua sắm = 1 điểm tích lũy
         pointValueVND: 1000,        // 1 điểm = 1.000 ₫ trừ trực tiếp vào hóa đơn
@@ -15,15 +14,34 @@ const LoyaltyStore = (() => {
 
     let cachedCustomers = [];
 
+    const getApiBase = () => {
+        if (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '') {
+            return 'http://localhost:8080/api/v1';
+        }
+        return '/api/v1';
+    };
+
     // Nạp danh sách khách hàng từ MySQL Database
     async function fetchCustomersFromDB() {
         try {
-            const res = await fetch('http://localhost:8080/api/v1/customers');
+            const res = await fetch(`${getApiBase()}/customers`);
             if (res.ok) {
-                cachedCustomers = await res.json();
+                const list = await res.json();
+                cachedCustomers = (Array.isArray(list) ? list : []).map(c => ({
+                    id: c.code || ('KH' + c.id),
+                    realId: c.id,
+                    name: c.name,
+                    phone: c.phone,
+                    dob: c.dateOfBirth || '',
+                    tier: c.tier || 'Bạc',
+                    points: Number(c.points || 0),
+                    totalSpent: Number(c.totalSpent || 0),
+                    joinedAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay'
+                }));
             }
         } catch (e) {
             console.warn('Chưa kết nối được API Khách hàng MySQL:', e);
+            cachedCustomers = [];
         }
         return cachedCustomers;
     }
@@ -32,10 +50,25 @@ const LoyaltyStore = (() => {
 
     return {
         getConfig() {
+            try {
+                const saved = localStorage.getItem('cp_loyalty_config');
+                if (saved) return Object.assign({}, DEFAULT_CONFIG, JSON.parse(saved));
+            } catch (e) {}
             return DEFAULT_CONFIG;
         },
 
-        async getCustomers() {
+        saveConfig(newConfig) {
+            try {
+                localStorage.setItem('cp_loyalty_config', JSON.stringify(newConfig));
+            } catch (e) {}
+            return Object.assign(DEFAULT_CONFIG, newConfig);
+        },
+
+        getCustomers() {
+            return cachedCustomers;
+        },
+
+        async refreshCustomers() {
             return await fetchCustomersFromDB();
         },
 
@@ -43,9 +76,20 @@ const LoyaltyStore = (() => {
             if (!phone) return null;
             const cleanPhone = phone.trim();
             try {
-                const res = await fetch(`http://localhost:8080/api/v1/customers/by-phone/${cleanPhone}`);
+                const res = await fetch(`${getApiBase()}/customers/by-phone/${cleanPhone}`);
                 if (res.ok) {
-                    return await res.json();
+                    const c = await res.json();
+                    return {
+                        id: c.code || ('KH' + c.id),
+                        realId: c.id,
+                        name: c.name,
+                        phone: c.phone,
+                        dob: c.dateOfBirth || '',
+                        tier: c.tier || 'Bạc',
+                        points: Number(c.points || 0),
+                        totalSpent: Number(c.totalSpent || 0),
+                        joinedAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay'
+                    };
                 }
             } catch (e) {
                 console.warn('Lỗi tìm khách hàng qua API:', e);
@@ -62,15 +106,16 @@ const LoyaltyStore = (() => {
                     branchId: Number(sessionStorage.getItem('cp_branch_id')) || 1
                 };
 
+                const targetId = custData.realId || custData.id;
                 let res;
-                if (custData.id && !isNaN(Number(custData.id))) {
-                    res = await fetch(`http://localhost:8080/api/v1/customers/${custData.id}`, {
+                if (targetId && !isNaN(Number(targetId))) {
+                    res = await fetch(`${getApiBase()}/customers/${targetId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
                 } else {
-                    res = await fetch('http://localhost:8080/api/v1/customers', {
+                    res = await fetch(`${getApiBase()}/customers`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -88,7 +133,6 @@ const LoyaltyStore = (() => {
             return null;
         },
 
-        // Tính toán quy đổi điểm theo đơn hàng (Mô hình Bách Hóa Xanh)
         calculateLoyaltyDiscount(pointsToUse, billAmount) {
             const cfg = this.getConfig();
             const points = parseInt(pointsToUse, 10) || 0;
@@ -121,11 +165,18 @@ const LoyaltyStore = (() => {
             };
         },
 
-        // Tính điểm tích lũy được từ hóa đơn sau giảm giá
         calculatePointsEarned(paidAmount) {
             const cfg = this.getConfig();
             if (!cfg.allowEarn || paidAmount <= 0) return 0;
             return Math.floor(paidAmount / cfg.earnRatioVND);
+        },
+
+        getCustomerById(id) {
+            return cachedCustomers.find(c => String(c.id) === String(id) || String(c.realId) === String(id)) || null;
+        },
+
+        getTransactions() {
+            return [];
         }
     };
 })();

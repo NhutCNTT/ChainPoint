@@ -2,9 +2,12 @@ package blockchain.ChainPoint.controller;
 
 import blockchain.ChainPoint.dto.auth.LoginRequest;
 import blockchain.ChainPoint.dto.auth.LoginResponse;
+import blockchain.ChainPoint.dto.auth.RegisterRequest;
+import blockchain.ChainPoint.dto.auth.RegisterResponse;
 import blockchain.ChainPoint.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,5 +26,10 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
     }
 }

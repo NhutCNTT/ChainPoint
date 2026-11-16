@@ -116,8 +116,64 @@
         });
     }
 
+    const CAT_NAMES = {
+        hot: '🔥 Món nóng',
+        cold: '🥗 Món lạnh',
+        drink: '🥤 Đồ uống',
+        dessert: '🍰 Tráng miệng',
+        other: '🍚 Món ăn kèm'
+    };
+
     function renderMenu() {
         const filtered = getFilteredMenu();
+
+        if (tableContainer) {
+            if (filtered.length === 0) {
+                tableContainer.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="padding: 48px 20px; text-align: center; color: var(--muted);">
+                            <div style="font-size: 36px; margin-bottom: 8px;">🍽️</div>
+                            <div style="font-weight: 700; font-size: 16px; color: var(--text);">Không tìm thấy món ăn nào</div>
+                            <p style="font-size: 13px; margin-top: 4px;">Thực đơn hiện tại chưa có món trong cơ sở dữ liệu MySQL. Nhấn nút <strong>"+ Thêm món"</strong> để bắt đầu kinh doanh.</p>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableContainer.innerHTML = filtered.map(item => {
+                    const isAvailable = item.status === 'available';
+                    return `
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:14px 20px; font-family:monospace; font-weight:700; color:var(--primary);">${item.id}</td>
+                            <td style="padding:14px 20px;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span style="font-size:22px;">${item.emoji}</span>
+                                    <strong style="font-size:14.5px; color:var(--text);">${item.name}</strong>
+                                </div>
+                            </td>
+                            <td style="padding:14px 20px;">
+                                <span class="badge" style="background:#f1f5f9; color:#475569; font-weight:600;">${CAT_NAMES[item.cat] || item.cat}</span>
+                            </td>
+                            <td style="padding:14px 20px; font-weight:700; color:var(--text);">${formatVND(item.price)}</td>
+                            <td style="padding:14px 20px;">
+                                <span class="badge ${isAvailable ? 'badge-success' : 'badge-danger'}">
+                                    ${isAvailable ? '● Đang bán' : '✕ Hết hàng'}
+                                </span>
+                            </td>
+                            <td style="padding:14px 20px; text-align:right;">
+                                <div style="display:inline-flex; align-items:center; gap:8px;">
+                                    <button type="button" class="btn-toggle-stock btn-ghost" data-id="${item.realId || item.id}" style="padding:6px 12px; font-size:12.5px; font-weight:600; cursor:pointer;">
+                                        ${isAvailable ? 'Báo hết' : 'Mở bán'}
+                                    </button>
+                                    <button type="button" class="action-icon-btn btn-edit-dish" data-id="${item.id}" title="Sửa món" style="cursor:pointer;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
 
         if (gridContainer) {
             if (filtered.length === 0) {

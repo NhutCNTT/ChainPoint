@@ -1,9 +1,7 @@
 /* Dữ liệu danh mục & nạp dữ liệu Bàn từ MySQL Database */
 
 const AREAS = [
-  { id: 'f1', name: 'Tầng 1' },
-  { id: 'f2', name: 'Tầng 2' },
-  { id: 'garden', name: 'Sân vườn' }
+  { id: 'Tầng 1', name: 'Tầng 1' }
 ];
 
 const CATEGORIES = [
@@ -26,8 +24,8 @@ const POS_API_BASE = (typeof window !== 'undefined' && window.location.port && w
 // Nạp danh sách món ăn từ Backend MySQL theo chi nhánh
 async function fetchMenuFromDatabase() {
   try {
-    const branchId = sessionStorage.getItem('cp_branch_id') || 1;
-    const url = `${POS_API_BASE}/products?branchId=${branchId}`;
+    const branchId = sessionStorage.getItem('cp_branch_id') || '';
+    const url = branchId ? `${POS_API_BASE}/products?branchId=${branchId}` : `${POS_API_BASE}/products`;
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
@@ -50,8 +48,8 @@ async function fetchMenuFromDatabase() {
 // Nạp danh sách bàn từ Backend MySQL theo chi nhánh
 async function fetchTablesFromDatabase() {
   try {
-    const branchId = sessionStorage.getItem('cp_branch_id') || 1;
-    const url = `${POS_API_BASE}/tables?branchId=${branchId}`;
+    const branchId = sessionStorage.getItem('cp_branch_id') || '';
+    const url = branchId ? `${POS_API_BASE}/tables?branchId=${branchId}` : `${POS_API_BASE}/tables`;
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
@@ -59,9 +57,16 @@ async function fetchTablesFromDatabase() {
         TABLES = data.filter(t => t.status !== 'disabled').map(t => ({
           id: t.code,
           name: t.name || ('Bàn ' + t.code),
-          area: t.area || 'f1',
+          area: t.area || 'Tầng 1',
           seats: parseInt(t.seats, 10) || 4
         }));
+
+        // Đồng bộ khu vực động từ bàn thực tế trong MySQL
+        const uniqueAreaNames = [...new Set(TABLES.map(t => t.area).filter(Boolean))];
+        if (uniqueAreaNames.length > 0) {
+          AREAS.length = 0;
+          uniqueAreaNames.forEach(a => AREAS.push({ id: a, name: a }));
+        }
       }
     }
   } catch (e) {

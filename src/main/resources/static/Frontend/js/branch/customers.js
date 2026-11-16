@@ -2,7 +2,7 @@
 // Used by: pages/branch/customers.html
 
 (function () {
-    const currentBranch = sessionStorage.getItem('cp_branch') || localStorage.getItem('cp_branch') || 'Chi nhánh Quận 1';
+    const currentBranch = sessionStorage.getItem('cp_branch') || localStorage.getItem('cp_branch') || '';
     let searchQuery = '';
 
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
@@ -214,7 +214,14 @@
         };
     }
 
-    updateStats();
-    renderCustomers();
+    async function init() {
+        if (window.LoyaltyStore && LoyaltyStore.refreshCustomers) {
+            await LoyaltyStore.refreshCustomers();
+        }
+        updateStats();
+        renderCustomers();
+    }
+
+    init();
 })();
 

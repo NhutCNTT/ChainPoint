@@ -47,7 +47,7 @@
         pointsUsed: ptsUsed,
         billAmount: bill.grossTotal || bill.total,
         billId,
-        branch: sessionStorage.getItem('cp_branch') || 'Chi nhánh Quận 1',
+        branch: sessionStorage.getItem('cp_branch') || 'Cửa hàng',
         staff: sessionStorage.getItem('cp_user') || 'Thu ngân'
       });
     }

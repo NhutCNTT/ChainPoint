@@ -10,7 +10,7 @@
 
     const getStorage = k => sessionStorage.getItem(k) || localStorage.getItem(k);
     const currentUserRole = getStorage('cp_role') || 'owner';
-    const currentUserBranch = getStorage('cp_branch') || 'Chi nhánh Quận 1';
+    const currentUserBranch = getStorage('cp_branch') || '';
     const currentBranchId = getStorage('cp_branch_id') || null;
 
     if (currentUserRole === 'manager') {

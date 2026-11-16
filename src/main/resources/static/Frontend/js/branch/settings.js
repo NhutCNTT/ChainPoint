@@ -2,8 +2,8 @@
 // Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
 
 (function () {
-    const currentBranchName = sessionStorage.getItem('cp_branch') || 'Chi nhánh Quận 1';
-    let currentBranchId = sessionStorage.getItem('cp_branch_id') || 1;
+    const currentBranchName = sessionStorage.getItem('cp_branch') || '';
+    let currentBranchId = sessionStorage.getItem('cp_branch_id') || '';
 
     const form = document.getElementById('branchSettingsForm');
     const notice = document.getElementById('saveNotice');

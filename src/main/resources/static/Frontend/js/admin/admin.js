@@ -5,7 +5,7 @@
     const get = key => sessionStorage.getItem(key) || localStorage.getItem(key);
     const user = get('cp_user');
     const role = get('cp_role') || 'owner';
-    const branch = get('cp_branch') || 'Chi nhánh Quận 1';
+    const branch = get('cp_branch') || '';
 
     // 1. Kiểm tra đăng nhập — Chưa đăng nhập thì chuyển về trang login
     if (!user) {

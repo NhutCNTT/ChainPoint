@@ -1,106 +1,26 @@
 // ChainPoint — Dashboard interactivity (Sales line chart, filters, tooltips, multi-branch data)
-// Used by: pages/admin/dashboard.html
+// Dữ liệu kết nối trực tiếp 100% với MySQL Backend API (không dùng mock data)
 
 (function () {
     const getStorage = k => sessionStorage.getItem(k) || localStorage.getItem(k);
     const currentUserRole = getStorage('cp_role') || 'owner';
-    const currentUserBranch = getStorage('cp_branch') || 'Chi nhánh Quận 1';
+    const currentUserBranch = getStorage('cp_branch') || '';
+    const currentBranchId = getStorage('cp_branch_id') || null;
 
-    // Dữ liệu theo từng chi nhánh và toàn chuỗi
-    const branchDatasets = {
-        all: {
-            name: 'Toàn chuỗi nhà hàng',
-            totalRevenue: '128.450.000 ₫',
-            revenueGrowth: '+14.8%',
-            totalOrders: '1.428',
-            ordersGrowth: '+8.2%',
-            totalCustomers: '3.890',
-            customerGrowth: '+12.5%',
-            revenueChart: [
-                { day: 'Thứ 2', val: 14200000, label: '14.2M ₫', orders: 156, growth: '+6.2%', y: 117 },
-                { day: 'Thứ 3', val: 16800000, label: '16.8M ₫', orders: 182, growth: '+9.1%', y: 102 },
-                { day: 'Thứ 4', val: 15500000, label: '15.5M ₫', orders: 170, growth: '+4.5%', y: 110 },
-                { day: 'Thứ 5', val: 19400000, label: '19.4M ₫', orders: 215, growth: '+12.0%', y: 88 },
-                { day: 'Thứ 6', val: 24800000, label: '24.8M ₫', orders: 268, growth: '+18.4%', y: 58 },
-                { day: 'Thứ 7', val: 21500000, label: '21.5M ₫', orders: 234, growth: '+14.2%', y: 76 },
-                { day: 'Chủ nhật', val: 16250000, label: '16.25M ₫', orders: 203, growth: '+8.8%', y: 105 }
-            ],
-            ordersChart: [
-                { day: 'Thứ 2', val: 156, label: '156 đơn', orders: 156, growth: '+5.0%', y: 120 },
-                { day: 'Thứ 3', val: 182, label: '182 đơn', orders: 182, growth: '+8.2%', y: 105 },
-                { day: 'Thứ 4', val: 170, label: '170 đơn', orders: 170, growth: '+3.9%', y: 112 },
-                { day: 'Thứ 5', val: 215, label: '215 đơn', orders: 215, growth: '+11.4%', y: 85 },
-                { day: 'Thứ 6', val: 268, label: '268 đơn', orders: 268, growth: '+16.1%', y: 55 },
-                { day: 'Thứ 7', val: 234, label: '234 đơn', orders: 234, growth: '+12.5%', y: 75 },
-                { day: 'Chủ nhật', val: 203, label: '203 đơn', orders: 203, growth: '+7.6%', y: 95 }
-            ]
-        },
-        q1: {
-            name: 'Chi nhánh Quận 1 (Trụ sở)',
-            totalRevenue: '68.450.000 ₫',
-            revenueGrowth: '+16.2%',
-            totalOrders: '756',
-            ordersGrowth: '+9.4%',
-            totalCustomers: '2.120',
-            customerGrowth: '+14.0%',
-            revenueChart: [
-                { day: 'Thứ 2', val: 7800000, label: '7.8M ₫', orders: 84, growth: '+8.2%', y: 130 },
-                { day: 'Thứ 3', val: 9200000, label: '9.2M ₫', orders: 98, growth: '+10.5%', y: 118 },
-                { day: 'Thứ 4', val: 8500000, label: '8.5M ₫', orders: 92, growth: '+5.2%', y: 124 },
-                { day: 'Thứ 5', val: 10400000, label: '10.4M ₫', orders: 115, growth: '+13.1%', y: 108 },
-                { day: 'Thứ 6', val: 13600000, label: '13.6M ₫', orders: 145, growth: '+21.0%', y: 85 },
-                { day: 'Thứ 7', val: 11200000, label: '11.2M ₫', orders: 124, growth: '+15.4%', y: 102 },
-                { day: 'Chủ nhật', val: 7750000, label: '7.75M ₫', orders: 98, growth: '+9.2%', y: 131 }
-            ]
-        },
-        td: {
-            name: 'Chi nhánh Thảo Điền',
-            totalRevenue: '38.200.000 ₫',
-            revenueGrowth: '+12.4%',
-            totalOrders: '428',
-            ordersGrowth: '+7.1%',
-            totalCustomers: '1.150',
-            customerGrowth: '+10.2%',
-            revenueChart: [
-                { day: 'Thứ 2', val: 4200000, label: '4.2M ₫', orders: 46, growth: '+5.1%', y: 145 },
-                { day: 'Thứ 3', val: 4900000, label: '4.9M ₫', orders: 52, growth: '+7.4%', y: 140 },
-                { day: 'Thứ 4', val: 4600000, label: '4.6M ₫', orders: 50, growth: '+4.0%', y: 142 },
-                { day: 'Thứ 5', val: 5600000, label: '5.6M ₫', orders: 62, growth: '+9.8%', y: 135 },
-                { day: 'Thứ 6', val: 7200000, label: '7.2M ₫', orders: 78, growth: '+15.2%', y: 125 },
-                { day: 'Thứ 7', val: 6800000, label: '6.8M ₫', orders: 74, growth: '+12.0%', y: 128 },
-                { day: 'Chủ nhật', val: 4900000, label: '4.9M ₫', orders: 66, growth: '+8.1%', y: 140 }
-            ]
-        },
-        hk: {
-            name: 'Chi nhánh Hoàn Kiếm',
-            totalRevenue: '21.800.000 ₫',
-            revenueGrowth: '+11.0%',
-            totalOrders: '244',
-            ordersGrowth: '+6.5%',
-            totalCustomers: '620',
-            customerGrowth: '+8.9%',
-            revenueChart: [
-                { day: 'Thứ 2', val: 2200000, label: '2.2M ₫', orders: 26, growth: '+4.0%', y: 165 },
-                { day: 'Thứ 3', val: 2700000, label: '2.7M ₫', orders: 32, growth: '+6.5%', y: 160 },
-                { day: 'Thứ 4', val: 2400000, label: '2.4M ₫', orders: 28, growth: '+3.5%', y: 163 },
-                { day: 'Thứ 5', val: 3400000, label: '3.4M ₫', orders: 38, growth: '+10.2%', y: 154 },
-                { day: 'Thứ 6', val: 4000000, label: '4.0M ₫', orders: 45, growth: '+14.0%', y: 148 },
-                { day: 'Thứ 7', val: 3500000, label: '3.5M ₫', orders: 36, growth: '+11.2%', y: 153 },
-                { day: 'Chủ nhật', val: 3600000, label: '3.6M ₫', orders: 39, growth: '+8.4%', y: 152 }
-            ]
-        }
-    };
-
-    let selectedBranchKey = 'all';
-
-    // Nếu người dùng là Manager -> tự động khóa chi nhánh về chi nhánh của Manager
-    if (currentUserRole === 'manager') {
-        if (currentUserBranch.includes('Thảo Điền')) selectedBranchKey = 'td';
-        else if (currentUserBranch.includes('Hoàn Kiếm')) selectedBranchKey = 'hk';
-        else selectedBranchKey = 'q1';
-    }
-
+    let branchesList = [];
+    let selectedBranchId = (currentUserRole === 'manager' && currentBranchId) ? currentBranchId : 'all';
     let currentMetric = 'revenue';
+    let currentMetricsData = {
+        totalRevenue: 0,
+        revenueGrowth: '+0.0%',
+        totalOrders: 0,
+        ordersGrowth: '+0.0%',
+        totalCustomers: 0,
+        customerGrowth: '+0.0%'
+    };
+    let currentChartPoints = [];
+
+    const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
 
     // DOM Elements
     const branchSelector = document.getElementById('dashboardBranchSelector');
@@ -115,93 +35,274 @@
     const tooltipDate = document.getElementById('tooltipDate');
     const tooltipValue = document.getElementById('tooltipValue');
     const tooltipSub = document.getElementById('tooltipSub');
-    const dataPoints = document.querySelectorAll('.data-point');
     const hoverGuide = document.getElementById('hoverGuide');
+    const chartSvg = document.querySelector('.chart-svg');
 
-    function updateBranchUI() {
-        const data = branchDatasets[selectedBranchKey] || branchDatasets.all;
+    const API_BASE = (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '') 
+        ? 'http://localhost:8080/api/v1' 
+        : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
 
-        if (dashboardTitle) {
-            dashboardTitle.textContent = currentUserRole === 'manager'
-                ? `Tổng quan — ${data.name}`
-                : (selectedBranchKey === 'all' ? 'Tổng quan chuỗi nhà hàng' : `Tổng quan — ${data.name}`);
+    // 1. Nạp danh sách chi nhánh thực tế từ MySQL
+    async function fetchBranches() {
+        try {
+            const res = await fetch(`${API_BASE}/branches`);
+            if (res.ok) {
+                branchesList = await res.json();
+            }
+        } catch (e) {
+            console.warn('Không thể nạp danh sách chi nhánh từ MySQL API:', e);
+            branchesList = [];
         }
-        if (dashboardSub) {
-            dashboardSub.textContent = selectedBranchKey === 'all'
-                ? 'Hiệu suất kinh doanh và tích điểm khách hàng trên toàn chuỗi nhà hàng.'
-                : `Số liệu doanh thu, đơn hàng và khách hàng tại ${data.name}.`;
-        }
-
-        if (metricRevenue) metricRevenue.textContent = data.totalRevenue;
-        if (metricOrders) metricOrders.innerHTML = `${data.totalOrders} <span style="font-size: 20px; font-weight: 600; color: var(--muted);">đơn</span>`;
-        if (metricCustomers) metricCustomers.innerHTML = `${data.totalCustomers} <span style="font-size: 20px; font-weight: 600; color: var(--muted);">khách</span>`;
-
-        if (chartLegendCurrent) {
-            chartLegendCurrent.textContent = `Tuần này (${data.totalRevenue})`;
-        }
+        initBranchSelector();
     }
 
     function initBranchSelector() {
         if (!branchSelector) return;
 
         if (currentUserRole === 'manager') {
-            const data = branchDatasets[selectedBranchKey];
-            branchSelector.innerHTML = `<option value="${selectedBranchKey}">📍 ${data.name}</option>`;
+            const currentB = branchesList.find(b => String(b.id) === String(currentBranchId)) || { name: currentUserBranch || 'Chi nhánh' };
+            branchSelector.innerHTML = `<option value="${currentBranchId || ''}">📍 ${currentB.name}</option>`;
             branchSelector.disabled = true;
         } else {
-            branchSelector.innerHTML = `
-                <option value="all">🌐 Toàn chuỗi nhà hàng (Tổng hợp 3 CN)</option>
-                <option value="q1">📍 Chi nhánh Quận 1 (Trụ sở chính)</option>
-                <option value="td">📍 Chi nhánh Thảo Điền</option>
-                <option value="hk">📍 Chi nhánh Hoàn Kiếm</option>
-            `;
-            branchSelector.value = selectedBranchKey;
+            let options = `<option value="all">🌐 Toàn chuỗi nhà hàng (Tổng hợp ${branchesList.length} CN)</option>`;
+            branchesList.forEach(b => {
+                options += `<option value="${b.id}">📍 ${b.name} (${b.code || ''})</option>`;
+            });
+            branchSelector.innerHTML = options;
+            branchSelector.value = selectedBranchId;
             branchSelector.addEventListener('change', (e) => {
-                selectedBranchKey = e.target.value;
-                updateBranchUI();
+                selectedBranchId = e.target.value;
+                loadDashboardData();
             });
         }
     }
 
-    // Tooltip handling
-    dataPoints.forEach((point) => {
-        const index = parseInt(point.dataset.index, 10);
+    // 2. Nạp dữ liệu Metrics & Chart từ MySQL API
+    async function loadDashboardData() {
+        const queryBranch = (selectedBranchId && selectedBranchId !== 'all') ? `?branchId=${selectedBranchId}` : '';
 
-        point.addEventListener('mouseenter', () => {
-            const data = branchDatasets[selectedBranchKey] || branchDatasets.all;
-            const currentList = currentMetric === 'revenue' ? data.revenueChart : (data.ordersChart || data.revenueChart);
-            const item = currentList[index];
-            if (!item) return;
-
-            tooltipDate.textContent = `${item.day} (Tuần này)`;
-            tooltipValue.textContent = currentMetric === 'revenue' 
-                ? `${item.label} (${item.orders} đơn)` 
-                : `${item.label}`;
-            tooltipSub.textContent = `Tăng trưởng: ${item.growth}`;
-
-            const cx = parseFloat(point.getAttribute('cx'));
-            const cy = parseFloat(point.getAttribute('cy'));
-
-            const viewport = document.querySelector('.chart-viewport').getBoundingClientRect();
-            const leftPx = (cx / 760) * viewport.width;
-            const topPx = (cy / 240) * viewport.height;
-
-            tooltip.style.left = `${leftPx}px`;
-            tooltip.style.top = `${topPx}px`;
-            tooltip.classList.add('is-active');
-
-            if (hoverGuide) {
-                hoverGuide.setAttribute('x1', cx);
-                hoverGuide.setAttribute('x2', cx);
-                hoverGuide.style.opacity = '1';
+        // Tải metrics từ MySQL
+        try {
+            const resMetrics = await fetch(`${API_BASE}/admin/dashboard/metrics${queryBranch}`);
+            if (resMetrics.ok) {
+                const data = await resMetrics.json();
+                currentMetricsData = {
+                    totalRevenue: data.totalRevenue || 0,
+                    revenueGrowth: data.revenueGrowth || '+0.0%',
+                    totalOrders: data.totalOrders || 0,
+                    ordersGrowth: data.ordersGrowth || '+0.0%',
+                    totalCustomers: data.totalCustomers || 0,
+                    customerGrowth: data.customerGrowth || '+0.0%'
+                };
+            } else {
+                currentMetricsData = { totalRevenue: 0, revenueGrowth: '+0.0%', totalOrders: 0, ordersGrowth: '+0.0%', totalCustomers: 0, customerGrowth: '+0.0%' };
             }
+        } catch (err) {
+            currentMetricsData = { totalRevenue: 0, revenueGrowth: '+0.0%', totalOrders: 0, ordersGrowth: '+0.0%', totalCustomers: 0, customerGrowth: '+0.0%' };
+        }
+
+        // Tải biểu đồ doanh thu từ MySQL
+        try {
+            const resChart = await fetch(`${API_BASE}/admin/dashboard/revenue-chart${queryBranch}`);
+            if (resChart.ok) {
+                const chartData = await resChart.json();
+                if (chartData && Array.isArray(chartData.points)) {
+                    currentChartPoints = chartData.points;
+                } else {
+                    currentChartPoints = [];
+                }
+            } else {
+                currentChartPoints = [];
+            }
+        } catch (err) {
+            currentChartPoints = [];
+        }
+
+        updateDashboardUI();
+        updateOpenBranchesBadge();
+        loadTopDishes(queryBranch);
+        renderBranchPerformance();
+    }
+
+    function updateOpenBranchesBadge() {
+        const badge = document.getElementById('openBranchesCount');
+        if (badge) {
+            const openCount = branchesList.filter(b => b.status === 'open').length;
+            badge.textContent = `${openCount} chi nhánh đang mở`;
+        }
+    }
+
+    async function loadTopDishes(queryBranch) {
+        const tbody = document.getElementById('topDishesBody');
+        if (!tbody) return;
+        try {
+            const res = await fetch(`${API_BASE}/admin/dashboard/top-dishes${queryBranch}`);
+            if (res.ok) {
+                const list = await res.json();
+                if (Array.isArray(list) && list.length > 0) {
+                    tbody.innerHTML = list.map(item => `
+                        <tr>
+                            <td>
+                                <div class="dish-item">
+                                    <div class="dish-icon">${item.emoji || '🍽️'}</div>
+                                    <div class="dish-info">
+                                        <strong>${item.name}</strong>
+                                        <small>${item.category || 'Món ăn'}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><strong>${item.quantity || item.soldCount || 0}</strong> suất</td>
+                            <td style="font-weight: 700; color: var(--text);">${formatVND(item.revenue || 0)}</td>
+                        </tr>
+                    `).join('');
+                    return;
+                }
+            }
+        } catch (e) {}
+
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 36px; color: var(--muted);">Chưa có dữ liệu món bán chạy trong Database.</td></tr>`;
+    }
+
+    function renderBranchPerformance() {
+        const container = document.getElementById('branchPerformanceList');
+        if (!container) return;
+
+        if (!branchesList || branchesList.length === 0) {
+            container.innerHTML = `<div style="text-align: center; padding: 36px; color: var(--muted);">Chưa có chi nhánh nào trong Database.</div>`;
+            return;
+        }
+
+        const totalChainRev = branchesList.reduce((acc, b) => acc + (b.weeklyRevenue || 0), 0) || 1;
+
+        container.innerHTML = branchesList.map(b => {
+            const rev = b.weeklyRevenue || 0;
+            const pct = totalChainRev > 0 ? Math.round((rev / totalChainRev) * 100) : 0;
+            return `
+                <div class="branch-item" style="margin-bottom: 16px;">
+                    <div class="branch-meta" style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+                        <span class="branch-name" style="font-weight: 700;">📍 ${b.name} (${b.code || ''})</span>
+                        <span class="branch-sales" style="font-weight: 800; color: var(--primary);">${formatVND(rev)}</span>
+                    </div>
+                    <div class="branch-bar-bg" style="height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+                        <div class="branch-bar-fill" style="width: ${pct}%; height: 100%; background: var(--primary); border-radius: 999px;"></div>
+                    </div>
+                    <div class="branch-sub" style="display:flex; justify-content:space-between; font-size: 12px; color: var(--muted); margin-top: 4px;">
+                        <span>Quản lý: ${b.managerName || 'Chưa chỉ định'}</span>
+                        <span>${pct}% tổng doanh thu</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function updateDashboardUI() {
+        const selectedBranch = branchesList.find(b => String(b.id) === String(selectedBranchId));
+        const branchName = selectedBranch ? selectedBranch.name : (selectedBranchId === 'all' ? 'Toàn chuỗi nhà hàng' : currentUserBranch);
+
+        if (dashboardTitle) {
+            dashboardTitle.textContent = currentUserRole === 'manager'
+                ? `Tổng quan — ${branchName}`
+                : (selectedBranchId === 'all' ? 'Tổng quan chuỗi nhà hàng' : `Tổng quan — ${branchName}`);
+        }
+        if (dashboardSub) {
+            dashboardSub.textContent = selectedBranchId === 'all'
+                ? `Dữ liệu kinh doanh và doanh thu thực tế từ MySQL (${branchesList.length} chi nhánh).`
+                : `Số liệu doanh thu, đơn hàng và khách hàng tại ${branchName}.`;
+        }
+
+        if (metricRevenue) metricRevenue.textContent = formatVND(currentMetricsData.totalRevenue);
+        if (metricOrders) metricOrders.innerHTML = `${currentMetricsData.totalOrders.toLocaleString('vi-VN')} <span style="font-size: 20px; font-weight: 600; color: var(--muted);">đơn</span>`;
+        if (metricCustomers) metricCustomers.innerHTML = `${currentMetricsData.totalCustomers.toLocaleString('vi-VN')} <span style="font-size: 20px; font-weight: 600; color: var(--muted);">khách</span>`;
+
+        if (chartLegendCurrent) {
+            chartLegendCurrent.textContent = `Tuần này (${formatVND(currentMetricsData.totalRevenue)})`;
+        }
+
+        renderChartSVG();
+    }
+
+    // 3. Vẽ biểu đồ động từ dữ liệu MySQL
+    function renderChartSVG() {
+        const defaultDays = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+        const points = (currentChartPoints && currentChartPoints.length > 0)
+            ? currentChartPoints
+            : defaultDays.map(d => ({ day: d, val: 0, label: '0 ₫', orders: 0, growth: '+0.0%' }));
+
+        const maxVal = Math.max(...points.map(p => Number(p.val) || 0), 1000000);
+        const svgW = 760;
+        const svgH = 240;
+        const padX = 50;
+        const padYTop = 30;
+        const padYBottom = 40;
+        const plotW = svgW - padX * 2;
+        const plotH = svgH - padYTop - padYBottom;
+
+        const coords = points.map((p, idx) => {
+            const x = padX + (idx / Math.max(points.length - 1, 1)) * plotW;
+            const ratio = (Number(p.val) || 0) / maxVal;
+            const y = (svgH - padYBottom) - ratio * plotH;
+            return { x, y, ...p };
         });
 
-        point.addEventListener('mouseleave', () => {
-            tooltip.classList.remove('is-active');
-            if (hoverGuide) hoverGuide.style.opacity = '0';
+        const linePath = coords.map((c, i) => (i === 0 ? `M ${c.x} ${c.y}` : `L ${c.x} ${c.y}`)).join(' ');
+        const areaPath = `${linePath} L ${coords[coords.length - 1].x} ${svgH - padYBottom} L ${coords[0].x} ${svgH - padYBottom} Z`;
+
+        const chartLine = document.querySelector('.chart-line-current');
+        const chartArea = document.querySelector('.chart-area-current');
+        if (chartLine) chartLine.setAttribute('d', linePath);
+        if (chartArea) chartArea.setAttribute('d', areaPath);
+
+        // Update dynamic Y-axis labels
+        const yTop = document.getElementById('yAxisTop');
+        const yMidHigh = document.getElementById('yAxisMidHigh');
+        const yMidLow = document.getElementById('yAxisMidLow');
+        if (yTop) yTop.textContent = formatVND(maxVal);
+        if (yMidHigh) yMidHigh.textContent = formatVND(Math.round(maxVal * 2 / 3));
+        if (yMidLow) yMidLow.textContent = formatVND(Math.round(maxVal / 3));
+
+        // Render data points
+        const pointsContainer = document.querySelector('.chart-points-container') || chartSvg;
+        const existingDots = document.querySelectorAll('.data-point');
+        existingDots.forEach(d => d.remove());
+
+        coords.forEach((c, idx) => {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('class', 'data-point');
+            circle.setAttribute('cx', c.x);
+            circle.setAttribute('cy', c.y);
+            circle.setAttribute('r', '6');
+            circle.setAttribute('data-index', idx);
+
+            circle.addEventListener('mouseenter', () => {
+                tooltipDate.textContent = `${c.day} (Tuần này)`;
+                tooltipValue.textContent = currentMetric === 'revenue' 
+                    ? `${formatVND(c.val)} (${c.orders || 0} đơn)` 
+                    : `${c.orders || 0} đơn`;
+                tooltipSub.textContent = `Tăng trưởng: ${c.growth || '+0.0%'}`;
+
+                const viewport = document.querySelector('.chart-viewport').getBoundingClientRect();
+                const leftPx = (c.x / svgW) * viewport.width;
+                const topPx = (c.y / svgH) * viewport.height;
+
+                tooltip.style.left = `${leftPx}px`;
+                tooltip.style.top = `${topPx}px`;
+                tooltip.classList.add('is-active');
+
+                if (hoverGuide) {
+                    hoverGuide.setAttribute('x1', c.x);
+                    hoverGuide.setAttribute('x2', c.x);
+                    hoverGuide.style.opacity = '1';
+                }
+            });
+
+            circle.addEventListener('mouseleave', () => {
+                tooltip.classList.remove('is-active');
+                if (hoverGuide) hoverGuide.style.opacity = '0';
+            });
+
+            pointsContainer.appendChild(circle);
         });
-    });
+    }
 
     // Toggle between "Doanh thu" and "Số lượng đơn"
     const metricPills = document.querySelectorAll('.chart-pill');
@@ -210,6 +311,7 @@
             metricPills.forEach(p => p.classList.remove('active'));
             pill.classList.add('active');
             currentMetric = pill.dataset.metric;
+            renderChartSVG();
         });
     });
 
@@ -219,6 +321,7 @@
         tab.addEventListener('click', () => {
             filterTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
+            loadDashboardData();
         });
     });
 
@@ -231,6 +334,7 @@
         }
     });
 
-    initBranchSelector();
-    updateBranchUI();
+    fetchBranches().then(() => {
+        loadDashboardData();
+    });
 })();

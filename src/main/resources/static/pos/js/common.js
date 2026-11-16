@@ -50,7 +50,7 @@ const UI = (() => {
     const get = (k) => sessionStorage.getItem(k) || localStorage.getItem(k);
     const role = get('cp_role') || 'cashier';
     const user = get('cp_user') || 'Thu ngân';
-    const branch = get('cp_branch') || 'Chi nhánh Quận 1';
+    const branch = get('cp_branch') || 'Cửa hàng';
 
     const roleName = role === 'owner' ? 'Chủ chuỗi' : role === 'manager' ? 'Quản lý' : 'Thu ngân';
 
