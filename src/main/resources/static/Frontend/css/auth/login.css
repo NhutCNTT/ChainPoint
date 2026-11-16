@@ -1,0 +1,422 @@
+/* ==========================================================
+   ChainPoint — Login page styles
+   Requires: ../base.css
+   ========================================================== */
+
+body {
+    background:
+        radial-gradient(900px 500px at 10% 0%, #f6f9ff 0%, transparent 60%),
+        radial-gradient(700px 500px at 100% 100%, var(--bg-accent) 0%, transparent 60%),
+        var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-6) var(--sp-4);
+}
+
+.layout {
+    width: 100%;
+    max-width: 1120px;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 48px;
+    align-items: center;
+}
+
+/* ---------- Left Hero Column ---------- */
+.hero {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-6);
+}
+
+.hero-art {
+    width: 100%;
+    max-width: 520px;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    background: linear-gradient(160deg, #f5f8ff 0%, #e4edff 100%);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+}
+.hero-art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.hero-copy {
+    max-width: 480px;
+}
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    color: var(--primary);
+    background: #ffffff;
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: var(--r-full);
+    margin-bottom: var(--sp-3);
+    box-shadow: var(--shadow-sm);
+}
+.hero-badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--success);
+}
+.hero-copy h1 {
+    font-size: clamp(26px, 3vw, 36px);
+    line-height: 1.2;
+    font-weight: var(--fw-bold);
+    letter-spacing: -0.02em;
+    margin-bottom: var(--sp-2);
+}
+.hero-copy h1 span {
+    color: var(--primary);
+}
+.hero-copy p {
+    font-size: var(--fs-base);
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+/* ---------- Right Column / Login Card ---------- */
+.card-wrap {
+    display: flex;
+    justify-content: center;
+}
+
+.card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--card);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border);
+    padding: 36px 32px 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: var(--sp-5);
+    text-decoration: none;
+    color: var(--text);
+}
+.logo-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--primary);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+.logo-text {
+    font-size: 19px;
+    font-weight: var(--fw-bold);
+    letter-spacing: -0.01em;
+}
+.logo-text span {
+    color: var(--primary);
+}
+
+.card h2 {
+    font-size: 22px;
+    font-weight: var(--fw-bold);
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+}
+.card .subtitle {
+    font-size: var(--fs-sm);
+    color: var(--muted);
+    margin-bottom: var(--sp-5);
+}
+
+/* Segmented Tabs */
+.tabs {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 3px;
+    margin-bottom: var(--sp-5);
+}
+.tab-indicator {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    background: #ffffff;
+    border-radius: 9px;
+    box-shadow: var(--shadow-sm);
+    transition: transform .25s var(--ease);
+}
+.tabs[data-active="cashier"] .tab-indicator {
+    transform: translateX(100%);
+}
+.tab {
+    position: relative;
+    z-index: 1;
+    border: 0;
+    background: transparent;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--muted);
+    padding: 9px 0;
+    border-radius: 9px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: color .15s;
+}
+.tab svg {
+    width: 16px;
+    height: 16px;
+}
+.tab[aria-selected="true"] {
+    color: var(--text);
+}
+
+.role-hint {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: var(--primary-soft);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: var(--fs-sm);
+    color: var(--text-2);
+    margin-bottom: var(--sp-4);
+}
+.role-hint svg {
+    flex-shrink: 0;
+    color: var(--primary);
+    width: 16px;
+    height: 16px;
+}
+
+/* Form */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-4);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.field label {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--text-2);
+}
+
+.input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.input-wrap:focus-within {
+    background: #ffffff;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-ring);
+}
+.input-wrap.has-error {
+    border-color: var(--danger);
+    background: var(--danger-soft);
+}
+
+.input-icon {
+    position: absolute;
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    color: var(--faint);
+    pointer-events: none;
+}
+.input-wrap:focus-within .input-icon {
+    color: var(--primary);
+}
+
+.input-wrap input,
+.input-wrap select {
+    width: 100%;
+    min-height: 42px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font-size: var(--fs-base);
+    color: var(--text);
+    padding: 0 12px 0 38px;
+}
+.input-wrap input[type="password"] {
+    padding-right: 42px;
+}
+.input-wrap input::placeholder {
+    color: var(--faint);
+}
+
+.toggle-password {
+    position: absolute;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: var(--r-sm);
+    background: transparent;
+    color: var(--muted);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+}
+.toggle-password:hover {
+    color: var(--text);
+    background: var(--surface);
+}
+.toggle-password svg {
+    width: 16px;
+    height: 16px;
+}
+.toggle-password .icon-hide { display: none; }
+.toggle-password.is-visible .icon-show { display: none; }
+.toggle-password.is-visible .icon-hide { display: block; }
+
+.form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--fs-sm);
+    margin-top: -2px;
+}
+.remember {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    cursor: pointer;
+}
+.remember input {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--primary);
+    cursor: pointer;
+}
+.forgot {
+    color: var(--primary);
+    font-weight: var(--fw-semibold);
+    text-decoration: none;
+}
+.forgot:hover {
+    text-decoration: underline;
+}
+
+.form-error {
+    font-size: var(--fs-sm);
+    color: var(--danger);
+    background: var(--danger-soft);
+    border-radius: var(--r-sm);
+    padding: 8px 12px;
+}
+.form-error[hidden] {
+    display: none;
+}
+
+.login-form .btn-primary {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 4px;
+}
+
+.card-footer {
+    margin-top: auto;
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-3);
+    font-size: var(--fs-xs);
+    color: var(--muted);
+}
+.support {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.support-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    display: grid;
+    place-items: center;
+    color: var(--primary);
+}
+.support-icon svg {
+    width: 15px;
+    height: 15px;
+}
+.support strong {
+    display: block;
+    color: var(--text);
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-xs);
+}
+.support a {
+    color: var(--muted);
+    text-decoration: none;
+}
+.support a:hover {
+    color: var(--primary);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+    .layout {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+    .hero {
+        align-items: center;
+        text-align: center;
+    }
+    .hero-art {
+        max-width: 440px;
+    }
+    .hero-copy {
+        margin: 0 auto;
+    }
+}
+@media (max-width: 520px) {
+    body {
+        padding: 16px;
+    }
+    .hero {
+        display: none;
+    }
+    .card {
+        padding: 24px 20px 20px;
+    }
+}

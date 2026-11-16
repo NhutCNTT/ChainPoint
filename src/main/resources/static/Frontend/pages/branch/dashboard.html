@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint Branch — Tổng quan chi nhánh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/admin/admin.css" />
+  <link rel="stylesheet" href="../../css/admin/dashboard.css" />
+</head>
+<body data-area="branch">
+  <div class="app">
+    <!-- Branch Left Sidebar (9 items) -->
+    <aside class="sidebar">
+      <a class="logo" href="dashboard.html">
+        <div class="logo-mark" aria-hidden="true" style="background:linear-gradient(135deg, #10b981, #059669);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/>
+          </svg>
+        </div>
+        <div class="logo-text">Chain<span>Point</span> <small style="font-size:10px; background:#ecfdf5; color:#059669; padding:2px 6px; border-radius:4px; font-weight:800;">BRANCH</small></div>
+      </a>
+
+      <nav class="nav" id="branchNav" aria-label="Menu Chi nhánh">
+        <!-- Rendered by branch-nav.js with 9 items -->
+      </nav>
+
+      <div class="sidebar-footer">
+        <button class="btn-logout" id="branchLogoutBtn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/></svg>
+          Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h1 id="branchCurrentName">Tổng quan chi nhánh</h1>
+          <p id="branchSubtitle">Vận hành cơ sở, bán hàng và tích điểm khách hàng từ Database.</p>
+        </div>
+        <div class="user-chip">
+          <div class="avatar" id="branchUserAvatar">M</div>
+          <div><span id="branchUserName">Quản lý cơ sở</span><small id="branchUserRole" style="color:#059669; font-weight:700;">Quản lý</small></div>
+        </div>
+      </header>
+
+      <!-- KPI Summary Cards -->
+      <section class="metrics-grid">
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Doanh thu chi nhánh</span>
+            <div class="metric-icon-wrap metric-icon-blue">💰</div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value" id="branchRevenueVal">0 ₫</div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge trend-up" id="branchRevenueGrowth">▲ +0.0%</span>
+            <span class="trend-period">Doanh thu ghi nhận từ MySQL</span>
+          </div>
+        </article>
+
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Số lượng đơn hàng</span>
+            <div class="metric-icon-wrap metric-icon-green">🧾</div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value" id="branchOrdersVal">0 <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span></div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge trend-up" id="branchOrdersGrowth">▲ +0.0%</span>
+            <span class="trend-period">Tổng đơn hàng đã thanh toán</span>
+          </div>
+        </article>
+
+        <article class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Quy mô bàn phục vụ</span>
+            <div class="metric-icon-wrap metric-icon-purple">🍽️</div>
+          </div>
+          <div class="metric-body">
+            <div class="metric-value" id="branchTablesVal">0 <span style="font-size:20px; font-weight:600; color:var(--muted);">bàn</span></div>
+          </div>
+          <div class="metric-footer">
+            <span class="trend-badge" style="background:#eef4ff; color:#2563eb;">Khả dụng</span>
+            <span class="trend-period" id="branchTableSub">Đang cập nhật sơ đồ</span>
+          </div>
+        </article>
+      </section>
+
+      <!-- Quick Action Navigation Hub for Branch -->
+      <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <a href="tables.html" class="table-card" style="text-decoration:none; padding:18px; border-color:#dbeafe;">
+          <div style="font-size:24px; margin-bottom:8px;">🍽️</div>
+          <strong style="color:var(--text); font-size:15px;">Quản lý bàn</strong>
+          <small style="color:var(--muted); margin-top:2px;">Cấu hình vị trí &amp; sơ đồ bàn</small>
+        </a>
+        <a href="menu.html" class="table-card" style="text-decoration:none; padding:18px; border-color:#dbeafe;">
+          <div style="font-size:24px; margin-bottom:8px;">📋</div>
+          <strong style="color:var(--text); font-size:15px;">Thực đơn</strong>
+          <small style="color:var(--muted); margin-top:2px;">Món ăn &amp; giá bán</small>
+        </a>
+        <a href="orders.html" class="table-card" style="text-decoration:none; padding:18px; border-color:#dbeafe;">
+          <div style="font-size:24px; margin-bottom:8px;">🧾</div>
+          <strong style="color:var(--text); font-size:15px;">Đơn hàng</strong>
+          <small style="color:var(--muted); margin-top:2px;">Hóa đơn &amp; thanh toán</small>
+        </a>
+        <a href="loyalty.html" class="table-card" style="text-decoration:none; padding:18px; border-color:#fef08a; background:#fefce8;">
+          <div style="font-size:24px; margin-bottom:8px;">🎁</div>
+          <strong style="color:#854d0e; font-size:15px;">Tích điểm Loyalty</strong>
+          <small style="color:#a16207; margin-top:2px;">Mô hình Bách Hóa Xanh</small>
+        </a>
+      </section>
+
+      <!-- Chart & Details -->
+      <section class="chart-card" style="margin-top: 8px;">
+        <div class="chart-header">
+          <div class="chart-info">
+            <h2>Doanh số trong tuần</h2>
+            <p>Doanh thu thực tế theo ngày từ MySQL Database.</p>
+          </div>
+          <a href="../../pos/index.html" class="btn-primary" style="background:#059669; text-decoration:none; font-size:13px;">
+            Mở POS Bán hàng
+          </a>
+        </div>
+
+        <div style="background:#f8fafc; border-radius:14px; padding:20px; border:1px solid #eef2f8;">
+          <div id="branchWeeklyDaysGrid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:12px; text-align:center;">
+            <!-- Render động từ MySQL API -->
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="../../js/common/api.js"></script>
+  <script src="../../js/common/ui.js"></script>
+  <script src="../../js/branch/branch-nav.js"></script>
+  <script>
+    const API_BASE = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1' : '/api/v1';
+    const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
+
+    function updateGrowthBadge(elId, growthStr) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      const val = growthStr || '+0.0%';
+      const isNegative = String(val).trim().startsWith('-');
+      el.className = `trend-badge ${isNegative ? 'trend-down' : 'trend-up'}`;
+      el.textContent = `${isNegative ? '▼' : '▲'} ${val}`;
+    }
+
+    async function loadBranchDashboard() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let bId = urlParams.get('branchId') || sessionStorage.getItem('cp_branch_id') || '';
+      let bName = urlParams.get('branch') || sessionStorage.getItem('cp_branch') || '';
+
+      if (urlParams.get('branchId')) {
+        sessionStorage.setItem('cp_branch_id', urlParams.get('branchId'));
+      }
+      if (urlParams.get('branch')) {
+        sessionStorage.setItem('cp_branch', urlParams.get('branch'));
+      }
+
+      // Nếu chưa có branchId cụ thể trong URL/session, đối chiếu theo tên chi nhánh hoặc lấy chi nhánh đầu tiên từ DB
+      if (!bId) {
+        try {
+          const res = await fetch(`${API_BASE}/branches`);
+          if (res.ok) {
+            const list = await res.json();
+            if (Array.isArray(list) && list.length > 0) {
+              const matched = (bName && list.find(x => x.name === bName)) || list[0];
+              bId = matched.id;
+              bName = matched.name;
+              sessionStorage.setItem('cp_branch_id', bId);
+              sessionStorage.setItem('cp_branch', bName);
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (bName) {
+        const titleEl = document.getElementById('branchCurrentName');
+        if (titleEl) titleEl.textContent = `📍 ${bName}`;
+      }
+
+      const qBranch = bId ? `?branchId=${bId}` : '';
+
+      try {
+        // 1. Tải metrics chi nhánh
+        const mRes = await fetch(`${API_BASE}/admin/dashboard/metrics${qBranch}`);
+        if (mRes.ok) {
+          const m = await mRes.json();
+          document.getElementById('branchRevenueVal').textContent = formatVND(m.totalRevenue || 0);
+          document.getElementById('branchOrdersVal').innerHTML = `${(m.totalOrders || 0).toLocaleString('vi-VN')} <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span>`;
+          updateGrowthBadge('branchRevenueGrowth', m.revenueGrowth);
+          updateGrowthBadge('branchOrdersGrowth', m.ordersGrowth);
+        }
+
+        // 2. Tải số lượng bàn của chi nhánh
+        const tRes = await fetch(`${API_BASE}/tables${qBranch}`);
+        if (tRes.ok) {
+          const tables = await tRes.json();
+          const tCount = Array.isArray(tables) ? tables.length : 0;
+          document.getElementById('branchTablesVal').innerHTML = `${tCount} <span style="font-size:20px; font-weight:600; color:var(--muted);">bàn</span>`;
+          document.getElementById('branchTableSub').textContent = `${tables.filter(t => t.status === 'active').length} bàn đang hoạt động`;
+        }
+
+        // 3. Tải biểu đồ tuần từ MySQL (RevenueChartResponse trả về thisWeek)
+        const cRes = await fetch(`${API_BASE}/admin/dashboard/revenue-chart${qBranch}`);
+        let chartPoints = [];
+        if (cRes.ok) {
+          const cData = await cRes.json();
+          if (cData && Array.isArray(cData.thisWeek)) {
+            chartPoints = cData.thisWeek;
+          } else if (cData && Array.isArray(cData.points)) {
+            chartPoints = cData.points;
+          }
+        }
+        renderBranchWeeklyGrid(chartPoints);
+      } catch (err) {
+        console.warn('Lỗi nạp dữ liệu chi nhánh từ Database:', err);
+      }
+    }
+
+    function renderBranchWeeklyGrid(points) {
+      const container = document.getElementById('branchWeeklyDaysGrid');
+      if (!container) return;
+
+      const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+      const data = (points && points.length > 0) ? points : days.map(d => ({ day: d, val: 0, orders: 0 }));
+
+      const currentDayIndex = (new Date().getDay() + 6) % 7; // Thứ 2 = 0, Chủ nhật = 6
+      container.innerHTML = data.map((p, idx) => {
+        const isToday = idx === currentDayIndex;
+        return `
+          <div style="background:${isToday ? '#eff6ff' : '#ffffff'}; padding:12px; border-radius:10px; border:${isToday ? '1.5px solid #2563eb' : '1px solid #e2e8f0'};">
+            <small style="color:${isToday ? '#2563eb; font-weight:700;' : 'var(--muted);'}">${p.day}</small>
+            <div style="font-weight:800; font-size:14px; color:${isToday ? '#2563eb' : 'var(--text)'}; margin-top:4px;">${formatVND(p.val || 0)}</div>
+            <small style="color:${isToday ? '#2563eb; font-weight:700;' : '#10b981; font-weight:700;'}">${p.orders || 0} đơn</small>
+          </div>
+        `;
+      }).join('');
+    }
+
+    document.getElementById('branchLogoutBtn').addEventListener('click', () => {
+      ['cp_token', 'cp_role', 'cp_user', 'cp_branch', 'cp_branch_id'].forEach(k => {
+        sessionStorage.removeItem(k);
+        localStorage.removeItem(k);
+      });
+      window.location.href = '../auth/pos-login.html';
+    });
+
+    loadBranchDashboard();
+  </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "cleanUrls": false,
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/index", "destination": "/index.html" },
+    { "source": "/order", "destination": "/order.html" },
+    { "source": "/pending", "destination": "/pending.html" },
+    { "source": "/payment", "destination": "/payment.html" },
+    { "source": "/payment-cash", "destination": "/payment-cash.html" },
+    { "source": "/payment-transfer", "destination": "/payment-transfer.html" },
+    { "source": "/history", "destination": "/history.html" }
+  ]
+}

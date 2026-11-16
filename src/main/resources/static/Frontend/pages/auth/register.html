@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChainPoint — Dùng thử miễn phí 7 ngày</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../../css/base.css" />
+  <link rel="stylesheet" href="../../css/auth/register.css" />
+</head>
+<body>
+  <div class="register-container">
+    <!-- Header Logo -->
+    <a href="../../../index.html" class="register-logo" title="Trang chủ ChainPoint">
+      <div class="logo-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9.5 14.5 14.5 9.5" />
+          <path d="M11 6.5 12.8 4.7a4 4 0 0 1 5.6 0l.9.9a4 4 0 0 1 0 5.6L17.5 13" />
+          <path d="M13 17.5 11.2 19.3a4 4 0 0 1-5.6 0l-.9-.9a4 4 0 0 1 0-5.6L6.5 11" />
+        </svg>
+      </div>
+      <div class="logo-title">Chain<span>Point</span></div>
+    </a>
+
+    <!-- Heading -->
+    <div class="register-heading">
+      <h1>Dùng thử miễn phí 7 ngày</h1>
+      <p>Để khám phá tại sao +230,000 nhà bán hàng tin dùng ChainPoint</p>
+    </div>
+
+    <!-- Alert Box -->
+    <div id="registerAlert" class="form-alert" role="alert">
+      <span class="alert-icon">⚠️</span>
+      <span class="alert-message"></span>
+    </div>
+
+    <!-- Register Form -->
+    <form class="register-form" id="registerForm" novalidate>
+      <!-- Họ tên của bạn -->
+      <div class="pill-field">
+        <input 
+          type="text" 
+          id="fullName" 
+          name="fullName" 
+          class="pill-input" 
+          placeholder="Họ tên của bạn" 
+          autocomplete="name" 
+          required 
+        />
+      </div>
+
+      <!-- Số điện thoại của bạn -->
+      <div class="pill-field">
+        <input 
+          type="tel" 
+          id="phone" 
+          name="phone" 
+          class="pill-input" 
+          placeholder="Số điện thoại của bạn" 
+          autocomplete="tel" 
+          required 
+        />
+      </div>
+
+      <!-- Mật khẩu -->
+      <div class="pill-field">
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          class="pill-input" 
+          placeholder="Thiết lập mật khẩu (tối thiểu 6 ký tự)" 
+          autocomplete="new-password" 
+          required 
+        />
+        <button type="button" class="password-toggle-btn" id="togglePasswordBtn" aria-label="Ẩn/hiện mật khẩu" tabindex="-1">
+          <svg class="eye-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <svg class="eye-hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+            <path d="M3 3l18 18" />
+            <path d="M10.6 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1" />
+            <path d="M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.8 9.8 0 0 0 5.4-1.6" />
+            <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- 2 Columns: Tên quán & Tỉnh/Thành phố -->
+      <div class="form-row-2col">
+        <div class="pill-field">
+          <input 
+            type="text" 
+            id="restaurantName" 
+            name="restaurantName" 
+            class="pill-input" 
+            placeholder="Tên quán của bạn" 
+            required 
+          />
+        </div>
+
+        <div class="pill-select-wrap">
+          
+<div class="pill-select-wrap">
+  <select id="province" name="province" class="pill-select" required>
+    <option value="" disabled selected>Bạn ở tỉnh/thành phố nào?</option>
+
+    <!-- 6 thành phố trực thuộc Trung ương -->
+    <option value="Cần Thơ">Cần Thơ</option>
+    <option value="Đà Nẵng">Đà Nẵng</option>
+    <option value="Hà Nội">Hà Nội</option>
+    <option value="Hải Phòng">Hải Phòng</option>
+    <option value="Huế">Huế</option>
+    <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
+
+    <!-- 28 tỉnh -->
+    <option value="An Giang">An Giang</option>
+    <option value="Bắc Ninh">Bắc Ninh</option>
+    <option value="Cà Mau">Cà Mau</option>
+    <option value="Cao Bằng">Cao Bằng</option>
+    <option value="Đắk Lắk">Đắk Lắk</option>
+    <option value="Điện Biên">Điện Biên</option>
+    <option value="Đồng Nai">Đồng Nai</option>
+    <option value="Đồng Tháp">Đồng Tháp</option>
+    <option value="Gia Lai">Gia Lai</option>
+    <option value="Hà Tĩnh">Hà Tĩnh</option>
+    <option value="Hưng Yên">Hưng Yên</option>
+    <option value="Khánh Hòa">Khánh Hòa</option>
+    <option value="Lai Châu">Lai Châu</option>
+    <option value="Lâm Đồng">Lâm Đồng</option>
+    <option value="Lạng Sơn">Lạng Sơn</option>
+    <option value="Lào Cai">Lào Cai</option>
+    <option value="Nghệ An">Nghệ An</option>
+    <option value="Ninh Bình">Ninh Bình</option>
+    <option value="Phú Thọ">Phú Thọ</option>
+    <option value="Quảng Ngãi">Quảng Ngãi</option>
+    <option value="Quảng Ninh">Quảng Ninh</option>
+    <option value="Quảng Trị">Quảng Trị</option>
+    <option value="Sơn La">Sơn La</option>
+    <option value="Tây Ninh">Tây Ninh</option>
+    <option value="Thái Nguyên">Thái Nguyên</option>
+    <option value="Thanh Hóa">Thanh Hóa</option>
+    <option value="Tuyên Quang">Tuyên Quang</option>
+    <option value="Vĩnh Long">Vĩnh Long</option>
+  </select>
+</div>
+
+          <div class="pill-select-arrow">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Điều khoản thỏa thuận -->
+      <label class="terms-agreement">
+        <input type="checkbox" id="termsAgree" name="termsAgree" checked />
+        <span class="terms-text">
+          Tôi đã đọc, hiểu và đồng ý với <a href="#" target="_blank">Quy định sử dụng</a> &amp; 
+          <a href="#" target="_blank">Chính sách bảo vệ dữ liệu cá nhân</a> 
+          của ChainPoint cho mục đích sử dụng sản phẩm, dịch vụ của ChainPoint
+        </span>
+      </label>
+
+      <!-- Nút Đăng ký Pill Button -->
+      <button type="submit" class="btn-submit-pill" id="submitBtn">
+        <span class="btn-pill-text">Đăng ký</span>
+        <div class="btn-pill-arrow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </div>
+      </button>
+    </form>
+
+    <!-- Footer Links -->
+    <div class="register-footer">
+      Đã có tài khoản? <a href="owner-login.html">Đăng nhập ngay</a>
+    </div>
+
+    <div class="register-help">
+      Tổng đài tư vấn miễn phí: <a href="tel:18001234">1800 1234</a> · Hỗ trợ toàn quốc 24/7
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('registerForm');
+    const fullNameInput = document.getElementById('fullName');
+    const phoneInput = document.getElementById('phone');
+    const passwordInput = document.getElementById('password');
+    const restaurantNameInput = document.getElementById('restaurantName');
+    const provinceSelect = document.getElementById('province');
+    const termsCheckbox = document.getElementById('termsAgree');
+    const submitBtn = document.getElementById('submitBtn');
+    const alertBox = document.getElementById('registerAlert');
+    const alertMsg = alertBox.querySelector('.alert-message');
+    const alertIcon = alertBox.querySelector('.alert-icon');
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+    const eyeShow = toggleBtn.querySelector('.eye-show');
+    const eyeHide = toggleBtn.querySelector('.eye-hide');
+
+    // Toggle hiển thị mật khẩu
+    toggleBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      eyeShow.style.display = isPassword ? 'none' : 'block';
+      eyeHide.style.display = isPassword ? 'block' : 'none';
+    });
+
+    // Cập nhật trạng thái màu nút submit
+    function checkInputsValidity() {
+      const hasValues = fullNameInput.value.trim() && 
+                        phoneInput.value.trim() && 
+                        passwordInput.value && 
+                        restaurantNameInput.value.trim() && 
+                        provinceSelect.value && 
+                        termsCheckbox.checked;
+      if (hasValues) {
+        submitBtn.classList.add('active');
+      } else {
+        submitBtn.classList.remove('active');
+      }
+    }
+
+    [fullNameInput, phoneInput, passwordInput, restaurantNameInput, provinceSelect, termsCheckbox].forEach(el => {
+      el.addEventListener('input', checkInputsValidity);
+      el.addEventListener('change', checkInputsValidity);
+    });
+
+    function showAlert(message, type = 'error') {
+      alertBox.className = `form-alert alert-${type}`;
+      alertMsg.textContent = message;
+      alertIcon.textContent = type === 'success' ? '✓' : '⚠️';
+      alertBox.style.display = 'flex';
+      alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideAlert() {
+      alertBox.style.display = 'none';
+    }
+
+    // Xử lý gửi Form
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      const fullName = fullNameInput.value.trim();
+      const phone = phoneInput.value.trim();
+      const password = passwordInput.value;
+      const restaurantName = restaurantNameInput.value.trim();
+      const province = provinceSelect.value;
+      const termsAgree = termsCheckbox.checked;
+
+      // Validation
+      if (!fullName) {
+        showAlert('Vui lòng nhập họ và tên của bạn.');
+        fullNameInput.focus();
+        return;
+      }
+
+      const phoneRegex = /^(0|\+84)[0-9]{9,10}$/;
+      if (!phone || !phoneRegex.test(phone)) {
+        showAlert('Số điện thoại không hợp lệ. Vui lòng nhập từ 9-10 chữ số (VD: 0912345678).');
+        phoneInput.focus();
+        return;
+      }
+
+      if (!password || password.length < 6) {
+        showAlert('Mật khẩu phải có tối thiểu 6 ký tự.');
+        passwordInput.focus();
+        return;
+      }
+
+      if (!restaurantName) {
+        showAlert('Vui lòng nhập tên quán hoặc chuỗi nhà hàng của bạn.');
+        restaurantNameInput.focus();
+        return;
+      }
+
+      if (!province) {
+        showAlert('Vui lòng chọn tỉnh/thành phố nơi quán hoạt động.');
+        provinceSelect.focus();
+        return;
+      }
+
+      if (!termsAgree) {
+        showAlert('Bạn cần đồng ý với Quy định sử dụng & Chính sách bảo vệ dữ liệu để tiếp tục.');
+        return;
+      }
+
+      // Khóa nút để tránh click nhiều lần
+      submitBtn.disabled = true;
+      const originalText = submitBtn.querySelector('.btn-pill-text').textContent;
+      submitBtn.querySelector('.btn-pill-text').textContent = 'Đang khởi tạo quán...';
+
+      const payload = {
+        fullName,
+        phone,
+        password,
+        restaurantName,
+        province
+      };
+
+      try {
+        const apiUrl = (window.location.port && window.location.port !== '8080' && window.location.port !== '')
+          ? 'http://localhost:8080/api/v1/auth/register'
+          : '/api/v1/auth/register';
+
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          showAlert('Đăng ký thành công! Đang chuyển hướng vào hệ thống...', 'success');
+          
+          // Lưu thông tin phiên đăng nhập
+          if (data.accessToken) {
+            sessionStorage.setItem('cp_token', data.accessToken);
+          }
+          sessionStorage.setItem('cp_role', 'owner');
+          sessionStorage.setItem('cp_user', data.fullName || fullName);
+          sessionStorage.setItem('cp_phone', data.phone || phone);
+          sessionStorage.setItem('cp_branch', data.branchName || restaurantName);
+          sessionStorage.setItem('cp_branch_id', data.branchId || '');
+          sessionStorage.setItem('cp_branch_code', data.branchCode || '');
+
+          // Chuyển hướng sau 1.2s vào dashboard chủ chuỗi
+          setTimeout(() => {
+            window.location.href = '../owner/dashboard.html';
+          }, 1200);
+        } else {
+          // Hiển thị lỗi từ backend
+          const errorMsg = data.message || data.error || 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin!';
+          showAlert(errorMsg, 'error');
+          submitBtn.disabled = false;
+          submitBtn.querySelector('.btn-pill-text').textContent = originalText;
+        }
+      } catch (err) {
+        console.error('Lỗi khi gọi API đăng ký:', err);
+        showAlert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng hoặc thử lại sau!', 'error');
+        submitBtn.disabled = false;
+        submitBtn.querySelector('.btn-pill-text').textContent = originalText;
+      }
+    });
+
+    // Check ban đầu
+    checkInputsValidity();
+  </script>
+</body>
+</html>

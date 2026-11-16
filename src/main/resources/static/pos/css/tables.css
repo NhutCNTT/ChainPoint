@@ -1,0 +1,78 @@
+.table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+
+.area-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.area-tab {
+  padding: 10px 20px; border-radius: 999px; font-weight: 600; color: var(--muted);
+  background: #ffffff; border: 1px solid var(--border);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.03);
+  transition: all .2s var(--ease);
+}
+.area-tab:hover { color: var(--accent-1); background: var(--blue-light); border-color: var(--accent-1); }
+.area-tab.active { color: #fff; background: var(--accent-grad); border-color: transparent; box-shadow: var(--accent-glow); }
+
+.legend { display: flex; gap: 18px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+.legend li { display: flex; align-items: center; gap: 7px; }
+.legend b { color: var(--text); }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot.free { background: var(--free); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+.dot.busy { background: var(--busy); box-shadow: 0 0 8px rgba(249, 115, 22, 0.4); }
+.dot.pending { background: var(--pending); box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+
+/* ---- Table grid ---- */
+.table-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 16px; }
+.area-title { grid-column: 1 / -1; font-size: 14px; color: var(--muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-top: 10px; }
+
+.table-card {
+  --c: var(--free);
+  position: relative; text-align: left;
+  display: flex; flex-direction: column; gap: 6px;
+  min-height: 130px; padding: 16px 16px 14px;
+  border-radius: var(--radius);
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--c);
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .2s;
+  animation: fade-up .45s var(--ease) backwards;
+}
+.table-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(120px 80px at 90% 0%, color-mix(in srgb, var(--c) 14%, transparent), transparent 70%);
+}
+.table-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 14px 28px rgba(79, 134, 255, 0.15); border-color: var(--border-strong); }
+.table-card:active { transform: scale(.97); }
+.table-card.busy { --c: var(--busy); }
+.table-card.pending { --c: var(--pending); }
+.table-name { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); }
+.table-meta { color: var(--muted); font-size: 13px; }
+.table-foot { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; position: relative; z-index: 1; }
+.table-total { font-weight: 800; font-size: 16px; color: var(--c); }
+.table-time { font-size: 12px; color: var(--muted); }
+
+/* ============ Trang chờ thanh toán ============ */
+.bill-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+.bill-card {
+  display: flex; flex-direction: column; gap: 14px; padding: 20px;
+  border-radius: var(--radius);
+  background: #ffffff;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.08);
+  animation: fade-up .45s var(--ease) backwards;
+  transition: transform .25s var(--ease), box-shadow .25s;
+}
+.bill-card:hover { transform: translateY(-4px); box-shadow: 0 14px 34px rgba(245, 158, 11, 0.16); }
+.bill-card.transfer { border-color: rgba(79, 134, 255, 0.35); box-shadow: 0 4px 16px rgba(79, 134, 255, 0.08); }
+.bill-card.transfer:hover { box-shadow: 0 14px 34px rgba(79, 134, 255, 0.18); }
+.bill-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.bill-table { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--text); }
+.bill-id { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.bill-items { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 14px; padding: 12px 0; border-top: 1px dashed var(--border-strong); border-bottom: 1px dashed var(--border-strong); }
+.bill-items li { display: flex; justify-content: space-between; gap: 10px; }
+.bill-items li span:first-child { color: var(--text); font-weight: 500; }
+.bill-items .more { color: var(--faint); font-style: italic; }
+.bill-total { display: flex; justify-content: space-between; align-items: baseline; }
+.bill-total span:first-child { color: var(--muted); font-weight: 600; }
+.bill-total .money { font-size: 24px; color: var(--pending); }
+.bill-card.transfer .bill-total .money { color: var(--accent-1); }
+.bill-actions { display: flex; gap: 10px; }
+.bill-actions .btn { flex: 1; padding: 12px 10px; }
