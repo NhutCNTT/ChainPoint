@@ -1,46 +1,86 @@
 /* ==========================================================
-   ChainPoint — Login page styles
+   ChainPoint — Unified authentication page styles
    Requires: ../base.css
    ========================================================== */
 
 body {
-    background:
-        radial-gradient(900px 500px at 10% 0%, #f6f9ff 0%, transparent 60%),
-        radial-gradient(700px 500px at 100% 100%, var(--bg-accent) 0%, transparent 60%),
-        var(--bg);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--sp-6) var(--sp-4);
+    padding: clamp(16px, 3vw, 40px);
+    background:
+        radial-gradient(900px 520px at 8% 0%, #f6f9ff 0%, transparent 62%),
+        radial-gradient(760px 560px at 100% 100%, var(--bg-accent) 0%, transparent 62%),
+        var(--bg);
 }
 
 .layout {
     width: 100%;
-    max-width: 1120px;
+    max-width: 1160px;
     display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    gap: 48px;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 440px);
+    gap: clamp(28px, 4vw, 52px);
     align-items: center;
+}
+
+.layout > *,
+.card-wrap,
+.card {
+    min-width: 0;
 }
 
 /* ---------- Left Hero Column ---------- */
 .hero {
+    position: relative;
+    isolation: isolate;
     display: flex;
     flex-direction: column;
     gap: var(--sp-6);
+    padding: clamp(18px, 2.4vw, 28px);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    background: linear-gradient(145deg, #ffffff 0%, #f7faff 58%, #eaf1ff 100%);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.hero::before {
+    content: "";
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    top: -160px;
+    right: -100px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(47, 107, 255, 0.16) 0%, transparent 68%);
+    z-index: -1;
+}
+
+.hero::after {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    bottom: -150px;
+    left: -80px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(22, 163, 74, 0.1) 0%, transparent 68%);
+    z-index: -1;
 }
 
 .hero-art {
+    position: relative;
+    z-index: 1;
     width: 100%;
-    max-width: 520px;
-    aspect-ratio: 4 / 3;
-    border-radius: var(--r-lg);
+    aspect-ratio: 16 / 10;
+    border-radius: 18px;
     overflow: hidden;
     background: linear-gradient(160deg, #f5f8ff 0%, #e4edff 100%);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(213, 221, 233, 0.85);
     box-shadow: var(--shadow-sm);
 }
+
 .hero-art img {
     width: 100%;
     height: 100%;
@@ -49,8 +89,12 @@ body {
 }
 
 .hero-copy {
-    max-width: 480px;
+    position: relative;
+    z-index: 1;
+    max-width: 560px;
+    padding: 0 var(--sp-2) var(--sp-1);
 }
+
 .hero-badge {
     display: inline-flex;
     align-items: center;
@@ -65,25 +109,29 @@ body {
     margin-bottom: var(--sp-3);
     box-shadow: var(--shadow-sm);
 }
+
 .hero-badge .dot {
     width: 7px;
     height: 7px;
     border-radius: 50%;
     background: var(--success);
 }
+
 .hero-copy h1 {
-    font-size: clamp(26px, 3vw, 36px);
+    font-size: clamp(25px, 3vw, 36px);
     line-height: 1.2;
     font-weight: var(--fw-bold);
     letter-spacing: -0.02em;
     margin-bottom: var(--sp-2);
 }
+
 .hero-copy h1 span {
     color: var(--primary);
 }
+
 .hero-copy p {
     font-size: var(--fs-base);
-    line-height: 1.6;
+    line-height: 1.65;
     color: var(--muted);
 }
 
@@ -95,40 +143,59 @@ body {
 
 .card {
     width: 100%;
-    max-width: 440px;
+    max-width: 460px;
     background: var(--card);
     border-radius: var(--r-lg);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
     border: 1px solid var(--border);
-    padding: 36px 32px 24px;
+    padding: 32px 32px 24px;
     display: flex;
     flex-direction: column;
 }
 
 .logo {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 10px;
+    width: max-content;
     margin-bottom: var(--sp-5);
     text-decoration: none;
     color: var(--text);
 }
+
 .logo-mark {
     width: 38px;
     height: 38px;
     border-radius: 10px;
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--primary), #5b8cff);
     display: grid;
     place-items: center;
     flex-shrink: 0;
+    box-shadow: 0 8px 16px -10px var(--primary);
 }
+
 .logo-text {
     font-size: 19px;
     font-weight: var(--fw-bold);
     letter-spacing: -0.01em;
 }
+
 .logo-text span {
     color: var(--primary);
+}
+
+.logo-tag {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 2px;
+    padding: 2px 6px;
+    border-radius: var(--r-full);
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
 }
 
 .card h2 {
@@ -137,37 +204,45 @@ body {
     letter-spacing: -0.01em;
     margin-bottom: 4px;
 }
+
 .card .subtitle {
     font-size: var(--fs-sm);
     color: var(--muted);
     margin-bottom: var(--sp-5);
 }
 
-/* Segmented Tabs */
+/* Segmented role tabs */
 .tabs {
     position: relative;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--r-md);
     padding: 3px;
-    margin-bottom: var(--sp-5);
+    margin-bottom: var(--sp-3);
 }
+
 .tab-indicator {
     position: absolute;
     top: 3px;
     bottom: 3px;
     left: 3px;
-    width: calc(50% - 3px);
+    width: calc((100% - 6px) / 3);
     background: #ffffff;
     border-radius: 9px;
     box-shadow: var(--shadow-sm);
     transition: transform .25s var(--ease);
 }
-.tabs[data-active="cashier"] .tab-indicator {
+
+.tabs[data-active="manager"] .tab-indicator {
     transform: translateX(100%);
 }
+
+.tabs[data-active="cashier"] .tab-indicator {
+    transform: translateX(200%);
+}
+
 .tab {
     position: relative;
     z-index: 1;
@@ -176,19 +251,23 @@ body {
     font-size: var(--fs-sm);
     font-weight: var(--fw-semibold);
     color: var(--muted);
-    padding: 9px 0;
+    padding: 9px 4px;
     border-radius: 9px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
+    white-space: nowrap;
     transition: color .15s;
 }
+
 .tab svg {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
 }
+
 .tab[aria-selected="true"] {
     color: var(--text);
 }
@@ -196,19 +275,22 @@ body {
 .role-hint {
     display: flex;
     gap: 10px;
-    align-items: center;
+    align-items: flex-start;
     background: var(--primary-soft);
     border-radius: 10px;
     padding: 10px 14px;
     font-size: var(--fs-sm);
+    line-height: 1.5;
     color: var(--text-2);
     margin-bottom: var(--sp-4);
 }
+
 .role-hint svg {
     flex-shrink: 0;
     color: var(--primary);
     width: 16px;
     height: 16px;
+    margin-top: 1px;
 }
 
 /* Form */
@@ -223,6 +305,7 @@ body {
     flex-direction: column;
     gap: 6px;
 }
+
 .field label {
     font-size: var(--fs-sm);
     font-weight: var(--fw-semibold);
@@ -238,11 +321,13 @@ body {
     border-radius: 10px;
     transition: border-color .15s, background .15s, box-shadow .15s;
 }
+
 .input-wrap:focus-within {
     background: #ffffff;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px var(--primary-ring);
 }
+
 .input-wrap.has-error {
     border-color: var(--danger);
     background: var(--danger-soft);
@@ -256,6 +341,7 @@ body {
     color: var(--faint);
     pointer-events: none;
 }
+
 .input-wrap:focus-within .input-icon {
     color: var(--primary);
 }
@@ -271,9 +357,20 @@ body {
     color: var(--text);
     padding: 0 12px 0 38px;
 }
+
+.input-wrap select {
+    cursor: pointer;
+}
+
+.input-wrap select:disabled {
+    cursor: not-allowed;
+    color: var(--muted);
+}
+
 .input-wrap input[type="password"] {
     padding-right: 42px;
 }
+
 .input-wrap input::placeholder {
     color: var(--faint);
 }
@@ -291,25 +388,38 @@ body {
     place-items: center;
     cursor: pointer;
 }
+
 .toggle-password:hover {
     color: var(--text);
-    background: var(--surface);
+    background: #ffffff;
 }
+
 .toggle-password svg {
     width: 16px;
     height: 16px;
 }
-.toggle-password .icon-hide { display: none; }
-.toggle-password.is-visible .icon-show { display: none; }
-.toggle-password.is-visible .icon-hide { display: block; }
+
+.toggle-password .icon-hide {
+    display: none;
+}
+
+.toggle-password.is-visible .icon-show {
+    display: none;
+}
+
+.toggle-password.is-visible .icon-hide {
+    display: block;
+}
 
 .form-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--sp-3);
     font-size: var(--fs-sm);
     margin-top: -2px;
 }
+
 .remember {
     display: inline-flex;
     align-items: center;
@@ -317,54 +427,135 @@ body {
     color: var(--muted);
     cursor: pointer;
 }
+
 .remember input {
     width: 15px;
     height: 15px;
     accent-color: var(--primary);
     cursor: pointer;
 }
+
 .forgot {
     color: var(--primary);
     font-weight: var(--fw-semibold);
     text-decoration: none;
 }
+
 .forgot:hover {
     text-decoration: underline;
 }
 
 .form-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
     font-size: var(--fs-sm);
+    line-height: 1.5;
     color: var(--danger);
     background: var(--danger-soft);
+    border: 1px solid #f5c2c2;
     border-radius: var(--r-sm);
-    padding: 8px 12px;
+    padding: 9px 12px;
 }
+
+.form-error svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
 .form-error[hidden] {
     display: none;
 }
 
 .login-form .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
     width: 100%;
-    min-height: 44px;
+    min-height: 46px;
     margin-top: 4px;
+    padding: 0 var(--sp-5);
+    border: 1px solid transparent;
+    border-radius: 11px;
+    background: var(--primary);
+    color: #ffffff;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 10px 20px -12px var(--primary);
+    transition: background .15s, box-shadow .15s, opacity .15s;
+}
+
+.login-form .btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+.login-form .btn-primary:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+}
+
+.login-form .btn-primary svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: .9;
+}
+
+.auth-links {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: var(--sp-4);
+    font-size: var(--fs-sm);
+    color: var(--muted);
+    text-align: center;
+}
+
+.auth-links a {
+    color: var(--primary);
+    font-weight: var(--fw-semibold);
+    text-decoration: none;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
+.auth-links > a {
+    color: var(--muted);
+    font-weight: var(--fw-medium);
+}
+
+.auth-links > a:hover {
+    color: var(--primary);
 }
 
 .card-footer {
-    margin-top: auto;
+    margin-top: var(--sp-5);
     padding-top: var(--sp-4);
     border-top: 1px solid var(--border);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: var(--sp-3);
     font-size: var(--fs-xs);
     color: var(--muted);
 }
+
 .support {
     display: flex;
     align-items: center;
     gap: 10px;
 }
+
 .support-icon {
     width: 30px;
     height: 30px;
@@ -374,20 +565,24 @@ body {
     place-items: center;
     color: var(--primary);
 }
+
 .support-icon svg {
     width: 15px;
     height: 15px;
 }
+
 .support strong {
     display: block;
     color: var(--text);
     font-weight: var(--fw-semibold);
     font-size: var(--fs-xs);
 }
+
 .support a {
     color: var(--muted);
     text-decoration: none;
 }
+
 .support a:hover {
     color: var(--primary);
 }
@@ -396,27 +591,59 @@ body {
 @media (max-width: 960px) {
     .layout {
         grid-template-columns: 1fr;
-        gap: 32px;
+        gap: 28px;
     }
+
     .hero {
         align-items: center;
         text-align: center;
     }
+
     .hero-art {
-        max-width: 440px;
+        max-width: 560px;
     }
+
     .hero-copy {
         margin: 0 auto;
+        padding: 0;
+    }
+
+    .card-wrap {
+        width: 100%;
     }
 }
-@media (max-width: 520px) {
+
+@media (max-width: 620px) {
     body {
         padding: 16px;
     }
+
     .hero {
         display: none;
     }
+
     .card {
+        max-width: none;
         padding: 24px 20px 20px;
+    }
+}
+
+@media (max-width: 420px) {
+    .tab {
+        gap: 4px;
+        font-size: var(--fs-xs);
+        padding: 9px 2px;
+    }
+
+    .tab svg {
+        display: none;
+    }
+
+    .card h2 {
+        font-size: 20px;
+    }
+
+    .role-hint {
+        padding: 9px 11px;
     }
 }
