@@ -40,6 +40,10 @@ contract RestaurantLoyalty {
 
     mapping(string => InvoiceRecord) public invoiceRecords;
 
+    // The same durable checkout can be delivered more than once by the broker.
+    // Bind each operation to its original payload so retries never move points twice.
+    mapping(bytes32 => bytes32) private _loyaltyOperations;
+
     // SỰ KIỆN (Events) để Spring Boot backend lắng nghe qua Web3j
     event PointsEarned(
         address indexed customer,
@@ -115,6 +119,13 @@ contract RestaurantLoyalty {
     ) external onlyAuthorized {
         require(points > 0, "Diem tich luy phai lon hon 0");
         bytes32 phoneHash = keccak256(abi.encodePacked(phoneNumber));
+        bytes32 operation = keccak256(abi.encode("earn", orderCode));
+        bytes32 payload = keccak256(abi.encode(customer, phoneHash, points, billAmount));
+        if (_loyaltyOperations[operation] != bytes32(0)) {
+            require(_loyaltyOperations[operation] == payload, "Conflicting loyalty retry");
+            return;
+        }
+        _loyaltyOperations[operation] = payload;
 
         if (customer != address(0)) {
             _pointBalances[customer] += points;
@@ -136,6 +147,13 @@ contract RestaurantLoyalty {
     ) external onlyAuthorized {
         require(points > 0, "Diem doi phai lon hon 0");
         bytes32 phoneHash = keccak256(abi.encodePacked(phoneNumber));
+        bytes32 operation = keccak256(abi.encode("redeem", orderCode));
+        bytes32 payload = keccak256(abi.encode(customer, phoneHash, points, discountAmount));
+        if (_loyaltyOperations[operation] != bytes32(0)) {
+            require(_loyaltyOperations[operation] == payload, "Conflicting loyalty retry");
+            return;
+        }
+        _loyaltyOperations[operation] = payload;
 
         require(_phonePointBalances[phoneHash] >= points, "So du diem khong du de doi");
         _phonePointBalances[phoneHash] -= points;
@@ -156,7 +174,11 @@ contract RestaurantLoyalty {
         uint256 netAmount,
         bytes32 invoiceHash
     ) external onlyAuthorized {
-        require(!invoiceRecords[orderCode].exists, "Hoa don da duoc ghi nhan");
+        if (invoiceRecords[orderCode].exists) {
+            InvoiceRecord storage previous = invoiceRecords[orderCode];
+            require(previous.branchId == branchId && previous.netAmount == netAmount && previous.invoiceHash == invoiceHash, "Conflicting invoice retry");
+            return;
+        }
 
         invoiceRecords[orderCode] = InvoiceRecord({
             orderCode: orderCode,

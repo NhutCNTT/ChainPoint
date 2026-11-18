@@ -3,8 +3,6 @@ package blockchain.ChainPoint.entity;
 import blockchain.ChainPoint.entity.enums.RoleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -50,13 +48,20 @@ public class User {
     @Column(name = "email", length = 150)
     private String email;
 
-    @Enumerated(EnumType.STRING)
+    @jakarta.persistence.Convert(converter = blockchain.ChainPoint.entity.enums.RoleTypeConverter.class)
     @Column(name = "role", nullable = false, length = 30)
     private RoleType role;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id")
     private Branch branch;
+
+    @Builder.Default
+    @jakarta.persistence.ManyToMany(fetch = FetchType.LAZY)
+    @jakarta.persistence.JoinTable(name = "manager_branches",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "branch_id"))
+    private java.util.Set<Branch> managedBranches = new java.util.HashSet<>();
 
     @Builder.Default
     @Column(name = "status", nullable = false, length = 20)

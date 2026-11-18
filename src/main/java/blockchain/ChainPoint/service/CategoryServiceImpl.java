@@ -26,10 +26,13 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     private final ProductRepository productRepository;
+    private final blockchain.ChainPoint.security.BranchAccess access;
 
     @Override
     public List<CategoryResponse> getCategories() {
-        return productRepository.findDistinctCategories().stream()
+        return productRepository.findVisibleProducts(access.resolve(null)).stream()
+                .map(blockchain.ChainPoint.entity.Product::getCategory)
+                .filter(org.springframework.util.StringUtils::hasText).distinct().sorted()
                 .map(code -> {
                     CategoryMeta meta = DEFAULT_META.get(code);
                     return CategoryResponse.builder()

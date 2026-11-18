@@ -2,6 +2,36 @@
 // Used by: all management pages (Branch & Owner & Admin)
 
 (function () {
+    const pagers = new WeakMap();
+    function initPagination() {
+        document.querySelectorAll('table.data-table').forEach(table => {
+            const body = table.tBodies[0]; if (!body) return;
+            const rows = Array.from(body.rows);
+            let state = pagers.get(table);
+            if (state && rows.length === state.rows.length && rows.every((row, index) => row === state.rows[index])) return;
+            if (!state) {
+                const controls = document.createElement('div'); controls.className = 'table-pagination';
+                controls.style.cssText = 'display:flex;gap:12px;align-items:center;justify-content:flex-end;padding:12px;flex-wrap:wrap';
+                const previous = document.createElement('button'), next = document.createElement('button'), label = document.createElement('span');
+                previous.type = next.type = 'button'; previous.textContent = 'Trang trước'; next.textContent = 'Trang sau';
+                previous.className = next.className = 'btn-secondary'; label.setAttribute('aria-live', 'polite');
+                controls.append(previous, label, next); table.after(controls);
+                state = { controls, previous, next, label, page: 0, rows: [] }; pagers.set(table, state);
+                const draw = () => {
+                    const pages = Math.max(1, Math.ceil(state.rows.length / 20));
+                    state.page = Math.min(state.page, pages - 1);
+                    state.rows.forEach((row, index) => row.hidden = index < state.page * 20 || index >= (state.page + 1) * 20);
+                    state.controls.hidden = state.rows.length <= 20; state.controls.style.display = state.rows.length <= 20 ? 'none' : 'flex';
+                    const text = `${state.page + 1} / ${pages} · ${state.rows.length} dòng`;
+                    if (state.label.textContent !== text) state.label.textContent = text;
+                    state.previous.disabled = state.page === 0; state.next.disabled = state.page >= pages - 1;
+                };
+                state.draw = draw;
+                previous.onclick = () => { state.page--; draw(); }; next.onclick = () => { state.page++; draw(); };
+            }
+            state.rows = rows; state.page = 0; state.draw();
+        });
+    }
     // 1. Responsive Sidebar Toggle & Backdrop
     function initResponsiveNav() {
         // Create backdrop if not existing
@@ -17,7 +47,7 @@
         });
 
         // Insert mobile toggle button into topbar if missing
-        const topbar = document.querySelector('.topbar');
+        const topbar = document.querySelector('.topbar, .top-header');
         if (topbar && !topbar.querySelector('.menu-toggle')) {
             const toggleBtn = document.createElement('button');
             toggleBtn.className = 'menu-toggle';
@@ -102,17 +132,20 @@
         document.addEventListener('DOMContentLoaded', () => {
             initResponsiveNav();
             initTableLabels();
+            initPagination();
             initModals();
         });
     } else {
         initResponsiveNav();
         initTableLabels();
+        initPagination();
         initModals();
     }
 
     // Observer for dynamically rendered tables
     const observer = new MutationObserver(() => {
         initTableLabels();
+        initPagination();
     });
     observer.observe(document.body, { childList: true, subtree: true });
 })();

@@ -1,4 +1,8 @@
 HELP.md
+.env
+.tmp/
+node_modules/
+test-results/
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

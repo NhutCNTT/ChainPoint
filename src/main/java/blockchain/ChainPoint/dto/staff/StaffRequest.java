@@ -38,6 +38,8 @@ public class StaffRequest {
 
     private Long branchId;
 
+    private java.util.Set<Long> branchIds;
+
     @Builder.Default
     @Pattern(
             regexp = "active|inactive|locked|disabled",

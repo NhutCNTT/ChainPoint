@@ -1,7 +1,8 @@
 // ChainPoint — Dashboard interactivity (Sales line chart, filters, tooltips, multi-branch data)
 // Dữ liệu kết nối trực tiếp 100% với MySQL Backend API (không dùng mock data)
 
-(function () {
+(async function () {
+    await window.CP.ready;
     const getStorage = k => sessionStorage.getItem(k) || localStorage.getItem(k);
     const urlParams = new URLSearchParams(window.location.search);
     const branchFromUrl = urlParams.get('branch');
@@ -24,6 +25,7 @@
         : (currentUserRole !== 'manager' && branchIdFromUrl ? branchIdFromUrl : 'all');
     let currentMetric = 'revenue';
     let currentRange = '7days';
+    let customFrom = '', customTo = '';
     let currentMetricsData = {
         totalRevenue: 0,
         revenueGrowth: '+0.0%',
@@ -99,7 +101,7 @@
 
             let options = `<option value="all">🌐 Toàn chuỗi nhà hàng (Tổng hợp ${branchesList.length} CN)</option>`;
             branchesList.forEach(b => {
-                options += `<option value="${b.id}">📍 ${b.name} (${b.code || ''})</option>`;
+                options += `<option value="${b.id}">📍 ${window.escapeHtml(b.name)} (${window.escapeHtml(b.code) || ''})</option>`;
             });
             branchSelector.innerHTML = options;
             branchSelector.value = selectedBranchId;
@@ -112,15 +114,27 @@
 
     // 2. Nạp dữ liệu Metrics & Chart từ MySQL API
     async function loadDashboardData() {
+        try { branchesList = await api().get('/branches'); } catch (error) { CP.notify(error.message); }
         const hasBranch = selectedBranchId && selectedBranchId !== 'all';
-        const metricsQuery = hasBranch
+        let metricsQuery = hasBranch
             ? `?branchId=${selectedBranchId}&range=${encodeURIComponent(currentRange)}`
             : `?range=${encodeURIComponent(currentRange)}`;
+        if (customFrom && customTo) metricsQuery += '&' + new URLSearchParams({ from: customFrom, to: customTo });
         const branchQuery = hasBranch ? `?branchId=${selectedBranchId}` : '';
 
         // Tải metrics từ MySQL
         try {
             const data = await api().get(`/admin/dashboard/metrics${metricsQuery}`);
+            for (const [label, value, id] of [['Nhân viên', data.totalEmployees, 'metricEmployees'], ['Chi nhánh', data.totalBranches, 'metricBranches']]) {
+                let node = document.getElementById(id);
+                if (!node) {
+                    const card = document.createElement('article'); card.className = 'metric-card';
+                    const title = document.createElement('h3'); title.textContent = label;
+                    node = document.createElement('div'); node.id = id; node.className = 'metric-value'; card.append(title, node);
+                    document.querySelector('.metrics-grid').appendChild(card);
+                }
+                node.textContent = value ?? '—';
+            }
             currentMetricsData = {
                 totalRevenue: data.totalRevenue || 0,
                 revenueGrowth: data.revenueGrowth || '+0.0%',
@@ -175,10 +189,10 @@
                             <tr>
                                 <td>
                                     <div class="dish-item">
-                                        <div class="dish-icon">${item.emoji || '🍽️'}</div>
+                                        <div class="dish-icon">${window.escapeHtml(item.emoji || '🍽️')}</div>
                                         <div class="dish-info">
-                                            <strong>${item.name || ('Món #' + (idx + 1))}</strong>
-                                            <small>${item.category || ('Top #' + (idx + 1))}</small>
+                                            <strong>${window.escapeHtml(item.name || ('Món #' + (idx + 1)))}</strong>
+                                            <small>${window.escapeHtml(item.category || ('Top #' + (idx + 1)))}</small>
                                         </div>
                                     </div>
                                 </td>
@@ -211,14 +225,14 @@
             return `
                 <div class="branch-item" style="margin-bottom: 16px;">
                     <div class="branch-meta" style="display:flex; justify-content:space-between; margin-bottom: 6px;">
-                        <span class="branch-name" style="font-weight: 700;">📍 ${b.name} (${b.code || ''})</span>
+                        <span class="branch-name" style="font-weight: 700;">📍 ${window.escapeHtml(b.name)} (${window.escapeHtml(b.code) || ''})</span>
                         <span class="branch-sales" style="font-weight: 800; color: var(--primary);">${formatVND(rev)}</span>
                     </div>
                     <div class="branch-bar-bg" style="height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
                         <div class="branch-bar-fill" style="width: ${pct}%; height: 100%; background: var(--primary); border-radius: 999px;"></div>
                     </div>
                     <div class="branch-sub" style="display:flex; justify-content:space-between; font-size: 12px; color: var(--muted); margin-top: 4px;">
-                        <span>Quản lý: ${b.managerName || 'Chưa chỉ định'}</span>
+                        <span>Quản lý: ${window.escapeHtml(b.managerName || 'Chưa chỉ định')}</span>
                         <span>${pct}% tổng doanh thu</span>
                     </div>
                 </div>
@@ -372,12 +386,74 @@
             filterTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
             currentRange = tab.dataset.range || '7days';
+            customFrom = ''; customTo = '';
             loadDashboardData();
         });
     });
 
     // Keyboard shortcut (Ctrl+K)
     const searchInput = document.getElementById('searchInput');
+    const results = document.createElement('div'); results.id = 'dashboardSearchResults'; results.setAttribute('aria-live', 'polite');
+    results.style.cssText = 'position:absolute;background:var(--card,#fff);box-shadow:0 8px 24px #0002;border-radius:10px;z-index:20;width:100%;max-height:340px;overflow:auto';
+    if (searchInput) {
+        searchInput.parentElement.style.position = 'relative'; searchInput.parentElement.appendChild(results);
+        let timeout, generation = 0;
+        searchInput.addEventListener('input', () => {
+            clearTimeout(timeout); const current = ++generation;
+            const query = searchInput.value.trim().toLowerCase(); results.replaceChildren();
+            if (!query) return;
+            timeout = setTimeout(async () => {
+                results.textContent = 'Đang tìm kiếm...';
+                const branchQuery = selectedBranchId && selectedBranchId !== 'all' ? '?branchId=' + selectedBranchId : '';
+                try {
+                    const [orders, products, customers] = await Promise.all(['orders', 'products', 'customers'].map(resource => api().get('/' + resource + branchQuery)));
+                    if (current !== generation) return;
+                    results.replaceChildren();
+                    const matches = [
+                        ...orders.filter(o => [o.billCode, o.customerName, o.customerPhone].some(v => String(v || '').toLowerCase().includes(query))).map(o => [o.billCode, 'branch/orders', o.branchId, o.billCode]),
+                        ...products.filter(p => p.name.toLowerCase().includes(query)).map(p => [p.name, 'branch/menu', p.branchId || selectedBranchId, p.name]),
+                        ...customers.filter(c => [c.name, c.phone].some(v => v.toLowerCase().includes(query))).map(c => [c.name + ' · ' + c.phone, 'branch/customers', c.branchId, c.phone])
+                    ].slice(0, 15);
+                    matches.forEach(([label, route, branchId, q]) => {
+                        const link = document.createElement('a'); link.textContent = label;
+                        const params = new URLSearchParams({ q }); if (branchId && branchId !== 'all') params.set('branchId', branchId);
+                        link.href = '/Frontend/pages/' + route + '.html?' + params; link.style.cssText = 'display:block;padding:12px'; results.appendChild(link);
+                    });
+                    if (!matches.length) results.textContent = 'Không tìm thấy kết quả.';
+                } catch (error) { results.textContent = error.message; }
+            }, 250);
+        });
+    }
+    const notificationButton = document.querySelector('button[aria-label="Thông báo"]');
+    notificationButton?.querySelector('.notif-badge')?.remove();
+    notificationButton?.addEventListener('click', async () => {
+        try {
+            const query = selectedBranchId && selectedBranchId !== 'all' ? '?branchId=' + selectedBranchId : '';
+            const orders = await api().get('/orders' + query);
+            const active = orders.filter(order => ['open', 'pending'].includes(order.status)).length;
+            window.showToast?.(`${active} đơn hàng đang xử lý trong phạm vi được chọn.`);
+        } catch (error) { CP.notify(error.message); }
+    });
+    const profile = document.querySelector('.profile-chip');
+    if (profile) {
+        profile.tabIndex = 0; profile.setAttribute('role', 'link');
+        profile.onclick = () => location.href = '/Frontend/pages/employee/profile.html';
+        profile.onkeydown = event => { if (event.key === 'Enter') profile.click(); };
+    }
+    const customRange = document.createElement('form'); customRange.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center';
+    customRange.innerHTML = '<label>Từ <input type="date" id="dashboardFrom" required></label><label>Đến <input type="date" id="dashboardTo" required></label><button class="btn-secondary" type="submit">Lọc ngày</button>';
+    document.querySelector('.heading-actions')?.appendChild(customRange);
+    customRange.onsubmit = async event => {
+        event.preventDefault();
+        const from = document.getElementById('dashboardFrom').value, to = document.getElementById('dashboardTo').value;
+        if (from > to) return CP.notify('Ngày bắt đầu phải trước ngày kết thúc.');
+        try {
+            customFrom = from; customTo = to;
+            await loadDashboardData();
+        } catch (error) { CP.notify(error.message); }
+    };
+    const refreshTimer = setInterval(() => { if (!document.hidden) loadDashboardData(); }, 30000);
+    window.addEventListener('pagehide', () => clearInterval(refreshTimer), { once: true });
     window.addEventListener('keydown', (e) => {
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
             e.preventDefault();

@@ -1,7 +1,8 @@
 // ChainPoint — Quản lý Thực đơn (Menu) Chi nhánh
 // Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
 
-(function () {
+(async function () {
+    await window.CP.ready;
     const CATEGORIES = [
         { id: 'all', name: 'Tất cả danh mục', icon: '✨' },
         { id: 'hot', name: 'Món nóng', icon: '🔥' },
@@ -13,7 +14,7 @@
 
     let products = [];
     let currentCategory = 'all';
-    let searchQuery = '';
+    let searchQuery = new URLSearchParams(location.search).get('q') || '';
 
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
 
@@ -28,6 +29,7 @@
     const tableBody = document.getElementById('menuTableBody');
     const categoryTabs = document.getElementById('categoryTabs');
     const searchInput = document.getElementById('menuSearchInput');
+    if (searchInput) searchInput.value = searchQuery;
     const addButton = document.getElementById('btnAddProduct');
     const modal = document.getElementById('productModal');
     const form = document.getElementById('productForm');
@@ -71,6 +73,7 @@
             const data = await window.API.get('/products');
             products = (Array.isArray(data) ? data : []).map(product => ({
                 realId: product.id,
+                branchId: product.branchId,
                 code: product.code || '',
                 name: product.name || '',
                 category: product.category || 'other',
@@ -86,6 +89,10 @@
             toast('Không thể tải thực đơn: ' + error.message, 'error');
         }
 
+        const known = new Set(CATEGORIES.map(category => category.id));
+        products.forEach(product => { if (!known.has(product.category)) { known.add(product.category); CATEGORIES.push({ id: product.category, name: product.category, icon: '🍽️' }); } });
+        const suggestions = document.getElementById('productCategories');
+        suggestions.replaceChildren(); CATEGORIES.filter(c => c.id !== 'all').forEach(category => suggestions.appendChild(new Option(category.name, category.id)));
         updateStats();
         renderCategoryTabs();
         renderTable();
@@ -120,9 +127,9 @@
             const active = currentCategory === category.id ? 'active' : '';
 
             return `
-                <button type="button" class="filter-tab ${active}" data-cat="${category.id}">
+                <button type="button" class="filter-tab ${active}" data-cat="${escapeHtml(category.id)}">
                     <span>${category.icon}</span>
-                    <span>${category.name}</span>
+                    <span>${escapeHtml(category.name)}</span>
                     <span style="opacity:0.75; font-size:12px; margin-left:4px;">(${count})</span>
                 </button>
             `;
@@ -197,7 +204,7 @@
                         </div>
                     </td>
                     <td style="padding:14px 20px;">
-                        <span class="badge" style="background:#f1f5f9; color:#475569; font-weight:600;">${getCategoryDisplay(product.category)}</span>
+                        <span class="badge" style="background:#f1f5f9; color:#475569; font-weight:600;">${escapeHtml(getCategoryDisplay(product.category))}</span>
                     </td>
                     <td style="padding:14px 20px; font-weight:700; color:var(--text);">${formatVND(product.price)}</td>
                     <td style="padding:14px 20px;">
@@ -223,6 +230,11 @@
             `;
         }).join('');
 
+        if (CP.role === 'manager') {
+            products.filter(p => p.branchId == null).forEach(p => {
+                tableBody.querySelectorAll('[data-id="' + p.realId + '"]').forEach(button => { button.disabled = true; button.title = 'Món dùng chung do Chủ chuỗi quản lý'; });
+            });
+        }
         bindRowActions();
     }
 
@@ -320,6 +332,7 @@
 
             const editingId = editingIdInput.value;
             const payload = {
+                branchId: editingId ? products.find(p => String(p.realId) === String(editingId))?.branchId : Number(sessionStorage.getItem('cp_branch_id')) || null,
                 code: codeInput.value.trim(),
                 name: nameInput.value.trim(),
                 category: categoryInput.value,
@@ -335,8 +348,8 @@
                 return;
             }
 
-            if (!Number.isFinite(payload.price) || payload.price <= 0) {
-                toast('Giá bán phải là số lớn hơn 0.', 'error');
+            if (!Number.isFinite(payload.price) || payload.price < 0) {
+                toast('Giá bán phải là số không âm.', 'error');
                 priceInput.focus();
                 return;
             }

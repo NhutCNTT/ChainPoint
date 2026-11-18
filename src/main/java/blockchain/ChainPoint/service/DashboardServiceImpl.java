@@ -58,11 +58,21 @@ public class DashboardServiceImpl implements DashboardService {
     private final DiningTableRepository diningTableRepository;
     private final CustomerRepository customerRepository;
     private final BillDetailRepository billDetailRepository;
+    private final blockchain.ChainPoint.security.BranchAccess access;
+    private final blockchain.ChainPoint.repository.UserRepository userRepository;
+    private final blockchain.ChainPoint.repository.BranchRepository branchRepository;
 
     @Override
-    public DashboardMetricsResponse getMetrics(Long branchId, String range) {
+    public DashboardMetricsResponse getMetrics(Long branchId, String range, LocalDate from, LocalDate to) {
+        access.requireManagement();
+        branchId = access.resolve(branchId);
         LocalDate today = LocalDate.now(ZONE_ID);
         MetricsWindow window = resolveMetricsWindow(range, today);
+        if (from != null || to != null) {
+            if (from == null || to == null || from.isAfter(to)) throw new IllegalArgumentException("Supply a valid from/to date range");
+            long days = java.time.temporal.ChronoUnit.DAYS.between(from, to) + 1;
+            window = new MetricsWindow(from.atStartOfDay(), to.atTime(LocalTime.MAX), from.minusDays(days).atStartOfDay(), from.minusDays(1).atTime(LocalTime.MAX));
+        }
 
         BigDecimal currentRevenue = money(billRepository.sumRevenueBetween(
                 branchId,
@@ -105,11 +115,15 @@ public class DashboardServiceImpl implements DashboardService {
                 .totalCustomers(count(customerRepository.countTotalCustomers(branchId)))
                 .customerGrowth(formatGrowth(calculateGrowth(newCustomers, previousNewCustomers)))
                 .activeTablesCount(count(diningTableRepository.countBusyTables(branchId)))
+                .totalEmployees(userRepository.countStaffInBranch(branchId))
+                .totalBranches(branchId != null ? 1L : branchRepository.count())
                 .build();
     }
 
     @Override
     public RevenueChartResponse getWeeklyRevenueChart(Long branchId) {
+        access.requireManagement();
+        branchId = access.resolve(branchId);
         LocalDate today = LocalDate.now(ZONE_ID);
         LocalDate currentMonday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate lastMonday = currentMonday.minusWeeks(1);
@@ -129,7 +143,7 @@ public class DashboardServiceImpl implements DashboardService {
             }
 
             totalsByDate
-                    .computeIfAbsent(bill.getCreatedAt().toLocalDate(), key -> new DayTotals())
+                    .computeIfAbsent((bill.getPaidAt() != null ? bill.getPaidAt() : bill.getCreatedAt()).toLocalDate(), key -> new DayTotals())
                     .add(bill.getFinalAmount());
         }
 
@@ -149,6 +163,8 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public List<TopDishResponse> getTopDishes(Long branchId, int limit) {
+        access.requireManagement();
+        branchId = access.resolve(branchId);
         int pageSize = limit > 0 ? limit : DEFAULT_TOP_DISHES_LIMIT;
 
         return billDetailRepository.findTopSellingDishes(branchId, PageRequest.of(0, pageSize))

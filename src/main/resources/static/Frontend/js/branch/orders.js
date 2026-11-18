@@ -1,16 +1,18 @@
 // ChainPoint — Quản lý Đơn hàng Chi nhánh
 // Kết nối trực tiếp với MySQL Backend API & Quyền hoàn tiền Quản lý (Manager/Owner)
 
-(function () {
+(async function () {
+    await window.CP.ready;
     let ordersList = [];
     let currentStatusFilter = 'all';
-    let searchQuery = '';
+    let searchQuery = new URLSearchParams(location.search).get('q') || '';
 
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
 
     const tbody = document.getElementById('ordersTableBody');
     const filterTabsContainer = document.getElementById('orderFilterTabs');
     const searchInput = document.getElementById('orderSearchInput');
+    if (searchInput) searchInput.value = searchQuery;
 
     // Stats
     const statTotalOrders = document.getElementById('statTotalOrders');
@@ -80,8 +82,8 @@
         const total = ordersList.length;
         const paid = ordersList.filter(o => o.status === 'paid');
         const revenue = paid.reduce((sum, o) => sum + Number(o.paidAmount || 0), 0);
-        const totalUsed = ordersList.reduce((sum, o) => sum + Number(o.pointsUsed || 0), 0);
-        const totalEarned = ordersList.reduce((sum, o) => sum + Number(o.pointsEarned || 0), 0);
+        const totalUsed = paid.reduce((sum, o) => sum + Number(o.pointsUsed || 0), 0);
+        const totalEarned = paid.reduce((sum, o) => sum + Number(o.pointsEarned || 0), 0);
 
         if (statTotalOrders) statTotalOrders.textContent = total;
         if (statTotalRevenue) statTotalRevenue.textContent = formatVND(revenue);
@@ -166,6 +168,7 @@
                 `;
             }
 
+            if (['open', 'pending'].includes(o.status) && isManager) actionButtons += `<button class="btn-cancel-order" data-id="${o.billId}" type="button">Hủy đơn</button>`;
             actionButtons += `</div>`;
 
             return `
@@ -173,11 +176,11 @@
                     <td><code>${o.billId}</code></td>
                     <td><small style="color:var(--muted);">${o.time}</small></td>
                     <td>
-                        <div style="font-weight: 600;">${o.customerName}</div>
-                        <div style="font-size: 11px; color: var(--muted);">${o.phone}</div>
+                        <div style="font-weight: 600;">${window.escapeHtml(o.customerName)}</div>
+                        <div style="font-size: 11px; color: var(--muted);">${window.escapeHtml(o.phone)}</div>
                     </td>
-                    <td><strong>${o.tableName}</strong></td>
-                    <td><small>${o.staff}</small></td>
+                    <td><strong>${window.escapeHtml(o.tableName)}</strong></td>
+                    <td><small>${window.escapeHtml(o.staff)}</small></td>
                     <td>
                         <div style="font-weight: 800; color: var(--primary);">${formatVND(o.paidAmount)}</div>
                         <div style="font-size: 10.5px; color: var(--muted);">${o.method}</div>
@@ -194,6 +197,14 @@
     }
 
     function bindTableEvents() {
+        document.querySelectorAll('.btn-cancel-order').forEach(button => {
+            button.onclick = async () => {
+                if (!confirm('Hủy đơn chưa thanh toán và hoàn tồn kho/điểm đã giữ?')) return;
+                button.disabled = true;
+                try { await API.post('/pos/orders/' + encodeURIComponent(button.dataset.id) + '/cancel', {}); await loadOrders(); }
+                catch (error) { CP.notify(error.message); button.disabled = false; }
+            };
+        });
         document.querySelectorAll('.btn-view-detail').forEach(btn => {
             btn.onclick = () => {
                 const billId = btn.getAttribute('data-id');
@@ -220,7 +231,7 @@
             return;
         }
 
-        const confirmed = confirm(`Bạn có chắc chắn muốn HOÀN TIỀN hóa đơn #${billId}?\n\n• Điểm đã dùng sẽ hoàn trả lại cho khách\n• Điểm đã tích sẽ được thu hồi\n• Tồn kho món ăn sẽ được tự động cộng lại vào cơ sở dữ liệu MySQL\n• Giao dịch sẽ được ghi vết trên Blockchain Smart Contract`);
+        const confirmed = confirm(`Bạn xác nhận đã trả tiền cho khách theo quy trình được phê duyệt cho hóa đơn #${billId}?\n\n• Thao tác này điều chỉnh sổ bán hàng, điểm và tồn kho.\n• Hệ thống không tự chuyển tiền hoàn từ ngân hàng.\n• Đồng bộ blockchain sẽ được thử khi đã có bản ghi hóa đơn.`);
         if (!confirmed) return;
 
         try {
@@ -270,7 +281,7 @@
         if (itemsContainer) {
             itemsContainer.innerHTML = order.items.map(item => `
                 <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #e2e8f0; font-size:13.5px;">
-                    <div><strong>${item.name}</strong> × ${item.qty}</div>
+                    <div><strong>${window.escapeHtml(item.name)}</strong> × ${item.qty}</div>
                     <div style="font-weight:700;">${formatVND(item.subtotal || (item.price * item.qty))}</div>
                 </div>
             `).join('');

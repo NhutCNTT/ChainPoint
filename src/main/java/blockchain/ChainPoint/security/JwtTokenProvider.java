@@ -38,6 +38,7 @@ public class JwtTokenProvider {
                 .ifPresent(role -> claims.put("role", role));
 
         if (userDetails instanceof CustomUserDetails customUserDetails) {
+            claims.put("branchIds", customUserDetails.getBranchIds());
             Long branchId = customUserDetails.getBranchId();
             if (branchId != null) {
                 claims.put("branchId", branchId);

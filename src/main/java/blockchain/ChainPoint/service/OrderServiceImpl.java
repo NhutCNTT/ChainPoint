@@ -42,6 +42,7 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final BlockchainService blockchainService;
     private final Web3Config web3Config;
+    private final blockchain.ChainPoint.security.BranchAccess access;
 
     @Override
     public List<OrderResponse> getOrders(
@@ -50,6 +51,8 @@ public class OrderServiceImpl implements OrderService {
             LocalDateTime from,
             LocalDateTime to
     ) {
+        branchId = access.resolve(branchId);
+        if (from != null && to != null && from.isAfter(to)) throw new IllegalArgumentException("Start date must precede end date");
         String statusFilter = StringUtils.hasText(status) ? status.trim() : null;
 
         return billRepository.searchBills(branchId, statusFilter, from, to).stream()
@@ -62,14 +65,17 @@ public class OrderServiceImpl implements OrderService {
         Bill bill = billRepository.findDetailedByBillCode(billCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Bill not found: " + billCode));
 
+        access.check(bill.getBranch().getId());
         return toResponse(bill);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public RefundResponse refundOrder(String billCode, RefundRequest request, String processedBy) {
-        Bill bill = billRepository.findDetailedByBillCode(billCode)
+        access.requireManagement();
+        Bill bill = billRepository.findForUpdate(billCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Bill not found: " + billCode));
+        access.check(bill.getBranch().getId());
 
         if (!STATUS_PAID.equalsIgnoreCase(bill.getStatus())) {
             throw new InvalidRedemptionException(
@@ -84,13 +90,14 @@ public class OrderServiceImpl implements OrderService {
 
         Customer customer = null;
         if (StringUtils.hasText(bill.getCustomerPhone())) {
-            customer = customerRepository.findByPhone(bill.getCustomerPhone()).orElse(null);
+            customer = customerRepository.findByPhoneForUpdate(bill.getCustomerPhone()).orElse(null);
             if (customer != null) {
                 adjustCustomer(customer, bill, pointsRestored, pointsRevoked);
             }
         }
 
         bill.setStatus(STATUS_REFUNDED);
+        bill.setBlockchainPending(false);
         if (request != null && StringUtils.hasText(request.getReason())) {
             bill.setRefundReason(request.getReason().trim());
         }
@@ -168,7 +175,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void restoreStock(Bill bill) {
-        for (BillDetail detail : bill.getDetails()) {
+        for (BillDetail detail : bill.getDetails().stream().sorted(java.util.Comparator.comparing(d -> d.getProduct().getId())).toList()) {
             Product product = productRepository.findByIdForUpdate(detail.getProduct().getId())
                     .orElse(null);
 
@@ -180,7 +187,7 @@ public class OrderServiceImpl implements OrderService {
             int quantity = detail.getQuantity() != null ? detail.getQuantity() : 0;
             product.setStockQuantity(stock + quantity);
 
-            if (STATUS_OUT_OF_STOCK.equalsIgnoreCase(product.getStatus()) && product.getStockQuantity() > 0) {
+            if (stock == 0 && STATUS_OUT_OF_STOCK.equalsIgnoreCase(product.getStatus()) && product.getStockQuantity() > 0) {
                 product.setStatus(STATUS_AVAILABLE);
             }
 
@@ -191,7 +198,8 @@ public class OrderServiceImpl implements OrderService {
     private void adjustCustomer(Customer customer, Bill bill, long pointsRestored, long pointsRevoked) {
         long currentPoints = customer.getPoints() != null ? customer.getPoints() : 0L;
         long newPoints = currentPoints + pointsRestored - pointsRevoked;
-        customer.setPoints(Math.max(0L, newPoints));
+        if (newPoints < 0) throw new InvalidRedemptionException("Earned points have already been spent; resolve the loyalty balance before refunding");
+        customer.setPoints(newPoints);
 
         BigDecimal currentTotalSpent = customer.getTotalSpent() != null
                 ? customer.getTotalSpent()
@@ -214,6 +222,9 @@ public class OrderServiceImpl implements OrderService {
 
         return OrderResponse.builder()
                 .id(bill.getId())
+                .note(bill.getNote())
+                .paidAt(bill.getPaidAt())
+                .cashReceived(bill.getCashReceived())
                 .billCode(bill.getBillCode())
                 .branchId(bill.getBranch() != null ? bill.getBranch().getId() : null)
                 .branchName(bill.getBranch() != null ? bill.getBranch().getName() : null)
@@ -240,6 +251,7 @@ public class OrderServiceImpl implements OrderService {
     private OrderItemResponse toItemResponse(BillDetail detail) {
         return OrderItemResponse.builder()
                 .productId(detail.getProduct() != null ? detail.getProduct().getId() : null)
+                .note(detail.getNote())
                 .productName(detail.getProductName())
                 .unitPrice(detail.getUnitPrice())
                 .quantity(detail.getQuantity())

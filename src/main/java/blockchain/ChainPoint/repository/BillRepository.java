@@ -15,6 +15,16 @@ import java.util.Optional;
 @Repository
 public interface BillRepository extends JpaRepository<Bill, Long> {
 
+    Optional<Bill> findByRequestKey(String requestKey);
+
+    boolean existsByCustomerPhone(String customerPhone);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Bill b WHERE b.billCode = :code")
+    Optional<Bill> findForUpdate(@Param("code") String code);
+
+    List<Bill> findByBlockchainPendingTrueAndStatus(String status);
+
     Optional<Bill> findByBillCode(String billCode);
 
     @EntityGraph(attributePaths = {"details", "details.product", "branch"})
@@ -24,8 +34,8 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
     @Query("SELECT DISTINCT b FROM Bill b "
             + "WHERE (:branchId IS NULL OR b.branch.id = :branchId) "
             + "AND (:status IS NULL OR b.status = :status) "
-            + "AND (:startDate IS NULL OR b.createdAt >= :startDate) "
-            + "AND (:endDate IS NULL OR b.createdAt <= :endDate) "
+            + "AND (:startDate IS NULL OR COALESCE(b.paidAt, b.createdAt) >= :startDate) "
+            + "AND (:endDate IS NULL OR COALESCE(b.paidAt, b.createdAt) <= :endDate) "
             + "ORDER BY b.createdAt DESC")
     List<Bill> searchBills(
             @Param("branchId") Long branchId,
@@ -37,7 +47,7 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
     @Query("SELECT COALESCE(SUM(b.finalAmount), 0) FROM Bill b "
             + "WHERE (:branchId IS NULL OR b.branch.id = :branchId) "
             + "AND b.status = 'paid' "
-            + "AND b.createdAt BETWEEN :startDate AND :endDate")
+            + "AND COALESCE(b.paidAt, b.createdAt) BETWEEN :startDate AND :endDate")
     BigDecimal sumRevenueBetween(
             @Param("branchId") Long branchId,
             @Param("startDate") LocalDateTime startDate,
@@ -47,7 +57,7 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
     @Query("SELECT COUNT(b) FROM Bill b "
             + "WHERE (:branchId IS NULL OR b.branch.id = :branchId) "
             + "AND b.status = 'paid' "
-            + "AND b.createdAt BETWEEN :startDate AND :endDate")
+            + "AND COALESCE(b.paidAt, b.createdAt) BETWEEN :startDate AND :endDate")
     Long countOrdersBetween(
             @Param("branchId") Long branchId,
             @Param("startDate") LocalDateTime startDate,
@@ -57,7 +67,7 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
     @Query("SELECT b FROM Bill b "
             + "WHERE (:branchId IS NULL OR b.branch.id = :branchId) "
             + "AND b.status = 'paid' "
-            + "AND b.createdAt BETWEEN :startDate AND :endDate "
+            + "AND COALESCE(b.paidAt, b.createdAt) BETWEEN :startDate AND :endDate "
             + "ORDER BY b.createdAt ASC")
     List<Bill> findPaidBillsBetween(
             @Param("branchId") Long branchId,

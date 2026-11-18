@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="../../js/common/session.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ChainPoint Owner — So sánh doanh thu chi nhánh</title>
@@ -67,6 +68,10 @@
         </div>
       </header>
 
+      <form id="comparisonDateFilter" class="panel" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:16px;margin-bottom:20px">
+        <label>Từ <input id="comparisonFrom" type="date" required></label><label>Đến <input id="comparisonTo" type="date" required></label>
+        <button class="btn-primary" type="submit">So sánh theo ngày</button>
+      </form>
       <!-- Comparison Metrics Cards -->
       <section id="comparisonCardsGrid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px;">
         <div style="text-align: center; padding: 36px; color: var(--muted); grid-column: 1 / -1;">
@@ -122,6 +127,14 @@
     async function loadComparisonData() {
       try {
         const branches = await window.API.get('/branches');
+        const from = document.getElementById('comparisonFrom').value, to = document.getElementById('comparisonTo').value;
+        if (from && to) {
+          if (from > to) throw new Error('Ngày bắt đầu phải trước ngày kết thúc.');
+          await Promise.all(branches.map(async branch => {
+            const metrics = await API.get('/admin/dashboard/metrics?' + new URLSearchParams({ branchId: branch.id, from, to }));
+            branch.weeklyRevenue = Number(metrics.totalRevenue);
+          }));
+        }
         renderComparison(branches);
       } catch (err) {
         console.warn('Lỗi nạp dữ liệu so sánh chi nhánh:', err);
@@ -147,7 +160,7 @@
       if (linksContainer) {
         linksContainer.innerHTML = branches.map(b => `
           <a href="../admin/dashboard.html?branchId=${b.id}&branch=${encodeURIComponent(b.name)}" class="switch-branch-link" style="color:#1e40af; background:#f0f7ff; border:1px solid #dbeafe; margin-bottom:2px;">
-            <span>📍 ${b.name}</span>
+            <span>📍 ${window.escapeHtml(b.name)}</span>
           </a>
         `).join('');
       }
@@ -169,10 +182,10 @@
                 <span class="badge badge-primary">Hạng ${idx + 1}</span>
                 <span class="badge ${b.status === 'open' ? 'badge-success' : 'badge-neutral'}">${b.status === 'open' ? '● Đang mở' : '⏸ Tạm đóng'}</span>
               </div>
-              <h3 style="font-size: 18px; font-weight: 800; color: var(--text); margin-top: 4px;">${b.name}</h3>
+              <h3 style="font-size: 18px; font-weight: 800; color: var(--text); margin-top: 4px;">${window.escapeHtml(b.name)}</h3>
               <div style="font-size: 26px; font-weight: 800; color: ${color}; margin: 6px 0;">${formatVND(rev)}</div>
               <div style="font-size: 13px; color: var(--muted); display:flex; flex-direction:column; gap:4px;">
-                <div>Quản lý: <strong>${b.managerName || 'Chưa chỉ định'}</strong></div>
+                <div>Quản lý: <strong>${window.escapeHtml(b.managerName || 'Chưa chỉ định')}</strong></div>
                 <div>Quy mô: <strong>${b.tablesCount || 0} bàn</strong> · <strong>${b.staffCount || 0} NV</strong></div>
                 <div>Tỷ trọng chuỗi: <strong>${pct}%</strong></div>
               </div>
@@ -188,10 +201,10 @@
           return `
             <tr>
               <td>
-                <strong>📍 ${b.name}</strong>
-                <small style="display:block; color:var(--muted); font-size:12px;">${b.code || ''} · ${b.address || 'Chưa có địa chỉ'}</small>
+                <strong>📍 ${window.escapeHtml(b.name)}</strong>
+                <small style="display:block; color:var(--muted); font-size:12px;">${window.escapeHtml(b.code) || ''} · ${b.address || 'Chưa có địa chỉ'}</small>
               </td>
-              <td>${b.managerName || 'Chưa chỉ định'}</td>
+              <td>${window.escapeHtml(b.managerName || 'Chưa chỉ định')}</td>
               <td style="font-weight:800; color:var(--primary);">${formatVND(rev)}</td>
               <td>${b.tablesCount || 0} bàn</td>
               <td>${b.staffCount || 0} nhân sự</td>
@@ -219,6 +232,7 @@
       window.location.href = '../auth/login.html';
     });
 
+    document.getElementById('comparisonDateFilter').onsubmit = event => { event.preventDefault(); loadComparisonData(); };
     loadComparisonData();
   </script>
 </body>

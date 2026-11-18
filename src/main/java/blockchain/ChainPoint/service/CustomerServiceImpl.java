@@ -26,9 +26,12 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final BranchRepository branchRepository;
+    private final blockchain.ChainPoint.security.BranchAccess access;
+    private final blockchain.ChainPoint.repository.BillRepository bills;
 
     @Override
     public List<CustomerResponse> getCustomers(Long branchId, String query) {
+        branchId = access.resolve(branchId);
         List<Customer> customers = branchId != null
                 ? customerRepository.findByBranchId(branchId)
                 : customerRepository.findAllByOrderByCreatedAtDesc();
@@ -52,6 +55,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerResponse getCustomerByPhone(String phone) {
         return customerRepository.findByPhone(phone.trim())
+                .filter(c -> access.canAccess(c.getBranch() != null ? c.getBranch().getId() : null))
                 .map(this::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Customer not found with phone: " + phone
@@ -61,6 +65,10 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public CustomerResponse createCustomer(CustomerRequest request) {
+        if (StringUtils.hasText(request.getWalletAddress())) access.requireOwner();
+        if (request.getPoints() != null && request.getPoints() != 0) {
+            throw new IllegalArgumentException("Loyalty balances can only change through payment workflows");
+        }
         String phone = request.getPhone().trim();
 
         if (customerRepository.existsByPhone(phone)) {
@@ -72,8 +80,8 @@ public class CustomerServiceImpl implements CustomerService {
                 .name(request.getName().trim())
                 .phone(phone)
                 .dateOfBirth(request.getDateOfBirth())
-                .tier(defaultTier(request.getTier()))
-                .points(defaultPoints(request.getPoints()))
+                .tier(DEFAULT_TIER)
+                .points(0L)
                 .walletAddress(trimToNull(request.getWalletAddress()))
                 .branch(resolveBranch(request.getBranchId()))
                 .build();
@@ -84,8 +92,11 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public CustomerResponse updateCustomer(Long id, CustomerRequest request) {
-        Customer customer = findCustomer(id);
+        Customer customer = customerRepository.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+        access.check(customer.getBranch() == null ? null : customer.getBranch().getId());
         String phone = request.getPhone().trim();
+        if (!phone.equals(customer.getPhone()) && bills.existsByCustomerPhone(customer.getPhone())) throw new IllegalArgumentException("Phone is referenced by financial history");
+        if (!Objects.equals(trimToNull(request.getWalletAddress()), customer.getWalletAddress()) && request.getWalletAddress() != null) access.requireOwner();
 
         if (!Objects.equals(customer.getPhone(), phone)
                 && customerRepository.existsByPhone(phone)) {
@@ -95,11 +106,10 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setName(request.getName().trim());
         customer.setPhone(phone);
         customer.setDateOfBirth(request.getDateOfBirth());
-        customer.setTier(defaultTier(request.getTier()));
-        if (request.getPoints() != null) {
-            customer.setPoints(request.getPoints());
+        if (request.getPoints() != null && !Objects.equals(request.getPoints(), customer.getPoints())) {
+            throw new IllegalArgumentException("Loyalty balances can only change through payment workflows");
         }
-        customer.setWalletAddress(trimToNull(request.getWalletAddress()));
+        if (request.getWalletAddress() != null) customer.setWalletAddress(trimToNull(request.getWalletAddress()));
         customer.setBranch(resolveBranch(request.getBranchId()));
 
         return toResponse(customerRepository.save(customer));
@@ -108,21 +118,26 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public void deleteCustomer(Long id) {
-        customerRepository.delete(findCustomer(id));
+        access.requireManagement();
+        Customer customer = findCustomer(id);
+        if (bills.existsByCustomerPhone(customer.getPhone()) || customer.getTotalSpent().signum() > 0 || customer.getPoints() > 0) {
+            throw new IllegalArgumentException("Customers with financial history must be retained");
+        }
+        customerRepository.delete(customer);
     }
 
     private Customer findCustomer(Long id) {
-        return customerRepository.findById(id)
+        Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
+        access.check(customer.getBranch() != null ? customer.getBranch().getId() : null);
+        return customer;
     }
 
     private Branch resolveBranch(Long branchId) {
-        if (branchId == null) {
-            return null;
-        }
+        branchId = access.requireBranch(branchId);
 
         return branchRepository.findById(branchId)
-                .orElseThrow(() -> new ResourceNotFoundException("Branch not found with id: " + branchId));
+                .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
     }
 
     private String generateCustomerCode() {

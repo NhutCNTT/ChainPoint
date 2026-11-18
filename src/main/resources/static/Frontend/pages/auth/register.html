@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="../../js/common/session.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ChainPoint — Dùng thử miễn phí 7 ngày</title>
@@ -305,7 +306,7 @@
       };
 
       try {
-        const apiUrl = (window.location.port && window.location.port !== '8080' && window.location.port !== '')
+        const apiUrl = (window.location.port && ['5500', '5501'].includes(window.location.port) && window.location.port !== '')
           ? 'http://localhost:8080/api/v1/auth/register'
           : '/api/v1/auth/register';
 

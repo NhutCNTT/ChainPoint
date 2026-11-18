@@ -1,4 +1,5 @@
 (async () => {
+  await Store.ready;
   const listEl = document.getElementById('bill-list');
   const methodLabel = { temp: 'Tạm tính', transfer: 'Chuyển khoản chờ' };
 
@@ -17,7 +18,7 @@
       return `
       <article class="bill-card ${b.method === 'transfer' ? 'transfer' : ''}" id="bill-${b.billId}" style="animation-delay:${i * 50}ms">
         <div class="bill-top">
-          <div><div class="bill-table">${t ? t.name : ('Bàn ' + b.tableId)}</div><div class="bill-id">#${b.billId} · ${UI.formatTime(b.createdAt)} · ${UI.minutesAgo(b.createdAt)} trước</div></div>
+          <div><div class="bill-table">${window.escapeHtml(t ? t.name : ('Bàn ' + b.tableId))}</div><div class="bill-id">#${b.billId} · ${UI.formatTime(b.createdAt)} · ${UI.minutesAgo(b.createdAt)} trước</div></div>
           <span class="badge ${b.method === 'transfer' ? 'badge-transfer' : 'badge-pending'}">${methodLabel[b.method] || 'Tạm tính'}</span>
         </div>
         <ul class="bill-items">

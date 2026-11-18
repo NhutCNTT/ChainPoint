@@ -1,9 +1,12 @@
 // ChainPoint POS — Payment & Loyalty Checkout
 // Used by: pos/payment.html
 
-(() => {
+(async () => {
+  await PayCommon.ready;
+  await LoyaltyStore.ready;
   const { bill, billId } = PayCommon;
   if (!billId || !bill) return;
+  if (bill.status === 'pending') { location.replace('payment-transfer.html?bill=' + encodeURIComponent(billId)); return; }
 
   const grossTotal = bill.grossTotal || bill.total;
   let activeCustomer = null;

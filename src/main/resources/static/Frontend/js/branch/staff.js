@@ -1,7 +1,8 @@
 // ChainPoint — Quản lý nhân viên Chi nhánh
 // Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
 
-(function () {
+(async function () {
+    await window.CP.ready;
     let staffList = [];
     let currentRoleFilter = 'all';
     let searchQuery = '';
@@ -16,6 +17,10 @@
     const staffForm = document.getElementById('staffForm');
     const modalTitle = document.getElementById('staffModalTitle');
     const editingIdInput = document.getElementById('editingStaffId');
+    const statusSelect = document.createElement('select'); statusSelect.id = 'staffAccountStatus';
+    statusSelect.add(new Option('Đang làm', 'active')); statusSelect.add(new Option('Tạm khóa', 'inactive'));
+    const statusLabel = document.createElement('label'); statusLabel.textContent = 'Trạng thái tài khoản';
+    statusLabel.appendChild(statusSelect); staffForm?.appendChild(statusLabel);
 
     async function resolveBranchId() {
         if (currentBranchId && !isNaN(Number(currentBranchId)) && Number(currentBranchId) > 0) {
@@ -114,14 +119,14 @@
             return `
                 <tr>
                     <td>
-                        <div style="font-weight: 700; color: var(--text);">${s.name}</div>
-                        <div style="font-size: 12px; color: var(--muted);"><code>@${s.username}</code></div>
+                        <div style="font-weight: 700; color: var(--text);">${window.escapeHtml(s.name)}</div>
+                        <div style="font-size: 12px; color: var(--muted);"><code>@${window.escapeHtml(s.username)}</code></div>
                     </td>
                     <td>${roleBadge}</td>
-                    <td>${s.phone}</td>
-                    <td>${s.email}</td>
-                    <td style="font-size: 13px; color: var(--muted);">${s.joinedAt}</td>
-                    <td><span class="badge badge-success">● Đang làm</span></td>
+                    <td>${window.escapeHtml(s.phone)}</td>
+                    <td>${window.escapeHtml(s.email)}</td>
+                    <td style="font-size: 13px; color: var(--muted);">${window.escapeHtml(s.joinedAt)}</td>
+                    <td><span class="badge">${s.status === 'active' ? '● Đang làm' : 'Tạm khóa'}</span></td>
                     <td style="text-align:right;">
                         <div style="display:inline-flex; gap:6px; justify-content:flex-end;">
                             <button type="button" class="action-icon-btn btn-edit-staff" data-id="${s.id}" title="Sửa">
@@ -169,6 +174,7 @@
             if (!staff) return;
             modalTitle.textContent = 'Chỉnh sửa nhân viên';
             editingIdInput.value = staff.id;
+            statusSelect.value = staff.status === 'active' ? 'active' : 'inactive';
             document.getElementById('staffName').value = staff.name;
             document.getElementById('staffUsername').value = staff.username;
             document.getElementById('staffUsername').disabled = true;
@@ -176,9 +182,12 @@
             document.getElementById('staffPhone').value = staff.phone === '—' ? '' : staff.phone;
             document.getElementById('staffEmail').value = staff.email === '—' ? '' : staff.email;
             const pwdRow = document.getElementById('staffPasswordRow');
+            document.getElementById('staffPassword').required = false;
+            document.getElementById('staffPassword').value = '';
             if (pwdRow) pwdRow.style.display = 'none';
         } else {
             modalTitle.textContent = 'Thêm nhân viên mới';
+            statusSelect.value = 'active';
             editingIdInput.value = '';
             document.getElementById('staffName').value = '';
             document.getElementById('staffUsername').value = '';
@@ -187,7 +196,7 @@
             document.getElementById('staffPhone').value = '';
             document.getElementById('staffEmail').value = '';
             const pwdInput = document.getElementById('staffPassword');
-            if (pwdInput) pwdInput.value = 'ChainPoint@123';
+            if (pwdInput) { pwdInput.value = ''; pwdInput.required = true; pwdInput.minLength = 8; }
             const pwdRow = document.getElementById('staffPasswordRow');
             if (pwdRow) pwdRow.style.display = 'grid';
         }
@@ -221,7 +230,7 @@
             const role = document.getElementById('staffRole').value;
             const phone = document.getElementById('staffPhone').value.trim();
             const email = document.getElementById('staffEmail').value.trim();
-            const password = document.getElementById('staffPassword') ? document.getElementById('staffPassword').value : 'ChainPoint@123';
+            const password = editId ? '' : document.getElementById('staffPassword').value;
             const branchId = await resolveBranchId();
 
             const payload = {
@@ -232,7 +241,7 @@
                 phone: phone || null,
                 email: email || null,
                 password: password || undefined,
-                status: 'active'
+                status: statusSelect.value
             };
 
             try {

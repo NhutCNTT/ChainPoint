@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="../js/common/session.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chọn món | ChainPoint POS</title>
@@ -8,6 +9,7 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/order.css">
+  <script src="../js/common/api.js"></script>
 </head>
 <body>
   <div class="order-shell">
@@ -50,9 +52,9 @@
         </div>
         <div class="cart-actions">
           <button id="btn-exit" class="btn btn-danger" type="button">↩ Thoát</button>
-          <button id="btn-save" class="btn" type="button">💾 Lưu</button>
-          <button id="btn-temp" class="btn btn-warn" type="button">🧮 Tạm tính</button>
-          <button id="btn-pay" class="btn btn-primary" type="button">💳 Thanh toán</button>
+          <button id="btn-save" disabled class="btn" type="button">💾 Lưu</button>
+          <button id="btn-temp" disabled class="btn btn-warn" type="button">🧮 Tạm tính</button>
+          <button id="btn-pay" disabled class="btn btn-primary" type="button">💳 Thanh toán</button>
         </div>
       </div>
     </aside>

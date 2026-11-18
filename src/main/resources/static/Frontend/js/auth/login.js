@@ -4,6 +4,7 @@
 (function () {
     const ROLE_ALIASES = {
         owner: 'owner',
+        admin: 'owner',
         manager: 'manager',
         cashier: 'cashier',
         employee: 'cashier',
@@ -49,7 +50,7 @@
 
     const isLiveServer = typeof window !== 'undefined'
         && window.location.port
-        && window.location.port !== '8080'
+        && ['5500', '5501'].includes(window.location.port)
         && window.location.port !== '';
     const API_BASE = isLiveServer
         ? 'http://localhost:8080/api/v1'
@@ -161,7 +162,7 @@
             });
         }
 
-        if (branchField) branchField.hidden = normalized === 'owner';
+        if (branchField) branchField.hidden = true;
         if (heroTitle) heroTitle.innerHTML = meta.heroTitle;
         if (heroText) heroText.textContent = meta.heroText;
         if (roleHintText) roleHintText.textContent = meta.hint;
@@ -294,7 +295,7 @@
             return;
         }
 
-        window.location.replace('../admin/dashboard.html');
+        window.location.replace(role === 'owner' ? '../owner/dashboard.html' : '../branch/dashboard.html');
     }
 
     if (tabs) {
@@ -388,8 +389,9 @@
                     return;
                 }
 
-                const role = normalizeRole(data.role, currentRole);
-                persistAuth(data, role, remember, username, fallbackBranch);
+                const role = normalizeRole(data.role, null);
+                if (!role) throw new Error('Unsupported account role');
+                persistAuth(data, role, remember, username, { id: '', name: '' });
                 redirectForRole(role);
             } catch (error) {
                 console.error('[Auth] Login request failed:', error);
@@ -401,5 +403,5 @@
     }
 
     selectRole(getRoleFromUrl());
-    loadBranches();
+    // Branch assignments are obtained after authentication.
 })();

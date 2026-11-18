@@ -21,6 +21,8 @@ public class ProductResponse implements Serializable {
 
     private Long id;
 
+    private Long branchId;
+
     private String code;
 
     private String name;

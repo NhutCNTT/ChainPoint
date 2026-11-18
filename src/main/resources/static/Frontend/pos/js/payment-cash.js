@@ -1,4 +1,5 @@
-(() => {
+(async () => {
+  await PayCommon.ready;
   const { bill, billId, loyaltyData } = PayCommon;
   if (!bill) return;
 
@@ -52,6 +53,7 @@
         discountVND: disc,
         paidAmount: bill.total
       });
+      if (CP.branches.find(branch => String(branch.id) === sessionStorage.getItem('cp_branch_id'))?.autoPrint) window.print();
 
       // Clear session for this bill
       sessionStorage.removeItem('pos_loyalty_' + billId);
@@ -61,7 +63,6 @@
       let msg = `Đã thu <b>${UI.formatVND(paidTotal)}</b>. Tiền thối khách: <b>${UI.formatVND(actualChange)}</b>.`;
 
       if (cust) {
-        const cfg = window.LoyaltyStore ? LoyaltyStore.getConfig() : { pointValueVND: 1000 };
         const usedPts = record ? Number(record.pointsUsed || 0) : Number(ptsUsed || 0);
         const discAmount = record ? Number(record.discountVND || 0) : Number(disc || 0);
         const earnedPts = record ? Number(record.pointsEarned || 0) : 0;
@@ -69,11 +70,11 @@
 
         msg += `
           <div style="margin-top:14px; padding:12px; background:#f0fdf4; border-radius:10px; font-size:13.5px; border:1px solid #bbf7d0; text-align:left; line-height:1.6;">
-            <div style="font-weight:700; color:#166534;">🎁 Tích điểm Bách Hóa Xanh (Database):</div>
+            <div style="font-weight:700; color:#166534;">🎁 Tích điểm ChainPoint:</div>
             <div>• Hội viên: <b>${UI.escapeHtml(cust.name)}</b> (${UI.escapeHtml(cust.phone)})</div>
             ${usedPts > 0 ? `<div>• Điểm đã đổi trừ: <b style="color:#e11d48;">-${usedPts} pts</b> (-${UI.formatVND(discAmount)})</div>` : ''}
             <div>• Điểm mới tích lũy: <b style="color:#16a34a;">+${earnedPts} pts</b></div>
-            <div>• Số dư điểm mới: <b style="color:#2563eb;">${finalBalance} pts</b> (= ${UI.formatVND(finalBalance * (cfg.pointValueVND || 1000))})</div>
+            <div>• Số dư điểm mới: <b style="color:#2563eb;">${finalBalance} pts</b></div>
           </div>
         `;
       }

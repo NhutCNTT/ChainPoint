@@ -31,6 +31,7 @@ public class LoyaltyServiceImpl implements LoyaltyService {
     private final LoyaltyConfigRepository loyaltyConfigRepository;
     private final BillRepository billRepository;
     private final CustomerRepository customerRepository;
+    private final blockchain.ChainPoint.security.BranchAccess access;
 
     @Override
     @Transactional
@@ -41,6 +42,7 @@ public class LoyaltyServiceImpl implements LoyaltyService {
     @Override
     @Transactional
     public LoyaltyConfigDto updateConfig(LoyaltyConfigDto request) {
+        access.requireOwner();
         LoyaltyConfig config = loadOrCreateConfig();
 
         if (request.getEarnRatioVnd() != null) {
@@ -71,10 +73,12 @@ public class LoyaltyServiceImpl implements LoyaltyService {
 
     @Override
     public List<LoyaltyTransactionResponse> getTransactions(Long branchId) {
+        branchId = access.resolve(branchId);
         List<Bill> bills = billRepository.searchBills(branchId, null, null, null);
         List<LoyaltyTransactionResponse> transactions = new ArrayList<>();
 
         for (Bill bill : bills) {
+            if (!"paid".equals(bill.getStatus()) && !"refunded".equals(bill.getStatus())) continue;
             Customer customer = StringUtils.hasText(bill.getCustomerPhone())
                     ? customerRepository.findByPhone(bill.getCustomerPhone()).orElse(null)
                     : null;

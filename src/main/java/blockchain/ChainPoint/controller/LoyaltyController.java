@@ -30,9 +30,9 @@ public class LoyaltyController {
     }
 
     @PutMapping("/config")
-    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
+    @PreAuthorize("hasRole('OWNER')")
     public ResponseEntity<LoyaltyConfigDto> updateConfig(
-            @RequestBody LoyaltyConfigDto request
+            @jakarta.validation.Valid @RequestBody LoyaltyConfigDto request
     ) {
         return ResponseEntity.ok(loyaltyService.updateConfig(request));
     }

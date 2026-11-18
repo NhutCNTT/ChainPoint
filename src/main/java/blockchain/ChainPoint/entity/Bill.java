@@ -40,6 +40,28 @@ public class Bill {
     @Column(name = "bill_code", nullable = false, unique = true, length = 32)
     private String billCode;
 
+    @Column(name = "request_key", unique = true, length = 64)
+    private String requestKey;
+
+    @Column(name = "provider_reference", unique = true, length = 100)
+    private String providerReference;
+
+    @Column(name = "order_note", length = 500)
+    private String note;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
+    @Column(name = "cash_received", precision = 15, scale = 2)
+    private BigDecimal cashReceived;
+
+    @Builder.Default
+    @Column(name = "blockchain_pending", nullable = false)
+    private Boolean blockchainPending = false;
+
+    @Column(name = "redeem_tx_hash", length = 66)
+    private String redeemTxHash;
+
     @Column(name = "table_code", nullable = false, length = 20)
     private String tableCode;
 

@@ -24,9 +24,11 @@ public class DiningTableServiceImpl implements DiningTableService {
 
     private final DiningTableRepository diningTableRepository;
     private final BranchRepository branchRepository;
+    private final blockchain.ChainPoint.security.BranchAccess access;
 
     @Override
     public List<DiningTableResponse> getTables(Long branchId, String area, String status) {
+        branchId = access.resolve(branchId);
         List<DiningTable> tables;
 
         if (branchId != null && StringUtils.hasText(area)) {
@@ -64,6 +66,7 @@ public class DiningTableServiceImpl implements DiningTableService {
     @Override
     @Transactional
     public DiningTableResponse createTable(DiningTableRequest request) {
+        access.requireManagement();
         Branch branch = findBranch(request.getBranchId());
 
         if (diningTableRepository.findByCodeAndBranchId(request.getCode(), branch.getId()).isPresent()) {
@@ -88,7 +91,9 @@ public class DiningTableServiceImpl implements DiningTableService {
     @Override
     @Transactional
     public DiningTableResponse updateTable(Long id, DiningTableRequest request) {
+        access.requireManagement();
         DiningTable table = findTable(id);
+        if ("busy".equals(table.getStatus()) || "pending".equals(table.getStatus())) throw new IllegalArgumentException("Occupied tables cannot be reconfigured");
         Branch branch = findBranch(request.getBranchId());
 
         diningTableRepository.findByCodeAndBranchId(request.getCode(), branch.getId())
@@ -113,15 +118,23 @@ public class DiningTableServiceImpl implements DiningTableService {
     @Override
     @Transactional
     public void deleteTable(Long id) {
-        diningTableRepository.delete(findTable(id));
+        access.requireManagement();
+        DiningTable table = findTable(id);
+        if ("busy".equals(table.getStatus()) || "pending".equals(table.getStatus())) {
+            throw new IllegalArgumentException("Cannot disable an occupied table");
+        }
+        table.setStatus("disabled");
     }
 
     private DiningTable findTable(Long id) {
-        return diningTableRepository.findById(id)
+        DiningTable table = diningTableRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dining table not found with id: " + id));
+        access.check(table.getBranch().getId());
+        return table;
     }
 
     private Branch findBranch(Long branchId) {
+        access.check(branchId);
         return branchRepository.findById(branchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with id: " + branchId));
     }

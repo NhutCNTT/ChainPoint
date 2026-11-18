@@ -22,6 +22,17 @@ import java.util.List;
 @Builder
 public class CheckoutRequest {
 
+    @jakarta.validation.constraints.Size(max = 64)
+    private String requestKey;
+
+    private String orderCode;
+
+    @jakarta.validation.constraints.Size(max = 500)
+    private String note;
+
+    @PositiveOrZero
+    private java.math.BigDecimal cashReceived;
+
     @NotNull(message = "Branch ID is required")
     @Positive(message = "Branch ID must be positive")
     private Long branchId;

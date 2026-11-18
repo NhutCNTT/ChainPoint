@@ -20,19 +20,26 @@ import java.math.BigDecimal;
 public class BranchRequest {
 
     @NotBlank(message = "Branch code is required")
+    @jakarta.validation.constraints.Size(max = 20)
     private String code;
 
     @NotBlank(message = "Branch name is required")
+    @jakarta.validation.constraints.Size(max = 150)
     private String name;
 
     @NotBlank(message = "Branch address is required")
+    @jakarta.validation.constraints.Size(max = 255)
     private String address;
 
     private String phone;
 
     private String managerName;
 
+    private Long managerId;
+
     private String openHours;
+
+    private Boolean autoPrint;
 
     @Builder.Default
     @Pattern(

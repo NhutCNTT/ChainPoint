@@ -1,0 +1,14 @@
+{
+  "name": "chainpoint-frontend-checks",
+  "private": true,
+  "scripts": {
+    "test": "node scripts/check-frontend.cjs",
+    "test:e2e": "node scripts/browser-e2e.cjs",
+    "test:contract": "node scripts/check-contract.cjs"
+  },
+  "overrides": { "tmp": "0.2.7" },
+  "devDependencies": {
+    "playwright": "1.65.1",
+    "solc": "0.8.38"
+  }
+}

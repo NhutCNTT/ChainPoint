@@ -1,7 +1,6 @@
 package blockchain.ChainPoint.controller;
 
 import blockchain.ChainPoint.dto.payment.PaymentStatusResponse;
-import blockchain.ChainPoint.dto.payment.SimulatePaymentRequest;
 import blockchain.ChainPoint.dto.payment.VietQrInfoResponse;
 import blockchain.ChainPoint.service.PaymentService;
 import jakarta.validation.Valid;
@@ -39,10 +38,11 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getStatus(billCode));
     }
 
-    @PostMapping("/simulate")
-    public ResponseEntity<PaymentStatusResponse> simulate(
-            @Valid @RequestBody SimulatePaymentRequest request
+    @PostMapping("/provider-confirmation")
+    public ResponseEntity<PaymentStatusResponse> confirm(
+            @Valid @RequestBody blockchain.ChainPoint.dto.payment.ProviderConfirmation request,
+            @org.springframework.web.bind.annotation.RequestHeader("X-Payment-Signature") String signature
     ) {
-        return ResponseEntity.ok(paymentService.simulatePayment(request.getBillCode()));
+        return ResponseEntity.ok(paymentService.confirm(request, signature));
     }
 }

@@ -20,16 +20,15 @@ import java.math.BigDecimal;
 public class ProductRequest {
 
     @NotBlank(message = "Product code is required")
+    @jakarta.validation.constraints.Size(max = 20)
     private String code;
 
     @NotBlank(message = "Product name is required")
+    @jakarta.validation.constraints.Size(max = 150)
     private String name;
 
     @NotBlank(message = "Product category is required")
-    @Pattern(
-            regexp = "hot|cold|drink|dessert|other",
-            message = "Category must be one of: hot, cold, drink, dessert, other"
-    )
+    @jakarta.validation.constraints.Size(max = 30)
     private String category;
 
     @NotNull(message = "Product price is required")
@@ -49,5 +48,9 @@ public class ProductRequest {
     @PositiveOrZero(message = "Stock quantity must be zero or positive")
     private Integer stockQuantity = 0;
 
+    @jakarta.validation.constraints.Size(max = 1000)
+    @jakarta.validation.constraints.Pattern(regexp = "^$|^https?://[^\\s]+$", message = "Image URL must use http or https")
     private String imageUrl;
+
+    private Long branchId;
 }

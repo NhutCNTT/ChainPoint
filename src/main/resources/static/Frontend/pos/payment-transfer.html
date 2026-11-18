@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="../js/common/session.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Thanh toán chuyển khoản | ChainPoint POS</title>
   <meta name="description" content="Thanh toán chuyển khoản: khách quét mã QR, thu ngân kiểm tra trạng thái hoặc chuyển bill sang chờ thanh toán.">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/payment.css">
+  <script src="../js/common/api.js"></script>
 </head>
 <body>
   <div class="pay-shell">
@@ -24,7 +26,7 @@
 
       <section class="glass pay-card qr-card" aria-label="Mã QR chuyển khoản VietQR">
         <div class="qr-frame">
-          <img id="qr-img" src="" alt="Mã QR VietQR Napas 247" style="max-width:280px; height:auto; border-radius:8px;" />
+          <img id="qr-img" hidden alt="Mã QR VietQR Napas 247" style="max-width:280px; height:auto; border-radius:8px;" />
         </div>
         <p class="qr-hint">Khách mở App Ngân hàng quét mã VietQR để thanh toán tự động</p>
         <div id="qr-amount" class="amount-big">0đ</div>
@@ -40,15 +42,9 @@
           Đang tự động chờ Webhook ngân hàng xác nhận giao dịch…
         </div>
 
-        <div style="margin: 8px 0; width:100%;">
-          <button id="btn-simulate-webhook" type="button" class="btn btn-outline" style="width:100%; font-size:12.5px; border:1px dashed #3b82f6; color:#2563eb; background:#f8fafc; padding:8px 12px; border-radius:8px; cursor:pointer;">
-            ⚡ [Test] Mô phỏng Khách quét mã & Ngân hàng gửi Webhook
-          </button>
-        </div>
-
         <div class="pay-actions" style="width:100%">
           <button id="btn-wait" class="btn btn-warn btn-lg" type="button">⏳ Chờ thanh toán</button>
-          <button id="btn-check" class="btn btn-primary btn-lg" type="button">✔ Xác nhận thủ công</button>
+          <button id="btn-check" class="btn btn-primary btn-lg" type="button">Kiểm tra giao dịch</button>
         </div>
       </section>
     </div>

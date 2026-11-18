@@ -1,4 +1,5 @@
 (async () => {
+  await Store.ready;
   const tabsEl = document.getElementById('area-tabs');
   const gridEl = document.getElementById('table-grid');
   const metricsEl = document.getElementById('status-metrics');
@@ -338,7 +339,7 @@
       refreshBtn.disabled = true;
       refreshBtn.classList.add('is-loading');
       try {
-        if (window.refreshPosData) await window.refreshPosData();
+        if (window.refreshPosData) await Promise.all([window.refreshPosData(), Store.refresh()]);
         renderTabs();
         renderGrid();
         UI.refreshPendingBadge();

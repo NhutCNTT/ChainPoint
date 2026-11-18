@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="../../js/common/session.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ChainPoint Branch — Quản lý Khách hàng</title>
@@ -149,11 +150,11 @@
         <div class="form-row">
           <div class="form-group">
             <label for="custPoints">Điểm tích lũy khởi tạo</label>
-            <input type="number" id="custPoints" min="0" value="0" />
+            <input type="number" id="custPoints" readonly title="Số dư được cập nhật qua giao dịch thanh toán" min="0" value="0" />
           </div>
           <div class="form-group">
             <label for="custTier">Hạng thành viên</label>
-            <select id="custTier">
+            <select id="custTier" disabled>
               <option value="Bạc">🥈 Bạc (Hội viên mới)</option>
               <option value="Vàng">🥇 Vàng (Chi tiêu trên 3 triệu)</option>
               <option value="Kim Cương">💎 Kim Cương (Chi tiêu trên 7 triệu)</option>

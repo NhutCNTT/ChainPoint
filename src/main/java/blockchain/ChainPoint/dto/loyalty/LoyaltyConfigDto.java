@@ -13,14 +13,19 @@ import lombok.Setter;
 @Builder
 public class LoyaltyConfigDto {
 
+    @jakarta.validation.constraints.Positive
     private Long earnRatioVnd;
 
+    @jakarta.validation.constraints.Positive
     private Long pointValueVnd;
 
+    @jakarta.validation.constraints.Positive
     private Long minPointsToRedeem;
 
+    @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(100)
     private Integer maxDiscountPercent;
 
+    @jakarta.validation.constraints.Positive
     private Integer pointExpiryDays;
 
     private Boolean allowEarn;

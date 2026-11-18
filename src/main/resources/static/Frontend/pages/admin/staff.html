@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+  <script src="../../js/common/session.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ChainPoint — Quản lý nhân viên</title>
@@ -172,7 +173,7 @@
 
         <div class="form-group">
           <label for="formStaffPassword">Mật khẩu khởi tạo</label>
-          <input type="text" id="formStaffPassword" placeholder="Nhập mật khẩu khởi tạo (tối thiểu 6 ký tự)" />
+          <input type="password" id="formStaffPassword" placeholder="Nhập mật khẩu khởi tạo (tối thiểu 8 ký tự)" />
           <small style="color:var(--muted); font-size:12px;">Thiết lập mật khẩu ban đầu cho nhân viên</small>
         </div>
 
@@ -181,8 +182,8 @@
           <div class="form-group">
             <label for="formStaffRole">Vai trò nhân sự <span style="color:#ef4444">*</span></label>
             <select id="formStaffRole" required>
-              <option value="manager">👑 Quản lý (Manager)</option>
-              <option value="cashier" selected>💳 Thu ngân (Cashier)</option>
+              <option value="ROLE_MANAGER">👑 Quản lý (Manager)</option>
+              <option value="ROLE_CASHIER" selected>💳 Thu ngân (Cashier)</option>
             </select>
             <small style="color:var(--muted); font-size:12px;">Hệ thống chỉ phân quyền Quản lý hoặc Thu ngân</small>
           </div>

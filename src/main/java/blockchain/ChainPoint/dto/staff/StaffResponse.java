@@ -29,6 +29,8 @@ public class StaffResponse {
 
     private Long branchId;
 
+    private java.util.Set<Long> branchIds;
+
     private String branchName;
 
     private String status;

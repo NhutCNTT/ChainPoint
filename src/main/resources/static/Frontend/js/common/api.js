@@ -18,7 +18,7 @@
 })();
 
 const API = (() => {
-    const isLiveServer = typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '';
+    const isLiveServer = typeof window !== 'undefined' && window.location.port && ['5500', '5501'].includes(window.location.port) && window.location.port !== '';
     const BASE_URL = isLiveServer ? 'http://localhost:8080/api/v1' : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
 
     function getAuthToken() {
@@ -39,19 +39,7 @@ const API = (() => {
             return;
         }
 
-        const path = window.location.pathname || '';
-        if (path.includes('/auth/')) {
-            return;
-        }
-
-        let loginUrl = 'Frontend/pages/auth/login.html';
-        if (path.includes('/pos/')) {
-            loginUrl = '../pages/auth/login.html';
-        } else if (path.includes('/pages/')) {
-            loginUrl = '../auth/login.html';
-        }
-
-        window.location.replace(loginUrl);
+        if (!window.location.pathname.includes('/auth/')) window.location.replace('/Frontend/pages/auth/login.html');
     }
 
     async function request(endpoint, options = {}) {
@@ -80,7 +68,7 @@ const API = (() => {
 
             if (!response.ok) {
                 const message = (data && data.message) ? data.message : `Lỗi ${response.status}: ${response.statusText}`;
-                throw new Error(message);
+                const error = new Error(message); error.status = response.status; throw error;
             }
 
             return data;

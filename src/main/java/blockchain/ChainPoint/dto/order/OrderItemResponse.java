@@ -15,6 +15,8 @@ import java.math.BigDecimal;
 @Builder
 public class OrderItemResponse {
 
+    private String note;
+
     private Long productId;
 
     private String productName;

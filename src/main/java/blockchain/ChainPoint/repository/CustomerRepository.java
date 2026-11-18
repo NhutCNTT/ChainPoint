@@ -13,6 +13,14 @@ import java.util.Optional;
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Customer c WHERE c.phone = :phone")
+    Optional<Customer> findByPhoneForUpdate(@Param("phone") String phone);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Customer c WHERE c.id = :id")
+    Optional<Customer> findByIdForUpdate(@Param("id") Long id);
+
     Optional<Customer> findByPhone(String phone);
 
     boolean existsByPhone(String phone);

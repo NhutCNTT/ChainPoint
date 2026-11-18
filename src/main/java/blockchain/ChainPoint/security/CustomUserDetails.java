@@ -26,6 +26,15 @@ public class CustomUserDetails implements UserDetails {
         return branch != null ? branch.getId() : null;
     }
 
+    public java.util.Set<Long> getBranchIds() {
+        java.util.Set<Long> ids = new java.util.LinkedHashSet<>();
+        if (getBranchId() != null) ids.add(getBranchId());
+        if (user.getRole() == blockchain.ChainPoint.entity.enums.RoleType.ROLE_MANAGER) {
+            user.getManagedBranches().forEach(b -> ids.add(b.getId()));
+        }
+        return ids;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(user.getRole().name()));

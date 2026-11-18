@@ -1,7 +1,8 @@
 // ChainPoint — Quản lý bàn & Sơ đồ vị trí nhà hàng
 // Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
 
-(function () {
+(async function () {
+    await window.CP.ready;
     let tables = [];
     let areas = [];
     let currentAreaFilter = 'all';
