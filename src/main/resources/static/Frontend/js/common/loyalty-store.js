@@ -29,6 +29,16 @@ const LoyaltyStore = (() => {
         return 'http://localhost:8080/api/v1';
     };
 
+    const getToken = () => sessionStorage.getItem('cp_token') || localStorage.getItem('cp_token') || '';
+
+    const authHeaders = (extra = {}) => {
+        const token = getToken();
+        return {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...extra
+        };
+    };
+
     function mapCustomerDto(c) {
         return {
             id: c.code || ('KH' + c.id),
@@ -51,7 +61,7 @@ const LoyaltyStore = (() => {
         if (inflightConfigPromise && !force) return inflightConfigPromise;
         inflightConfigPromise = (async () => {
             try {
-                const res = await fetch(`${getApiBase()}/loyalty/config`);
+                const res = await fetch(`${getApiBase()}/loyalty/config`, { headers: authHeaders() });
                 if (res.ok) {
                     const cfg = await res.json();
                     currentConfig = {
@@ -78,7 +88,7 @@ const LoyaltyStore = (() => {
         if (inflightCustomersPromise && !force) return inflightCustomersPromise;
         inflightCustomersPromise = (async () => {
             try {
-                const res = await fetch(`${getApiBase()}/customers`);
+                const res = await fetch(`${getApiBase()}/customers`, { headers: authHeaders() });
                 if (res.ok) {
                     const list = await res.json();
                     cachedCustomers = (Array.isArray(list) ? list : []).map(mapCustomerDto);
@@ -99,7 +109,7 @@ const LoyaltyStore = (() => {
         if (inflightTransactionsPromise && !force) return inflightTransactionsPromise;
         inflightTransactionsPromise = (async () => {
             try {
-                const txRes = await fetch(`${getApiBase()}/loyalty/transactions`);
+                const txRes = await fetch(`${getApiBase()}/loyalty/transactions`, { headers: authHeaders() });
                 if (txRes.ok) {
                     const txList = await txRes.json();
                     if (Array.isArray(txList) && txList.length > 0) {
@@ -133,7 +143,7 @@ const LoyaltyStore = (() => {
             try {
                 const branchId = sessionStorage.getItem('cp_branch_id') || '';
                 const url = branchId ? `${getApiBase()}/orders?branchId=${branchId}` : `${getApiBase()}/orders`;
-                const res = await fetch(url);
+                const res = await fetch(url, { headers: authHeaders() });
                 if (res.ok) {
                     const bills = await res.json();
                     const derived = [];
@@ -230,7 +240,7 @@ const LoyaltyStore = (() => {
             try {
                 await fetch(`${getApiBase()}/loyalty/config`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: authHeaders({ 'Content-Type': 'application/json' }),
                     body: JSON.stringify({
                         earnRatioVnd: currentConfig.earnRatioVND,
                         pointValueVnd: currentConfig.pointValueVND,
@@ -257,7 +267,7 @@ const LoyaltyStore = (() => {
             if (!phone) return null;
             const cleanPhone = phone.trim();
             try {
-                const res = await fetch(`${getApiBase()}/customers/by-phone/${encodeURIComponent(cleanPhone)}`);
+                const res = await fetch(`${getApiBase()}/customers/by-phone/${encodeURIComponent(cleanPhone)}`, { headers: authHeaders() });
                 if (res.ok) {
                     const c = await res.json();
                     return mapCustomerDto(c);
@@ -273,7 +283,7 @@ const LoyaltyStore = (() => {
                 let branchId = Number(sessionStorage.getItem('cp_branch_id')) || null;
                 if (!branchId) {
                     try {
-                        const bRes = await fetch(`${getApiBase()}/branches`);
+                        const bRes = await fetch(`${getApiBase()}/branches`, { headers: authHeaders() });
                         if (bRes.ok) {
                             const branches = await bRes.json();
                             if (Array.isArray(branches) && branches.length > 0) {
@@ -303,13 +313,13 @@ const LoyaltyStore = (() => {
                 if (targetId) {
                     res = await fetch(`${getApiBase()}/customers/${targetId}`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: authHeaders({ 'Content-Type': 'application/json' }),
                         body: JSON.stringify(payload)
                     });
                 } else {
                     res = await fetch(`${getApiBase()}/customers`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: authHeaders({ 'Content-Type': 'application/json' }),
                         body: JSON.stringify(payload)
                     });
                 }

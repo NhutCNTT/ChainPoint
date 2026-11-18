@@ -45,9 +45,7 @@
     const hoverGuide = document.getElementById('hoverGuide');
     const chartSvg = document.querySelector('.chart-svg');
 
-    const API_BASE = (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '')
-        ? 'http://localhost:8080/api/v1'
-        : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
+    const api = () => window.API;
 
     function applyGrowthBadge(el, growthStr) {
         if (!el) return;
@@ -60,10 +58,8 @@
     // 1. Nạp danh sách chi nhánh thực tế từ MySQL
     async function fetchBranches() {
         try {
-            const res = await fetch(`${API_BASE}/branches`);
-            if (res.ok) {
-                branchesList = await res.json();
-            }
+            const data = await api().get('/branches');
+            branchesList = Array.isArray(data) ? data : [];
         } catch (e) {
             console.warn('Không thể nạp danh sách chi nhánh từ MySQL API:', e);
             branchesList = [];
@@ -106,40 +102,28 @@
 
         // Tải metrics từ MySQL
         try {
-            const resMetrics = await fetch(`${API_BASE}/admin/dashboard/metrics${metricsQuery}`);
-            if (resMetrics.ok) {
-                const data = await resMetrics.json();
-                currentMetricsData = {
-                    totalRevenue: data.totalRevenue || 0,
-                    revenueGrowth: data.revenueGrowth || '+0.0%',
-                    totalOrders: data.totalOrders || 0,
-                    ordersGrowth: data.ordersGrowth || '+0.0%',
-                    totalCustomers: data.totalCustomers || 0,
-                    customerGrowth: data.customerGrowth || '+0.0%'
-                };
-            } else {
-                currentMetricsData = { totalRevenue: 0, revenueGrowth: '+0.0%', totalOrders: 0, ordersGrowth: '+0.0%', totalCustomers: 0, customerGrowth: '+0.0%' };
-            }
+            const data = await api().get(`/admin/dashboard/metrics${metricsQuery}`);
+            currentMetricsData = {
+                totalRevenue: data.totalRevenue || 0,
+                revenueGrowth: data.revenueGrowth || '+0.0%',
+                totalOrders: data.totalOrders || 0,
+                ordersGrowth: data.ordersGrowth || '+0.0%',
+                totalCustomers: data.totalCustomers || 0,
+                customerGrowth: data.customerGrowth || '+0.0%'
+            };
         } catch (err) {
             currentMetricsData = { totalRevenue: 0, revenueGrowth: '+0.0%', totalOrders: 0, ordersGrowth: '+0.0%', totalCustomers: 0, customerGrowth: '+0.0%' };
         }
 
         // Tải biểu đồ doanh thu từ MySQL (RevenueChartResponse trả về thisWeek, lastWeek, thisWeekTotal, lastWeekTotal)
         try {
-            const resChart = await fetch(`${API_BASE}/admin/dashboard/revenue-chart${branchQuery}`);
-            if (resChart.ok) {
-                const chartData = await resChart.json();
-                const points = (chartData && Array.isArray(chartData.thisWeek))
-                    ? chartData.thisWeek
-                    : (chartData && Array.isArray(chartData.points) ? chartData.points : []);
-                currentChartPoints = points;
-                thisWeekTotalVal = Number(chartData?.thisWeekTotal ?? currentMetricsData.totalRevenue ?? 0);
-                lastWeekTotalVal = Number(chartData?.lastWeekTotal ?? 0);
-            } else {
-                currentChartPoints = [];
-                thisWeekTotalVal = 0;
-                lastWeekTotalVal = 0;
-            }
+            const chartData = await api().get(`/admin/dashboard/revenue-chart${branchQuery}`);
+            const points = (chartData && Array.isArray(chartData.thisWeek))
+                ? chartData.thisWeek
+                : (chartData && Array.isArray(chartData.points) ? chartData.points : []);
+            currentChartPoints = points;
+            thisWeekTotalVal = Number(chartData?.thisWeekTotal ?? currentMetricsData.totalRevenue ?? 0);
+            lastWeekTotalVal = Number(chartData?.lastWeekTotal ?? 0);
         } catch (err) {
             currentChartPoints = [];
             thisWeekTotalVal = 0;
@@ -164,10 +148,8 @@
         const tbody = document.getElementById('topDishesBody');
         if (!tbody) return;
         try {
-            const res = await fetch(`${API_BASE}/admin/dashboard/top-dishes${queryBranch}`);
-            if (res.ok) {
-                const list = await res.json();
-                if (Array.isArray(list) && list.length > 0) {
+            const list = await api().get(`/admin/dashboard/top-dishes${queryBranch}`);
+            if (Array.isArray(list) && list.length > 0) {
                     tbody.innerHTML = list.map((item, idx) => {
                         const qty = item.quantitySold ?? item.quantity ?? item.soldCount ?? 0;
                         const rev = item.totalRevenue ?? item.revenue ?? 0;
@@ -189,7 +171,6 @@
                     }).join('');
                     return;
                 }
-            }
         } catch (e) {}
 
         tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 36px; color: var(--muted);">Chưa có dữ liệu món bán chạy trong Database.</td></tr>`;

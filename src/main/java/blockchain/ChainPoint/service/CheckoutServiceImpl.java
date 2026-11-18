@@ -8,6 +8,7 @@ import blockchain.ChainPoint.entity.Branch;
 import blockchain.ChainPoint.entity.Bill;
 import blockchain.ChainPoint.entity.BillDetail;
 import blockchain.ChainPoint.entity.Customer;
+import blockchain.ChainPoint.entity.DiningTable;
 import blockchain.ChainPoint.entity.Product;
 import blockchain.ChainPoint.event.CheckoutWeb3Event;
 import blockchain.ChainPoint.exception.InsufficientStockException;
@@ -20,7 +21,11 @@ import blockchain.ChainPoint.repository.DiningTableRepository;
 import blockchain.ChainPoint.repository.ProductRepository;
 import blockchain.ChainPoint.util.HashUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -34,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CheckoutServiceImpl implements CheckoutService {
 
@@ -41,6 +47,8 @@ public class CheckoutServiceImpl implements CheckoutService {
     private static final BigDecimal VND_PER_EARNED_POINT = BigDecimal.valueOf(10000L);
     private static final long MINIMUM_POINTS_TO_REDEEM = 5L;
     private static final String BILL_STATUS_PAID = "paid";
+    private static final String TABLE_STATUS_DISABLED = "disabled";
+    private static final String PRODUCT_STATUS_OUT_OF_STOCK = "out_of_stock";
 
     private final BranchRepository branchRepository;
     private final DiningTableRepository diningTableRepository;
@@ -51,6 +59,7 @@ public class CheckoutServiceImpl implements CheckoutService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "products", allEntries = true)
     public CheckoutResponse processCheckout(CheckoutRequest request) {
         Branch branch = findBranch(request.getBranchId());
         validateTable(request.getTableCode(), branch.getId());
@@ -82,6 +91,9 @@ public class CheckoutServiceImpl implements CheckoutService {
             }
 
             product.setStockQuantity(availableStock - quantity);
+            if (availableStock - quantity <= 0) {
+                product.setStatus(PRODUCT_STATUS_OUT_OF_STOCK);
+            }
 
             BigDecimal subtotal = product.getPrice()
                     .multiply(BigDecimal.valueOf(quantity))
@@ -144,9 +156,9 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .subtract(discountAmount)
                 .setScale(2, RoundingMode.HALF_UP);
 
-        long pointsEarned = finalAmount
-                .divideToIntegralValue(VND_PER_EARNED_POINT)
-                .longValue();
+        long pointsEarned = customer != null
+                ? finalAmount.divideToIntegralValue(VND_PER_EARNED_POINT).longValue()
+                : 0L;
 
         if (customer != null) {
             long currentPoints = customer.getPoints() != null ? customer.getPoints() : 0L;
@@ -174,7 +186,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         Bill bill = Bill.builder()
                 .billCode(billCode)
                 .tableCode(request.getTableCode())
-                .cashierUsername(request.getCashierUsername())
+                .cashierUsername(resolveCashier(request.getCashierUsername()))
                 .customerPhone(customerPhone)
                 .grossAmount(grossAmount)
                 .discountAmount(discountAmount)
@@ -227,11 +239,19 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .timestamp(savedBill.getCreatedAt())
                 .build();
 
-        rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE_NAME,
-                RabbitMQConfig.ROUTING_KEY,
-                event
-        );
+        try {
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.EXCHANGE_NAME,
+                    RabbitMQConfig.ROUTING_KEY,
+                    event
+            );
+        } catch (Exception exception) {
+            log.warn(
+                    "Could not publish checkout event for billCode={}; blockchain sync will be skipped",
+                    savedBill.getBillCode(),
+                    exception
+            );
+        }
 
         return toResponse(savedBill);
     }
@@ -244,11 +264,29 @@ public class CheckoutServiceImpl implements CheckoutService {
     }
 
     private void validateTable(String tableCode, Long branchId) {
-        diningTableRepository.findByCodeAndBranchId(tableCode, branchId)
+        DiningTable table = diningTableRepository.findByCodeAndBranchId(tableCode, branchId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Dining table not found with code " + tableCode
                                 + " in branch " + branchId
                 ));
+
+        if (TABLE_STATUS_DISABLED.equalsIgnoreCase(table.getStatus())) {
+            throw new InvalidRedemptionException(
+                    "Dining table " + tableCode + " is currently disabled"
+            );
+        }
+    }
+
+    private String resolveCashier(String fallbackUsername) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null
+                && authentication.isAuthenticated()
+                && StringUtils.hasText(authentication.getName())
+                && !"anonymousUser".equals(authentication.getName())) {
+            return authentication.getName();
+        }
+
+        return StringUtils.hasText(fallbackUsername) ? fallbackUsername.trim() : "pos";
     }
 
     private Map<Long, Integer> aggregateQuantities(List<CheckoutItemRequest> items) {

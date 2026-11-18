@@ -46,6 +46,13 @@ blockchain:
   contract-address: "0x0000000000000000000000000000000000000000"
   master-wallet-private-key: ""
   gas-limit: 300000
+  chain-id: 11155111
+payment:
+  bank-code: "970422"
+  bank-name: "MBBank (Napas 247)"
+  account-number: "0387654321"
+  account-name: "CONG TY CO PHAN CHAINPOINT"
+  template: "compact2"
 cloudinary:
   cloud-name: your_cloud_name
   api-key: your_api_key

@@ -24,6 +24,10 @@ public class LoginResponse {
 
     private String role;
 
+    private String phone;
+
+    private Long branchId;
+
     private String branchName;
 
     private String branchCode;

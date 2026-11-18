@@ -58,7 +58,6 @@ public final class RestaurantLoyaltyFunctions {
 
         return new Function("recordInvoice", inputParameters, Collections.emptyList());
     }
-
     public static Function getPointsByPhone(String phoneNumber) {
         List<Type> inputParameters = Collections.singletonList(new Utf8String(phoneNumber));
         List<TypeReference<?>> outputParameters = Collections.singletonList(
@@ -67,6 +66,20 @@ public final class RestaurantLoyaltyFunctions {
         );
 
         return new Function("getPointsByPhone", inputParameters, outputParameters);
+    }
+
+    public static Function redeemPoints(
+            String phoneNumber,
+            long points,
+            String orderCode
+    ) {
+        List<Type> inputParameters = Arrays.asList(
+                new Utf8String(phoneNumber),
+                new Uint256(BigInteger.valueOf(points)),
+                new Utf8String(orderCode)
+        );
+
+        return new Function("redeemPoints", inputParameters, Collections.emptyList());
     }
 
     public static String encode(Function function) {

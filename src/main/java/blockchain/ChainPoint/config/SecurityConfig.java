@@ -93,16 +93,39 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/Frontend/**",
+                                "/pos/**",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/assets/**",
+                                "/favicon.ico",
+                                "/*.html",
+                                "/*.css",
+                                "/*.js",
+                                "/*.png",
+                                "/*.jpg",
+                                "/*.jpeg",
+                                "/*.svg",
+                                "/*.ico",
+                                "/*.webp",
+                                "/*.woff",
+                                "/*.woff2",
+                                "/*.ttf"
+                        ).permitAll()
+                        .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/actuator/**",
                                 "/error",
-                                "/favicon.ico",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/webjars/**"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/v1/**").authenticated()
+                        .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

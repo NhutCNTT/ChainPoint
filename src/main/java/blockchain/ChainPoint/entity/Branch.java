@@ -14,6 +14,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -44,6 +45,16 @@ public class Branch {
     @Builder.Default
     @Column(name = "status", nullable = false, length = 20)
     private String status = "open";
+
+    @Column(name = "manager_name", length = 100)
+    private String managerName;
+
+    @Column(name = "open_hours", length = 50)
+    private String openHours;
+
+    @Builder.Default
+    @Column(name = "vat_percent", precision = 5, scale = 2)
+    private BigDecimal vatPercent = BigDecimal.valueOf(8);
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

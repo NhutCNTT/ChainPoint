@@ -9,6 +9,35 @@ const API = (() => {
         return sessionStorage.getItem('cp_token') || localStorage.getItem('cp_token') || '';
     }
 
+    function clearSession() {
+        ['cp_token', 'cp_user', 'cp_role', 'cp_branch', 'cp_branch_id'].forEach((key) => {
+            sessionStorage.removeItem(key);
+            localStorage.removeItem(key);
+        });
+    }
+
+    function handleUnauthorized() {
+        clearSession();
+
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const path = window.location.pathname || '';
+        if (path.includes('/auth/')) {
+            return;
+        }
+
+        let loginUrl = 'Frontend/pages/auth/pos-login.html';
+        if (path.includes('/pos/')) {
+            loginUrl = '../pages/auth/pos-login.html';
+        } else if (path.includes('/pages/')) {
+            loginUrl = '../auth/pos-login.html';
+        }
+
+        window.location.replace(loginUrl);
+    }
+
     async function request(endpoint, options = {}) {
         const url = `${BASE_URL}${endpoint}`;
         const headers = {
@@ -20,7 +49,12 @@ const API = (() => {
 
         try {
             const response = await fetch(url, { ...options, headers });
-            
+
+            if (response.status === 401) {
+                handleUnauthorized();
+                throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.');
+            }
+
             if (response.status === 204) {
                 return null;
             }
@@ -48,7 +82,7 @@ const API = (() => {
         patch: (endpoint, body) => request(endpoint, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined }),
         delete: (endpoint) => request(endpoint, { method: 'DELETE' }),
         setToken: (token) => sessionStorage.setItem('cp_token', token),
-        clearToken: () => sessionStorage.removeItem('cp_token')
+        clearToken: clearSession
     };
 })();
 

@@ -12,11 +12,11 @@ import java.util.List;
 @Repository
 public interface BillDetailRepository extends JpaRepository<BillDetail, Long> {
 
-    @Query("SELECT d.productName, SUM(d.quantity), SUM(d.subtotal) "
+    @Query("SELECT d.productName, d.product.category, d.product.emoji, SUM(d.quantity), SUM(d.subtotal) "
             + "FROM BillDetail d "
             + "WHERE (:branchId IS NULL OR d.bill.branch.id = :branchId) "
             + "AND d.bill.status = 'paid' "
-            + "GROUP BY d.productName "
+            + "GROUP BY d.productName, d.product.category, d.product.emoji "
             + "ORDER BY SUM(d.quantity) DESC")
     List<Object[]> findTopSellingDishes(@Param("branchId") Long branchId, Pageable pageable);
 }

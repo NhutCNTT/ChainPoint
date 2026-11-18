@@ -16,9 +16,16 @@ public class RabbitMQConfig {
     public static final String EXCHANGE_NAME = "chainpoint.event.exchange";
     public static final String ROUTING_KEY = "chainpoint.checkout.success";
 
+    public static final String DEAD_LETTER_QUEUE_NAME = "blockchain.loyalty.dlq";
+    public static final String DEAD_LETTER_EXCHANGE_NAME = "chainpoint.event.dlx";
+    public static final String DEAD_LETTER_ROUTING_KEY = "chainpoint.checkout.dead";
+
     @Bean
     public Queue loyaltyQueue() {
-        return QueueBuilder.durable(QUEUE_NAME).build();
+        return QueueBuilder.durable(QUEUE_NAME)
+                .withArgument("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE_NAME)
+                .withArgument("x-dead-letter-routing-key", DEAD_LETTER_ROUTING_KEY)
+                .build();
     }
 
     @Bean
@@ -31,6 +38,23 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(loyaltyQueue)
                 .to(loyaltyExchange)
                 .with(ROUTING_KEY);
+    }
+
+    @Bean
+    public Queue deadLetterQueue() {
+        return QueueBuilder.durable(DEAD_LETTER_QUEUE_NAME).build();
+    }
+
+    @Bean
+    public DirectExchange deadLetterExchange() {
+        return new DirectExchange(DEAD_LETTER_EXCHANGE_NAME, true, false);
+    }
+
+    @Bean
+    public Binding deadLetterBinding(Queue deadLetterQueue, DirectExchange deadLetterExchange) {
+        return BindingBuilder.bind(deadLetterQueue)
+                .to(deadLetterExchange)
+                .with(DEAD_LETTER_ROUTING_KEY);
     }
 
     @Bean
