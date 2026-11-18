@@ -2,6 +2,13 @@
 // Used by all pages in pages/branch/*.html
 
 (function () {
+    function normalizeRole(value) {
+        const normalized = String(value || '').trim().toLowerCase().replace(/^role_/, '');
+        const aliases = { employee: 'cashier', pos: 'cashier', branch: 'manager' };
+        const roleName = aliases[normalized] || normalized;
+        return ['owner', 'manager', 'cashier'].includes(roleName) ? roleName : 'manager';
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const branchFromUrl = urlParams.get('branch');
     const branchIdFromUrl = urlParams.get('branchId');
@@ -14,8 +21,13 @@
 
     const getStorage = k => sessionStorage.getItem(k) || localStorage.getItem(k);
     const user = getStorage('cp_user') || 'Quản lý cơ sở';
-    const role = getStorage('cp_role') || 'manager';
+    const role = normalizeRole(getStorage('cp_role'));
     const currentBranch = getStorage('cp_branch') || '';
+
+    document.documentElement.setAttribute('data-role', role);
+    if (document.body) {
+        document.body.setAttribute('data-role', role);
+    }
 
     const currentFile = location.pathname.split('/').pop() || 'dashboard.html';
 
@@ -75,9 +87,9 @@
 
         if (isOwner) {
             navHtml += `
-                <a href="../owner/dashboard.html" style="background:var(--primary-soft); color:var(--primary); font-weight:700; margin-bottom:8px;">
+                <a href="../admin/dashboard.html" style="background:var(--nav-active-bg); color:var(--nav-active-color); font-weight:700; margin-bottom:8px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><polyline points="15 18 9 12 15 6"/></svg>
-                    <span>Về Owner Dashboard</span>
+                    <span>Về Dashboard tổng quan</span>
                 </a>
             `;
         }
@@ -120,20 +132,29 @@
     if (userNameEl) userNameEl.textContent = user;
     if (userAvatarEl) userAvatarEl.textContent = user.charAt(0).toUpperCase();
     if (userRoleEl) {
-        userRoleEl.textContent = role === 'owner' ? `Chủ chuỗi · ${currentBranch}` : `Quản lý · ${currentBranch}`;
+        const roleLabels = {
+            owner: 'Chủ chuỗi hệ thống',
+            manager: 'Quản lý chi nhánh',
+            cashier: 'Thu ngân POS'
+        };
+        userRoleEl.textContent = roleLabels[role];
+        userRoleEl.title = currentBranch ? `Chi nhánh: ${currentBranch}` : '';
+    }
+
+    const sidebarRoleBadge = document.querySelector('.sidebar .logo-text small');
+    if (sidebarRoleBadge) {
+        sidebarRoleBadge.textContent = role === 'owner' ? 'OWNER' : role === 'cashier' ? 'CASHIER' : 'MANAGER';
     }
 
     // Logout
     const logoutBtn = document.getElementById('branchLogoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            if (role === 'owner') {
-                window.location.href = '../owner/dashboard.html';
-            } else {
-                localStorage.removeItem('cp_role');
-                localStorage.removeItem('cp_user');
-                window.location.href = '../auth/pos-login.html';
-            }
+            ['cp_token', 'cp_role', 'cp_user', 'cp_branch', 'cp_branch_id'].forEach(key => {
+                sessionStorage.removeItem(key);
+                localStorage.removeItem(key);
+            });
+            window.location.href = '../auth/login.html';
         });
     }
 

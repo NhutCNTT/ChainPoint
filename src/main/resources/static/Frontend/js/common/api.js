@@ -1,6 +1,22 @@
 // ChainPoint — Centralized API Client kết nối trực tiếp với MySQL Backend
 // Thay thế hoàn toàn việc lưu trữ dữ liệu nghiệp vụ trên localStorage
 
+(function applyRoleTheme() {
+    try {
+        const storedRole = sessionStorage.getItem('cp_role') || localStorage.getItem('cp_role') || 'owner';
+        const normalized = String(storedRole).trim().toLowerCase().replace(/^role_/, '');
+        const aliases = { employee: 'cashier', pos: 'cashier', branch: 'manager' };
+        const role = aliases[normalized] || normalized;
+        const activeRole = ['owner', 'manager', 'cashier'].includes(role) ? role : 'owner';
+        document.documentElement.setAttribute('data-role', activeRole);
+        if (document.body) {
+            document.body.setAttribute('data-role', activeRole);
+        }
+    } catch (error) {
+        console.warn('[Theme] Unable to apply role theme:', error);
+    }
+})();
+
 const API = (() => {
     const isLiveServer = typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '';
     const BASE_URL = isLiveServer ? 'http://localhost:8080/api/v1' : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
@@ -28,11 +44,11 @@ const API = (() => {
             return;
         }
 
-        let loginUrl = 'Frontend/pages/auth/pos-login.html';
+        let loginUrl = 'Frontend/pages/auth/login.html';
         if (path.includes('/pos/')) {
-            loginUrl = '../pages/auth/pos-login.html';
+            loginUrl = '../pages/auth/login.html';
         } else if (path.includes('/pages/')) {
-            loginUrl = '../auth/pos-login.html';
+            loginUrl = '../auth/login.html';
         }
 
         window.location.replace(loginUrl);

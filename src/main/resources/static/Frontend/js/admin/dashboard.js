@@ -3,12 +3,25 @@
 
 (function () {
     const getStorage = k => sessionStorage.getItem(k) || localStorage.getItem(k);
+    const urlParams = new URLSearchParams(window.location.search);
+    const branchFromUrl = urlParams.get('branch');
+    const branchIdFromUrl = urlParams.get('branchId');
+
+    if (branchFromUrl) {
+        sessionStorage.setItem('cp_branch', branchFromUrl);
+    }
+    if (branchIdFromUrl) {
+        sessionStorage.setItem('cp_branch_id', branchIdFromUrl);
+    }
+
     const currentUserRole = getStorage('cp_role') || 'owner';
     const currentUserBranch = getStorage('cp_branch') || '';
     const currentBranchId = getStorage('cp_branch_id') || null;
 
     let branchesList = [];
-    let selectedBranchId = (currentUserRole === 'manager' && currentBranchId) ? currentBranchId : 'all';
+    let selectedBranchId = (currentUserRole === 'manager' && currentBranchId)
+        ? currentBranchId
+        : (currentUserRole !== 'manager' && branchIdFromUrl ? branchIdFromUrl : 'all');
     let currentMetric = 'revenue';
     let currentRange = '7days';
     let currentMetricsData = {
@@ -79,6 +92,11 @@
             branchSelector.innerHTML = `<option value="${selectedBranchId || ''}">📍 ${currentB.name}</option>`;
             branchSelector.disabled = true;
         } else {
+            if (branchFromUrl && (!selectedBranchId || selectedBranchId === 'all')) {
+                const matchedBranch = branchesList.find(b => b.name === branchFromUrl || String(b.id) === String(branchFromUrl));
+                if (matchedBranch) selectedBranchId = String(matchedBranch.id);
+            }
+
             let options = `<option value="all">🌐 Toàn chuỗi nhà hàng (Tổng hợp ${branchesList.length} CN)</option>`;
             branchesList.forEach(b => {
                 options += `<option value="${b.id}">📍 ${b.name} (${b.code || ''})</option>`;
@@ -270,7 +288,14 @@
 
         const chartLine = document.querySelector('.chart-line-current');
         const chartArea = document.querySelector('.chart-area-current');
-        if (chartLine) chartLine.setAttribute('d', linePath);
+        const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#2f6bff';
+        document.querySelectorAll('#blueGradient stop').forEach(stop => {
+            stop.setAttribute('stop-color', primaryColor);
+        });
+        if (chartLine) {
+            chartLine.setAttribute('d', linePath);
+            chartLine.setAttribute('stroke', primaryColor);
+        }
         if (chartArea) chartArea.setAttribute('d', areaPath);
 
         // Update dynamic Y-axis labels
@@ -293,6 +318,9 @@
             circle.setAttribute('cx', c.x);
             circle.setAttribute('cy', c.y);
             circle.setAttribute('r', '6');
+            circle.setAttribute('fill', '#ffffff');
+            circle.setAttribute('stroke', primaryColor);
+            circle.setAttribute('stroke-width', '3');
             circle.setAttribute('data-index', idx);
 
             circle.addEventListener('mouseenter', () => {

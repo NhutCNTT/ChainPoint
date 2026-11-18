@@ -34,15 +34,15 @@ body { min-height: 100vh; }
     height: 100vh;
     display: flex; flex-direction: column; gap: var(--sp-6);
     padding: var(--sp-5) var(--sp-3);
-    background: var(--card);
-    border-right: 1px solid var(--border);
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border-color);
     z-index: var(--z-sidebar);
 }
 
 .logo {
     display: flex; align-items: center; gap: 10px;
     padding: 0 var(--sp-2);
-    color: var(--text); text-decoration: none;
+    color: var(--sidebar-logo-color); text-decoration: none;
 }
 .logo-mark {
     width: 34px; height: 34px; flex-shrink: 0;
@@ -50,14 +50,19 @@ body { min-height: 100vh; }
     border-radius: 10px;
     background: var(--primary);
 }
+.sidebar .logo-mark { background: var(--primary) !important; }
+.sidebar .logo-text small {
+    color: var(--role-tag-color) !important;
+    background: var(--role-tag-bg) !important;
+}
 .logo-mark svg { width: 18px; height: 18px; }
 .logo-text { font-size: 17px; font-weight: var(--fw-bold); letter-spacing: -0.01em; }
-.logo-text span { color: var(--primary); }
+.logo-text span { color: var(--sidebar-logo-accent); }
 .logo-tag {
     margin-left: auto;
     padding: 2px 6px; border-radius: 6px;
     font-size: 10px; font-weight: var(--fw-bold); letter-spacing: 0.04em; text-transform: uppercase;
-    color: var(--primary); background: var(--primary-soft);
+    color: var(--role-tag-color); background: var(--role-tag-bg);
 }
 
 .nav {
@@ -67,7 +72,7 @@ body { min-height: 100vh; }
 .nav-section {
     padding: var(--sp-3) var(--sp-3) var(--sp-1);
     font-size: 11px; font-weight: var(--fw-bold); letter-spacing: 0.06em; text-transform: uppercase;
-    color: var(--faint);
+    color: var(--sidebar-heading-color);
 }
 .nav-section:first-child { padding-top: 0; }
 .nav a {
@@ -75,14 +80,15 @@ body { min-height: 100vh; }
     min-height: 40px; padding: 0 var(--sp-3);
     border-radius: 10px;
     font-size: var(--fs-base); font-weight: var(--fw-medium);
-    color: var(--text-2); text-decoration: none;
+    color: var(--sidebar-link-color); text-decoration: none;
     transition: background .15s, color .15s;
 }
-.nav a svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--muted); }
-.nav a:hover { background: var(--surface); color: var(--text); }
-.nav a.active { background: var(--primary-soft); color: var(--primary); font-weight: var(--fw-semibold); }
-.nav a.active svg { color: var(--primary); }
-.nav-divider { height: 1px; margin: var(--sp-2) var(--sp-3); background: var(--border); }
+.nav a svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--sidebar-link-icon); }
+.nav a:hover { background: var(--sidebar-link-hover-bg); color: var(--sidebar-link-hover-color); }
+.nav a:hover svg { color: var(--sidebar-link-hover-color); }
+.nav a.active { background: var(--nav-active-bg); color: var(--nav-active-color); font-weight: var(--fw-semibold); }
+.nav a.active svg { color: var(--nav-active-icon); }
+.nav-divider { height: 1px; margin: var(--sp-2) var(--sp-3); background: var(--sidebar-divider-color); }
 
 .sidebar-footer { display: flex; flex-direction: column; gap: 2px; }
 .btn-logout {
@@ -91,10 +97,10 @@ body { min-height: 100vh; }
     min-height: 40px; padding: 0 var(--sp-3);
     border: 0; border-radius: 10px; background: transparent;
     font-size: var(--fs-base); font-weight: var(--fw-medium);
-    color: var(--muted); cursor: pointer;
+    color: var(--sidebar-logout-color); cursor: pointer;
 }
 .btn-logout svg { width: 18px; height: 18px; }
-.btn-logout:hover { background: var(--danger-soft); color: var(--danger); }
+.btn-logout:hover { background: var(--sidebar-logout-hover-bg); color: var(--sidebar-logout-hover-color); }
 
 /* ---- Main ---- */
 .main {
@@ -138,11 +144,18 @@ body { min-height: 100vh; }
     width: 32px; height: 32px; flex-shrink: 0;
     display: grid; place-items: center;
     border-radius: 50%;
-    background: var(--primary-soft); color: var(--primary);
+    background: var(--role-avatar-bg) !important;
+    color: var(--role-avatar-color) !important;
     font-weight: var(--fw-bold);
 }
 .user-chip span { display: block; }
-.user-chip small { display: block; font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--muted); }
+.user-chip small {
+    display: inline-flex; align-items: center; width: fit-content;
+    margin-top: 1px; padding: 1px 7px; border-radius: var(--r-full);
+    font-size: 10.5px; font-weight: var(--fw-semibold);
+    color: var(--role-badge-color) !important;
+    background: var(--role-badge-bg) !important;
+}
 
 .menu-toggle { display: none; }
 .sidebar-backdrop { display: none; }

@@ -69,6 +69,97 @@
     --z-modal: 100;
     --z-toast: 120;
     --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ---- Role theming defaults (overridden by [data-role]) ---- */
+    --role-badge-bg: var(--primary-soft);
+    --role-badge-color: var(--primary);
+    --role-tag-bg: var(--primary-soft);
+    --role-tag-color: var(--primary);
+    --role-avatar-bg: linear-gradient(135deg, #4f86ff, #2f6bff);
+    --role-avatar-color: #ffffff;
+    --nav-active-bg: var(--primary-soft);
+    --nav-active-color: var(--primary);
+    --nav-active-icon: var(--primary);
+    --sidebar-bg: var(--card);
+    --sidebar-border-color: var(--border);
+    --sidebar-logo-color: var(--text);
+    --sidebar-logo-accent: var(--primary);
+    --sidebar-link-color: var(--text-2);
+    --sidebar-link-icon: var(--muted);
+    --sidebar-link-hover-bg: var(--surface);
+    --sidebar-link-hover-color: var(--text);
+    --sidebar-heading-color: var(--faint);
+    --sidebar-divider-color: var(--border);
+    --sidebar-logout-color: var(--muted);
+    --sidebar-logout-hover-bg: var(--danger-soft);
+    --sidebar-logout-hover-color: var(--danger);
+}
+
+[data-role="owner"] {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-soft: #eef2ff;
+    --primary-ring: rgba(79, 70, 229, 0.18);
+    --info: #4f46e5;
+    --info-soft: #eef2ff;
+    --bg-accent: #e7e5ff;
+    --role-badge-bg: #ede9fe;
+    --role-badge-color: #4f46e5;
+    --role-tag-bg: rgba(99, 102, 241, 0.24);
+    --role-tag-color: #e0e7ff;
+    --role-avatar-bg: linear-gradient(135deg, #818cf8, #4f46e5);
+    --nav-active-bg: rgba(99, 102, 241, 0.28);
+    --nav-active-color: #e0e7ff;
+    --nav-active-icon: #c7d2fe;
+    --sidebar-bg: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%);
+    --sidebar-border-color: rgba(255, 255, 255, 0.08);
+    --sidebar-logo-color: #ffffff;
+    --sidebar-logo-accent: #a5b4fc;
+    --sidebar-link-color: #c7d2fe;
+    --sidebar-link-icon: #a5b4fc;
+    --sidebar-link-hover-bg: rgba(255, 255, 255, 0.08);
+    --sidebar-link-hover-color: #ffffff;
+    --sidebar-heading-color: #818cf8;
+    --sidebar-divider-color: rgba(255, 255, 255, 0.1);
+    --sidebar-logout-color: #c7d2fe;
+    --sidebar-logout-hover-bg: rgba(248, 113, 113, 0.16);
+    --sidebar-logout-hover-color: #fecaca;
+}
+
+[data-role="manager"] {
+    --primary: #0284c7;
+    --primary-hover: #0369a1;
+    --primary-soft: #e0f2fe;
+    --primary-ring: rgba(2, 132, 199, 0.18);
+    --info: #0284c7;
+    --info-soft: #e0f2fe;
+    --bg-accent: #e0f2fe;
+    --role-badge-bg: #e0f2fe;
+    --role-badge-color: #0284c7;
+    --role-tag-bg: #e0f2fe;
+    --role-tag-color: #0284c7;
+    --role-avatar-bg: linear-gradient(135deg, #38bdf8, #0284c7);
+    --nav-active-bg: #e0f2fe;
+    --nav-active-color: #0284c7;
+    --nav-active-icon: #0284c7;
+}
+
+[data-role="cashier"] {
+    --primary: #059669;
+    --primary-hover: #047857;
+    --primary-soft: #d1fae5;
+    --primary-ring: rgba(5, 150, 105, 0.18);
+    --info: #059669;
+    --info-soft: #d1fae5;
+    --bg-accent: #d1fae5;
+    --role-badge-bg: #d1fae5;
+    --role-badge-color: #047857;
+    --role-tag-bg: #d1fae5;
+    --role-tag-color: #047857;
+    --role-avatar-bg: linear-gradient(135deg, #34d399, #059669);
+    --nav-active-bg: #d1fae5;
+    --nav-active-color: #047857;
+    --nav-active-icon: #059669;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

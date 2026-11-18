@@ -1,3 +1,19 @@
+(function applyRoleTheme() {
+  try {
+    const storedRole = sessionStorage.getItem('cp_role') || localStorage.getItem('cp_role') || 'cashier';
+    const normalized = String(storedRole).trim().toLowerCase().replace(/^role_/, '');
+    const aliases = { employee: 'cashier', pos: 'cashier', branch: 'manager' };
+    const role = aliases[normalized] || normalized;
+    const activeRole = ['owner', 'manager', 'cashier'].includes(role) ? role : 'cashier';
+    document.documentElement.setAttribute('data-role', activeRole);
+    if (document.body) {
+      document.body.setAttribute('data-role', activeRole);
+    }
+  } catch (error) {
+    console.warn('[Theme] Unable to apply role theme:', error);
+  }
+})();
+
 /* Tiện ích dùng chung: định dạng, toast, modal, drawer, badge chờ thanh toán */
 const UI = (() => {
   const formatVND = (n) => (Number(n) || 0).toLocaleString('vi-VN') + 'đ';
@@ -52,7 +68,7 @@ const UI = (() => {
     const user = get('cp_user') || 'Thu ngân';
     const branch = get('cp_branch') || 'Cửa hàng';
 
-    const roleName = role === 'owner' ? 'Chủ chuỗi' : role === 'manager' ? 'Quản lý' : 'Thu ngân';
+    const roleName = role === 'owner' ? 'Chủ chuỗi hệ thống' : role === 'manager' ? 'Quản lý chi nhánh' : 'Thu ngân POS';
 
     const overlay = document.createElement('div');
     overlay.className = 'overlay'; overlay.id = 'drawer-overlay';
@@ -63,7 +79,7 @@ const UI = (() => {
     const isOwner = role === 'owner';
     const isManager = role === 'manager';
     const canAccessAdmin = isOwner || isManager;
-    const returnDashboardUrl = isOwner ? '../pages/owner/dashboard.html' : '../pages/branch/dashboard.html';
+    const returnDashboardUrl = '../pages/admin/dashboard.html';
 
     drawer.innerHTML = `
       <div class="drawer-head">
@@ -72,7 +88,7 @@ const UI = (() => {
       </div>
 
       ${canAccessAdmin ? `
-        <a id="menu-admin-back" class="drawer-link" style="background:#eef4ff; color:#2f6bff; font-weight:700;" href="${returnDashboardUrl}"><span class="ico">📊</span>Về ${isOwner ? 'Owner Dashboard' : 'Quản trị chi nhánh'}</a>
+        <a id="menu-admin-back" class="drawer-link" style="background:#eef4ff; color:#2f6bff; font-weight:700;" href="${returnDashboardUrl}"><span class="ico">📊</span>Về Dashboard tổng quan</a>
         <a id="menu-admin-tables" class="drawer-link" href="../pages/branch/tables.html"><span class="ico">📐</span>Cấu hình vị trí bàn</a>
         <hr style="border:0; border-top:1px solid #e2e8f0; margin:8px 0;" />
       ` : ''}
@@ -113,7 +129,7 @@ const UI = (() => {
           sessionStorage.removeItem(k);
           localStorage.removeItem(k);
         });
-        window.location.href = '../pages/auth/pos-login.html';
+        window.location.href = '../pages/auth/login.html';
       });
     }
   }

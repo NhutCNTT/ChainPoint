@@ -63,7 +63,7 @@
         </div>
         <div class="user-chip">
           <div class="avatar" style="background:linear-gradient(135deg, #4f86ff, #2f6bff); color:#fff; font-weight:800;">👑</div>
-          <div><span id="ownerUserName">Chủ hệ thống</span><small style="color:var(--primary); font-weight:700;">OWNER PORTAL</small></div>
+          <div><span id="ownerUserName">Chủ hệ thống</span><small>Chủ chuỗi hệ thống</small></div>
         </div>
       </header>
 
@@ -146,7 +146,7 @@
       // Sidebar links
       if (linksContainer) {
         linksContainer.innerHTML = branches.map(b => `
-          <a href="../branch/dashboard.html?branchId=${b.id}&branch=${encodeURIComponent(b.name)}" class="switch-branch-link" style="color:#1e40af; background:#f0f7ff; border:1px solid #dbeafe; margin-bottom:2px;">
+          <a href="../admin/dashboard.html?branchId=${b.id}&branch=${encodeURIComponent(b.name)}" class="switch-branch-link" style="color:#1e40af; background:#f0f7ff; border:1px solid #dbeafe; margin-bottom:2px;">
             <span>📍 ${b.name}</span>
           </a>
         `).join('');
@@ -201,7 +201,7 @@
                 </span>
               </td>
               <td style="text-align:right;">
-                <a href="../branch/dashboard.html?branchId=${b.id}&branch=${encodeURIComponent(b.name)}" class="btn-secondary" style="font-size:12px; padding:6px 12px; text-decoration:none;">
+                <a href="../admin/dashboard.html?branchId=${b.id}&branch=${encodeURIComponent(b.name)}" class="btn-secondary" style="font-size:12px; padding:6px 12px; text-decoration:none;">
                   Quản trị →
                 </a>
               </td>
@@ -216,7 +216,7 @@
         sessionStorage.removeItem(k);
         localStorage.removeItem(k);
       });
-      window.location.href = '../auth/owner-login.html';
+      window.location.href = '../auth/login.html';
     });
 
     loadComparisonData();

@@ -63,7 +63,7 @@
         </div>
         <div class="user-chip">
           <div class="avatar" style="background:linear-gradient(135deg, #4f86ff, #2f6bff); color:#fff; font-weight:800;">👑</div>
-          <div><span>Chủ hệ thống</span><small style="color:var(--primary); font-weight:700;">OWNER PORTAL</small></div>
+          <div><span>Chủ hệ thống</span><small>Chủ chuỗi hệ thống</small></div>
         </div>
       </header>
 
@@ -186,9 +186,11 @@
   <script src="../../js/admin/branches.js"></script>
   <script>
     document.getElementById('ownerLogoutBtn').addEventListener('click', () => {
-      localStorage.removeItem('cp_role');
-      localStorage.removeItem('cp_user');
-      window.location.href = '../auth/owner-login.html';
+      ['cp_token', 'cp_role', 'cp_user', 'cp_branch', 'cp_branch_id'].forEach(k => {
+        sessionStorage.removeItem(k);
+        localStorage.removeItem(k);
+      });
+      window.location.href = '../auth/login.html';
     });
   </script>
 </body>

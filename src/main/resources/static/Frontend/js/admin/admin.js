@@ -3,9 +3,26 @@
 
 (function () {
     const get = key => sessionStorage.getItem(key) || localStorage.getItem(key);
+
+    function normalizeRole(value) {
+        const normalized = String(value || '').trim().toLowerCase().replace(/^role_/, '');
+        const aliases = { employee: 'cashier', pos: 'cashier', branch: 'manager' };
+        const roleName = aliases[normalized] || normalized;
+        return ['owner', 'manager', 'cashier'].includes(roleName) ? roleName : 'owner';
+    }
+
+    function applyRoleTheme(roleName) {
+        document.documentElement.setAttribute('data-role', roleName);
+        if (document.body) {
+            document.body.setAttribute('data-role', roleName);
+        }
+    }
+
     const user = get('cp_user');
-    const role = get('cp_role') || 'owner';
+    const role = normalizeRole(get('cp_role'));
     const branch = get('cp_branch') || '';
+
+    applyRoleTheme(role);
 
     // 1. Kiểm tra đăng nhập — Chưa đăng nhập thì chuyển về trang login
     if (!user) {
@@ -95,26 +112,46 @@
         }).join('');
     }
 
-    // 4. Cập nhật thông tin User Chip trên Topbar
+    // 4. Cập nhật thông tin User Chip + role badge trên Topbar và Sidebar
     const roleLabels = {
         owner: 'Chủ chuỗi hệ thống',
-        manager: `Quản lý — ${branch}`,
-        cashier: `Thu ngân — ${branch}`
+        manager: 'Quản lý chi nhánh',
+        cashier: 'Thu ngân POS'
+    };
+
+    const sidebarRoleLabels = {
+        owner: 'Chủ chuỗi',
+        manager: 'Quản lý',
+        cashier: 'Thu ngân'
     };
 
     const nameEl = document.getElementById('userName');
     const roleEl = document.getElementById('userRole');
     const avatarEl = document.getElementById('userAvatar');
+    const logoTextEl = document.querySelector('.sidebar .logo-text');
 
     if (nameEl) nameEl.textContent = user;
-    if (roleEl) roleEl.textContent = roleLabels[role] || role;
+    if (roleEl) {
+        roleEl.textContent = roleLabels[role] || role;
+        roleEl.title = branch ? `Chi nhánh: ${branch}` : '';
+    }
     if (avatarEl) avatarEl.textContent = user.charAt(0).toUpperCase();
+
+    if (logoTextEl) {
+        let badge = logoTextEl.querySelector('.logo-tag');
+        if (!badge) {
+            badge = document.createElement('small');
+            badge.className = 'logo-tag';
+            logoTextEl.appendChild(badge);
+        }
+        badge.textContent = sidebarRoleLabels[role] || role;
+    }
 
     // 5. Nút đăng xuất
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            ['cp_role', 'cp_user', 'cp_branch'].forEach(k => {
+            ['cp_token', 'cp_role', 'cp_user', 'cp_branch', 'cp_branch_id'].forEach(k => {
                 sessionStorage.removeItem(k);
                 localStorage.removeItem(k);
             });

@@ -119,7 +119,7 @@
 
                     <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 16px;">
                         <span>⏰ Giờ mở cửa: <strong>${b.openHours || '08:00 - 22:00'}</strong></span>
-                        <a href="../branch/dashboard.html?branchId=${b.id}&branch=${encodeURIComponent(b.name)}" style="color: var(--primary); font-weight: 700; text-decoration: none;">Xem Dashboard →</a>
+                        <a href="dashboard.html?branchId=${b.id}&branch=${encodeURIComponent(b.name)}" style="color: var(--primary); font-weight: 700; text-decoration: none;">Xem Dashboard →</a>
                     </div>
 
                     <div class="table-card-actions">
@@ -147,7 +147,7 @@
                 if (window.showToast) {
                     window.showToast(`Chuyển sang: ${bName}`);
                 }
-                window.location.href = `../branch/dashboard.html?branchId=${bId}&branch=${encodeURIComponent(bName)}`;
+                window.location.href = `dashboard.html?branchId=${bId}&branch=${encodeURIComponent(bName)}`;
             });
         });
 
