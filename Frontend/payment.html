@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán | ChainPoint POS</title>
+  <meta name="description" content="Chọn phương thức thanh toán cho bill: tiền mặt hoặc chuyển khoản QR.">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/payment.css">
+</head>
+<body>
+  <div class="pay-shell">
+    <header class="pay-head">
+      <button id="btn-back" class="icon-btn back" type="button" aria-label="Quay lại">←</button>
+      <div><h1 id="pay-title">Thanh toán</h1><p id="pay-sub" class="sub"></p></div>
+    </header>
+
+    <div class="pay-body">
+      <section class="glass pay-card" aria-label="Chi tiết bill">
+        <h2>Chi tiết bill</h2>
+        <div class="sum-list" id="sum-list"></div>
+        <div class="sum-total"><span>Tổng thanh toán</span><span id="sum-total" class="money">0đ</span></div>
+      </section>
+
+      <section class="method-col" aria-label="Phương thức thanh toán">
+        <a id="method-cash" class="method-card cash" href="#">
+          <span class="ico">💵</span><h3>Tiền mặt</h3><p>Nhập số tiền khách đưa và tính tiền thối</p>
+        </a>
+        <a id="method-transfer" class="method-card transfer" href="#">
+          <span class="ico">📱</span><h3>Chuyển khoản</h3><p>Hiển thị mã QR để khách quét thanh toán</p>
+        </a>
+      </section>
+    </div>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/pay-common.js"></script>
+  <script src="js/payment.js"></script>
+</body>
+</html>
