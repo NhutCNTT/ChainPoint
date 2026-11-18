@@ -56,6 +56,10 @@ public class Bill {
     private BigDecimal cashReceived;
 
     @Builder.Default
+    @Column(name = "redemption_reserved", nullable = false)
+    private Boolean redemptionReserved = false;
+
+    @Builder.Default
     @Column(name = "blockchain_pending", nullable = false)
     private Boolean blockchainPending = false;
 

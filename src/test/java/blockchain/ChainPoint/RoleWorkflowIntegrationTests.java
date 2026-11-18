@@ -127,6 +127,10 @@ class RoleWorkflowIntegrationTests {
         assertEquals(99, products.findById(product.getId()).orElseThrow().getStockQuantity());
         assertEquals(code, send(post("/api/v1/pos/orders"), cashierToken, request, 200).get("billCode").asText());
         request.put("orderCode", code); request.put("customerPhone", customer.getPhone()); request.put("pointsToUse", 5); request.put("cashReceived", 95000);
+        request.put("cashReceived", 1);
+        send(post("/api/v1/pos/checkout"), cashierToken, request, 400);
+        assertEquals(100, customers.findById(customer.getId()).orElseThrow().getPoints());
+        request.put("cashReceived", 95000);
         JsonNode paid = send(post("/api/v1/pos/checkout"), cashierToken, request, 200);
         assertEquals("paid", paid.get("status").asText());
         assertEquals(0, new BigDecimal("95000").compareTo(paid.get("finalAmount").decimalValue()));
@@ -146,7 +150,7 @@ class RoleWorkflowIntegrationTests {
         var request = order("transfer", "T1"); request.put("customerPhone", customer.getPhone()); request.put("pointsToUse", 5);
         JsonNode pending = send(post("/api/v1/pos/checkout"), cashierToken, request, 200);
         String code = pending.get("billCode").asText(); assertEquals("pending", pending.get("status").asText());
-        assertEquals(95, customers.findById(customer.getId()).orElseThrow().getPoints());
+        assertEquals(100, customers.findById(customer.getId()).orElseThrow().getPoints());
         assertEquals(0, read("/api/v1/admin/dashboard/metrics?branchId=" + a.getId() + "&range=today", managerToken).get("totalRevenue").decimalValue().signum());
         assertFalse(read("/api/v1/payment/status/" + code, cashierToken).get("paid").asBoolean());
         assertEquals(0, read("/api/v1/payment/vietqr-info?billCode=" + code + "&amount=1", cashierToken).get("amount").decimalValue().compareTo(new BigDecimal("95000")));
@@ -254,11 +258,58 @@ class RoleWorkflowIntegrationTests {
         org.mockito.Mockito.verify(chainService, org.mockito.Mockito.times(1)).redeemPoints(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.any());
     }
 
+    @Test void normalizedPhoneLookupAndDuplicateRegistration() throws Exception {
+        var payload = Map.of("name", "Phone Member", "phone", "+84 908-123-456", "branchId", a.getId());
+        JsonNode created = send(post("/api/v1/customers"), cashierToken, payload, 201);
+        assertEquals("0908123456", created.get("phone").asText());
+        assertEquals(created.get("id"), read("/api/v1/customers/by-phone/0908123456", cashierToken).get("id"));
+        send(post("/api/v1/customers"), cashierToken, Map.of("name", "Duplicate", "phone", "0908.123.456", "branchId", a.getId()), 409);
+        mvc.perform(auth(get("/api/v1/customers/by-phone/invalid"), cashierToken)).andExpect(status().isBadRequest());
+        mvc.perform(auth(get("/api/v1/customers/by-phone/0908999999"), cashierToken)).andExpect(status().isNotFound());
+    }
+
+    @Test void pendingRedemptionReservesWithoutDeductingAndCancellationReleases() throws Exception {
+        Customer member = customer(a);
+        var request = order("transfer", "T1"); request.put("customerPhone", member.getPhone()); request.put("pointsToUse", 40);
+        member.setPoints(10L); customers.save(member); request.put("pointsToUse", 20);
+        send(post("/api/v1/pos/checkout"), cashierToken, request, 400);
+        assertEquals(10, customers.findById(member.getId()).orElseThrow().getPoints());
+        member.setPoints(100L); customers.save(member); request.put("pointsToUse", 40);
+        String code = send(post("/api/v1/pos/checkout"), cashierToken, request, 200).get("billCode").asText();
+        assertEquals(100, customers.findById(member.getId()).orElseThrow().getPoints());
+        assertEquals(60, read("/api/v1/customers/by-phone/" + member.getPhone(), cashierToken).get("availablePoints").asInt());
+        mvc.perform(auth(post("/api/v1/pos/orders/" + code + "/cancel"), managerToken)).andExpect(status().isNoContent());
+        assertEquals(100, read("/api/v1/customers/by-phone/" + member.getPhone(), cashierToken).get("availablePoints").asInt());
+        assertEquals(100, customers.findById(member.getId()).orElseThrow().getPoints());
+    }
+
+    @Test void concurrentOrdersForSameCustomerDoNotLoseLoyaltyUpdates() throws Exception {
+        Customer member = customer(a); table(a, "T2");
+        var first = order("cash", "T1"); var second = order("cash", "T2");
+        for (var request : List.of(first, second)) {
+            request.put("orderCode", send(post("/api/v1/pos/orders"), cashierToken, request, 200).get("billCode").asText());
+            request.put("customerPhone", member.getPhone()); request.put("pointsToUse", 40); request.put("cashReceived", 60000);
+        }
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        var gate = new java.util.concurrent.CountDownLatch(1);
+        try {
+            var jobs = new java.util.ArrayList<java.util.concurrent.Future<?>>();
+            for (var request : List.of(first, second)) jobs.add(executor.submit(() -> {
+                try { gate.await(); send(post("/api/v1/pos/checkout"), cashierToken, request, 200); }
+                catch (Exception exception) { throw new RuntimeException(exception); }
+            }));
+            gate.countDown();
+            for (var job : jobs) job.get(20, java.util.concurrent.TimeUnit.SECONDS);
+        } finally { executor.shutdownNow(); }
+        assertEquals(32, customers.findById(member.getId()).orElseThrow().getPoints());
+        assertEquals(0, customers.findById(member.getId()).orElseThrow().getTotalSpent().compareTo(new BigDecimal("120000")));
+    }
+
     Branch branch(String code) { return branches.save(Branch.builder().code(code + suffix).name(code).address("HCM").build()); }
     void table(Branch branch, String code) { tables.save(DiningTable.builder().code(code).seats(4).branch(branch).build()); }
     User user(String name, RoleType role, Branch branch) { return users.save(User.builder().username(name + suffix).fullName(name).password(passwords.encode("Password123!")).role(role).branch(branch).build()); }
     String token(User user) { return jwt.generateToken(new CustomUserDetails(user)); }
-    Customer customer(Branch branch) { return customers.save(Customer.builder().code("KH" + suffix).name("Customer").phone("09" + suffix).points(100L).branch(branch).build()); }
+    Customer customer(Branch branch) { return customers.save(Customer.builder().code("KH" + suffix).name("Customer").phone("09" + String.format("%08d", Integer.toUnsignedLong(suffix.hashCode()) % 100000000)).points(100L).branch(branch).build()); }
     Map<String, Object> staff(String name, String role, Long branch) { return new LinkedHashMap<>(Map.of("username", name + suffix, "fullName", name, "password", "Password123!", "role", role, "branchId", branch)); }
     Map<String, Object> order(String method, String table) { return new LinkedHashMap<>(Map.of("requestKey", UUID.randomUUID().toString(), "branchId", a.getId(), "tableCode", table, "paymentMethod", method, "items", List.of(Map.of("productId", product.getId(), "quantity", 1, "note", "No sugar")))); }
     MockHttpServletRequestBuilder auth(MockHttpServletRequestBuilder request, String token) { return request.header("Authorization", "Bearer " + token); }

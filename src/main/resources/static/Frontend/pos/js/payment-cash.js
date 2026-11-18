@@ -66,7 +66,8 @@
         const usedPts = record ? Number(record.pointsUsed || 0) : Number(ptsUsed || 0);
         const discAmount = record ? Number(record.discountVND || 0) : Number(disc || 0);
         const earnedPts = record ? Number(record.pointsEarned || 0) : 0;
-        const finalBalance = Math.max(0, Number(cust.points || 0) - usedPts + earnedPts);
+        let finalBalance = 'Xem hồ sơ hội viên';
+        try { finalBalance = (await LoyaltyStore.getCustomerByPhone(cust.phone)).points; } catch (_) { /* Payment already committed; do not report it as failed. */ }
 
         msg += `
           <div style="margin-top:14px; padding:12px; background:#f0fdf4; border-radius:10px; font-size:13.5px; border:1px solid #bbf7d0; text-align:left; line-height:1.6;">

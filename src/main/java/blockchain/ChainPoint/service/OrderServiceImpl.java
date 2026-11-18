@@ -198,7 +198,7 @@ public class OrderServiceImpl implements OrderService {
     private void adjustCustomer(Customer customer, Bill bill, long pointsRestored, long pointsRevoked) {
         long currentPoints = customer.getPoints() != null ? customer.getPoints() : 0L;
         long newPoints = currentPoints + pointsRestored - pointsRevoked;
-        if (newPoints < 0) throw new InvalidRedemptionException("Earned points have already been spent; resolve the loyalty balance before refunding");
+        if (newPoints < billRepository.reservedPoints(customer.getPhone())) throw new InvalidRedemptionException("Earned points have already been spent or reserved; resolve the loyalty balance before refunding");
         customer.setPoints(newPoints);
 
         BigDecimal currentTotalSpent = customer.getTotalSpent() != null

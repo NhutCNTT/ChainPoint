@@ -30,6 +30,7 @@ public class CustomerResponse {
     private String tier;
 
     private Long points;
+    private Long availablePoints;
 
     private BigDecimal totalSpent;
 

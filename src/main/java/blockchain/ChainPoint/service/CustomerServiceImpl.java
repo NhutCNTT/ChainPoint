@@ -54,12 +54,10 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponse getCustomerByPhone(String phone) {
-        return customerRepository.findByPhone(phone.trim())
-                .filter(c -> access.canAccess(c.getBranch() != null ? c.getBranch().getId() : null))
-                .map(this::toResponse)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Customer not found with phone: " + phone
-                ));
+        var matches = customerRepository.findPhoneVariants(blockchain.ChainPoint.util.VietnamPhone.variants(phone));
+        if (matches.size() > 1) throw new DuplicateResourceException("Duplicate legacy phone records require review");
+        return matches.stream().filter(c -> access.canAccess(c.getBranch() == null ? null : c.getBranch().getId()))
+                .map(this::toResponse).findFirst().orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
     }
 
     @Override
@@ -69,14 +67,14 @@ public class CustomerServiceImpl implements CustomerService {
         if (request.getPoints() != null && request.getPoints() != 0) {
             throw new IllegalArgumentException("Loyalty balances can only change through payment workflows");
         }
-        String phone = request.getPhone().trim();
+        String phone = blockchain.ChainPoint.util.VietnamPhone.normalize(request.getPhone());
 
-        if (customerRepository.existsByPhone(phone)) {
+        if (!customerRepository.findPhoneVariants(blockchain.ChainPoint.util.VietnamPhone.variants(phone)).isEmpty()) {
             throw new DuplicateResourceException("Số điện thoại đã được đăng ký hội viên: " + phone);
         }
 
         Customer customer = Customer.builder()
-                .code(generateCustomerCode())
+                .code("KH" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 18))
                 .name(request.getName().trim())
                 .phone(phone)
                 .dateOfBirth(request.getDateOfBirth())
@@ -94,12 +92,13 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerResponse updateCustomer(Long id, CustomerRequest request) {
         Customer customer = customerRepository.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
         access.check(customer.getBranch() == null ? null : customer.getBranch().getId());
-        String phone = request.getPhone().trim();
+        String phone = blockchain.ChainPoint.util.VietnamPhone.normalize(request.getPhone());
+        if (blockchain.ChainPoint.util.VietnamPhone.normalize(customer.getPhone()).equals(phone)) phone = customer.getPhone();
         if (!phone.equals(customer.getPhone()) && bills.existsByCustomerPhone(customer.getPhone())) throw new IllegalArgumentException("Phone is referenced by financial history");
         if (!Objects.equals(trimToNull(request.getWalletAddress()), customer.getWalletAddress()) && request.getWalletAddress() != null) access.requireOwner();
 
         if (!Objects.equals(customer.getPhone(), phone)
-                && customerRepository.existsByPhone(phone)) {
+                && customerRepository.findPhoneVariants(blockchain.ChainPoint.util.VietnamPhone.variants(phone)).stream().anyMatch(c -> !c.getId().equals(id))) {
             throw new DuplicateResourceException("Số điện thoại đã được đăng ký hội viên: " + phone);
         }
 
@@ -175,6 +174,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .dateOfBirth(customer.getDateOfBirth())
                 .tier(customer.getTier())
                 .points(customer.getPoints())
+                .availablePoints(Math.max(0, customer.getPoints() - bills.reservedPoints(customer.getPhone())))
                 .totalSpent(customer.getTotalSpent())
                 .walletAddress(customer.getWalletAddress())
                 .branchId(branch != null ? branch.getId() : null)

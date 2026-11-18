@@ -3,7 +3,7 @@ const LoyaltyStore = (() => {
     let config = null, customers = [], transactions = [];
     let configRequest, customerRequest, transactionRequest;
     const mapCustomer = c => ({ id: c.code, realId: c.id, name: c.name, phone: c.phone, dob: c.dateOfBirth || '',
-        tier: c.tier, points: Number(c.points), totalSpent: Number(c.totalSpent), branchId: c.branchId,
+        tier: c.tier, points: Number(c.points), availablePoints: Number(c.availablePoints ?? c.points), totalSpent: Number(c.totalSpent), branchId: c.branchId,
         branchName: c.branchName, walletAddress: c.walletAddress || '', joinedAt: c.createdAt ? new Date(c.createdAt).toLocaleDateString('vi-VN') : '' });
     const fromConfig = c => ({ earnRatioVND: c.earnRatioVnd, pointValueVND: c.pointValueVnd,
         minPointsToRedeem: c.minPointsToRedeem, maxDiscountPercent: c.maxDiscountPercent,

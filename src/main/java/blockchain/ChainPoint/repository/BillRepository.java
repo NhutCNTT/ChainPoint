@@ -14,6 +14,8 @@ import java.util.Optional;
 
 @Repository
 public interface BillRepository extends JpaRepository<Bill, Long> {
+    @Query("SELECT COALESCE(SUM(b.pointsUsed), 0) FROM Bill b WHERE b.customerPhone = :phone AND b.status = 'pending' AND b.redemptionReserved = true")
+    long reservedPoints(@Param("phone") String phone);
 
     Optional<Bill> findByRequestKey(String requestKey);
 

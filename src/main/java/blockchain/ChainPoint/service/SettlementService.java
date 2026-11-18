@@ -25,6 +25,7 @@ public class SettlementService {
     private final DiningTableRepository tables;
     private final BranchAccess access;
     private final ApplicationEventPublisher events;
+    private final BillRepository bills;
 
     @org.springframework.beans.factory.annotation.Value("${payment.webhook-secret:}")
     private String webhookSecret;
@@ -34,7 +35,7 @@ public class SettlementService {
         String method = request.getPaymentMethod();
         if (!"cash".equals(method) && !"transfer".equals(method)) throw new IllegalArgumentException("Unsupported payment method");
         if ("paid".equals(bill.getStatus()) || "pending".equals(bill.getStatus())) {
-            if (!Objects.equals(method, bill.getPaymentMethod()) || !Objects.equals(normalize(request.getCustomerPhone()), bill.getCustomerPhone())
+            if (!Objects.equals(method, bill.getPaymentMethod()) || !Objects.equals(normalize(request.getCustomerPhone()), normalize(bill.getCustomerPhone()))
                     || !Objects.equals(request.getPointsToUse() == null ? 0L : request.getPointsToUse(), bill.getPointsUsed())) throw new IllegalArgumentException("Existing payment cannot be changed");
             return;
         }
@@ -50,15 +51,15 @@ public class SettlementService {
         BigDecimal discount = BigDecimal.valueOf(points).multiply(BigDecimal.valueOf(cfg.getPointValueVnd()));
         BigDecimal max = bill.getGrossAmount().multiply(BigDecimal.valueOf(cfg.getMaxDiscountPercent())).divide(BigDecimal.valueOf(100), 2, RoundingMode.DOWN);
         if (points > 0 && (!Boolean.TRUE.equals(cfg.getAllowRedeem()) || customer == null || points < cfg.getMinPointsToRedeem()
-                || points > customer.getPoints() || discount.compareTo(max) > 0)) throw new InvalidRedemptionException("Requested loyalty redemption is not eligible");
+                || points > customer.getPoints() - bills.reservedPoints(customer.getPhone()) || discount.compareTo(max) > 0)) throw new InvalidRedemptionException("Requested loyalty redemption is not eligible");
         BigDecimal due = bill.getGrossAmount().subtract(discount).setScale(2, RoundingMode.HALF_UP);
         if ("cash".equals(method) && (request.getCashReceived() == null || request.getCashReceived().compareTo(due) < 0)) throw new IllegalArgumentException("Cash received must cover the server-calculated amount");
-        bill.setCustomerPhone(normalize(request.getCustomerPhone())); bill.setPaymentMethod(method); bill.setPointsUsed(points);
+        bill.setCustomerPhone(customer == null ? null : customer.getPhone()); bill.setPaymentMethod(method); bill.setPointsUsed(points);
         bill.setDiscountAmount(discount); bill.setFinalAmount(due);
         if ("cash".equals(method)) bill.setCashReceived(request.getCashReceived());
         bill.setPointsEarned(customer != null && Boolean.TRUE.equals(cfg.getAllowEarn()) ? due.divideToIntegralValue(BigDecimal.valueOf(cfg.getEarnRatioVnd())).longValueExact() : 0L);
         // Reserve redemption under the customer lock; earnings and spend await settlement.
-        if (customer != null) customer.setPoints(customer.getPoints() - points);
+        bill.setRedemptionReserved(true);
         bill.setStatus("pending");
         if ("cash".equals(method)) settle(bill, customer);
         else tables.findByCodeAndBranchId(bill.getTableCode(), bill.getBranch().getId()).ifPresent(t -> t.setStatus("pending"));
@@ -73,6 +74,10 @@ public class SettlementService {
 
     private void settle(Bill bill, Customer customer) {
         if (customer != null) {
+            if (Boolean.TRUE.equals(bill.getRedemptionReserved())) {
+                if (customer.getPoints() < bill.getPointsUsed()) throw new InvalidRedemptionException("Insufficient points at settlement");
+                customer.setPoints(customer.getPoints() - bill.getPointsUsed());
+            }
             customer.setPoints(customer.getPoints() + bill.getPointsEarned());
             BigDecimal spend = customer.getTotalSpent().add(bill.getFinalAmount()); customer.setTotalSpent(spend);
             customer.setTier(spend.compareTo(new BigDecimal("20000000")) >= 0 ? "Kim Cương" : spend.compareTo(new BigDecimal("5000000")) >= 0 ? "Vàng" : "Bạc");
@@ -84,13 +89,16 @@ public class SettlementService {
     }
 
     public void releaseReservedPoints(Bill bill) {
-        if (!"pending".equals(bill.getStatus())) return;
+        if (!"pending".equals(bill.getStatus()) || Boolean.TRUE.equals(bill.getRedemptionReserved())) return;
         Customer customer = customer(bill.getCustomerPhone());
         if (customer != null) customer.setPoints(customer.getPoints() + bill.getPointsUsed());
     }
     private Customer customer(String phone) {
         if (phone == null) return null;
-        return customers.findByPhoneForUpdate(phone).orElseThrow(() -> new InvalidRedemptionException("Registered customer not found"));
+        var matches = customers.findPhoneVariantsForUpdate(blockchain.ChainPoint.util.VietnamPhone.variants(phone));
+        if (matches.size() > 1) throw new InvalidRedemptionException("Duplicate legacy phone records require review");
+        if (matches.isEmpty()) throw new InvalidRedemptionException("Registered customer not found");
+        return matches.getFirst();
     }
-    private String normalize(String value) { return value == null || value.isBlank() ? null : value.trim(); }
+    private String normalize(String value) { return value == null || value.isBlank() ? null : blockchain.ChainPoint.util.VietnamPhone.normalize(value); }
 }

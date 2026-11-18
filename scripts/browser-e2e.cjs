@@ -45,6 +45,7 @@ async function run() {
       await page.waitForURL(role === 'owner' ? '**/owner/dashboard.html' : role === 'manager' ? '**/branch/dashboard.html' : '**/pos/index.html');
       await page.evaluate(() => CP.ready);
     }
+    if (!process.env.CHAINPOINT_POS_ONLY) {
     await login('owner');
     await page.locator('#searchInput').fill('Coffee'); await page.locator('#dashboardSearchResults a').first().waitFor();
     await page.locator('#searchInput').fill('');
@@ -94,6 +95,13 @@ async function run() {
     outcomes.push('Manager cashier creation and restricted role options');
     await page.evaluate(() => CP.logout()); await page.waitForURL('**/auth/login.html');
     await login('cashier', 'e2ecashier', 'Cashier123!');
+    } else {
+      const managerLogin = await context.request.post(base + '/api/v1/auth/login', { data: { username: 'manager', password: 'BrowserTest123!' } });
+      const manager = await managerLogin.json();
+      const product = await context.request.post(base + '/api/v1/products', { headers: { Authorization: 'Bearer ' + manager.accessToken }, data: { code: 'E2E-TEA', name: 'E2E Tea', category: 'drink', price: 25000, stockQuantity: 100, branchId: manager.branchId } });
+      assert.equal(product.status(), 201);
+      await login('cashier');
+    }
     await page.locator('[data-table="T1"]').first().click();
     await page.getByText('E2E Tea', { exact: true }).click();
     await page.locator('#btn-save').click(); await page.waitForURL('**/pos/index.html');
@@ -104,6 +112,22 @@ async function run() {
     await page.locator('#quick-cust-name').fill('E2E Member'); await page.locator('#quick-cust-phone').fill('0908888888');
     await page.locator('#quickAddCustForm button[type=submit]').click();
     await page.locator('#cust-name-display').filter({ hasText: 'E2E Member' }).waitFor();
+    await page.reload();
+    await page.locator('#cust-profile-container').waitFor({ state: 'visible' });
+    await page.locator('#cust-phone-input').fill('invalid'); await page.locator('#btn-find-cust').click();
+    await page.locator('#customer-lookup-status').filter({ hasText: 'hợp lệ' }).waitFor();
+    await page.locator('#cust-phone-input').fill('+84 908-888-888'); await page.locator('#cust-phone-input').press('Enter');
+    await page.locator('#cust-profile-container').waitFor({ state: 'visible' });
+    await page.getByRole('button', { name: 'Bỏ chọn khách hàng' }).click();
+    assert.equal(await page.locator('#cust-profile-container').isVisible(), false);
+    assert.ok((await page.locator('#sum-list').textContent()).includes('E2E Tea'));
+    await page.locator('#btn-quick-add-cust').click();
+    await page.locator('#quick-cust-name').fill('Second Member'); await page.locator('#quick-cust-phone').fill('0907777777');
+    await page.locator('#quickAddCustForm button[type=submit]').click();
+    await page.locator('#cust-name-display').filter({ hasText: 'Second Member' }).waitFor();
+    await page.locator('#cust-phone-input').fill('0908888888'); await page.locator('#btn-find-cust').click();
+    await page.locator('#cust-profile-container').waitFor({ state: 'visible' });
+    outcomes.push('Normalized phone lookup, validation, selection restoration/removal without cart loss');
     await page.locator('#method-cash').click(); await page.locator('#received').fill('25000');
     await page.locator('#btn-confirm-cash').click(); await page.getByText('Thanh toán thành công', { exact: true }).waitFor();
     outcomes.push('Cashier menu synchronization, order persistence across reload, and cash payment');

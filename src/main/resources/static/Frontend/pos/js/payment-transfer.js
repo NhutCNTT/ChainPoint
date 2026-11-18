@@ -13,6 +13,7 @@
       const result = await API.get('/payment/status/' + encodeURIComponent(billId));
       if (result.paid) {
         clearInterval(timer); await Store.refresh(); sessionStorage.removeItem('pos_loyalty_' + billId);
+        LoyaltyStore.refreshCustomers().catch(error => CP.notify(error.message));
         if (status) status.textContent = '✓ Ngân hàng đã xác nhận thanh toán.';
         UI.showModal({ icon: '✓', title: 'Thanh toán thành công', message: 'Giao dịch đã được máy chủ xác minh.', actions: [{ label: 'Lịch sử', onClick: () => location.href = 'history.html' }] });
       } else if (status) status.textContent = 'Chưa nhận được xác nhận từ ngân hàng.';
