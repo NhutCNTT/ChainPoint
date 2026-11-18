@@ -7,7 +7,7 @@ spring:
   application:
     name: ChainPoint
   datasource:
-    url: jdbc:mysql://gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/sys?sslMode=VERIFY_IDENTITY&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&connectTimeout=10000
+    url: jdbc:mysql://gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/test?sslMode=VERIFY_IDENTITY&useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC&connectTimeout=10000
     username: pf5fvqEKCvScA6d.root
     password: 3N5Q8en1yV8esiXO
     driver-class-name: com.mysql.cj.jdbc.Driver
