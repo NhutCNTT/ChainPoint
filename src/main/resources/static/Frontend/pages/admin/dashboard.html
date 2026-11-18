@@ -4,6 +4,28 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ChainPoint — Tổng quan doanh thu</title>
+  <style>html[data-access-guard="denied"] body { visibility: hidden !important; }</style>
+  <script>
+    (function () {
+      try {
+        var get = function (key) { return sessionStorage.getItem(key) || localStorage.getItem(key); };
+        var rawRole = String(get('cp_role') || '').trim().toLowerCase().replace(/^role_/, '');
+        var aliases = { employee: 'cashier', pos: 'cashier', branch: 'manager' };
+        var role = aliases[rawRole] || rawRole || 'owner';
+        var canViewDashboard = ['owner', 'manager', 'admin', 'store_owner'].includes(role);
+        if (!get('cp_user')) {
+          document.documentElement.setAttribute('data-access-guard', 'denied');
+          window.location.replace('../auth/login.html');
+        } else if (!canViewDashboard) {
+          document.documentElement.setAttribute('data-access-guard', 'denied');
+          window.location.replace('../../pos/index.html');
+        }
+      } catch (error) {
+        document.documentElement.setAttribute('data-access-guard', 'denied');
+        window.location.replace('../../pos/index.html');
+      }
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />

@@ -14,14 +14,22 @@
         sessionStorage.setItem('cp_branch_id', branchIdFromUrl);
     }
 
-    const currentUserRole = getStorage('cp_role') || 'owner';
+    function normalizeRole(value) {
+        const normalized = String(value || '').trim().toLowerCase().replace(/^role_/, '');
+        const aliases = { employee: 'cashier', pos: 'cashier', branch: 'manager', branch_staff: 'cashier', admin: 'owner', store_owner: 'owner' };
+        const roleName = aliases[normalized] || normalized;
+        return ['owner', 'manager', 'cashier'].includes(roleName) ? roleName : 'cashier';
+    }
+
+    const currentUserRole = normalizeRole(getStorage('cp_role') || 'owner');
+    const isBranchScopedRole = currentUserRole === 'manager' || currentUserRole === 'cashier';
     const currentUserBranch = getStorage('cp_branch') || '';
     const currentBranchId = getStorage('cp_branch_id') || null;
 
     let branchesList = [];
-    let selectedBranchId = (currentUserRole === 'manager' && currentBranchId)
+    let selectedBranchId = (isBranchScopedRole && currentBranchId)
         ? currentBranchId
-        : (currentUserRole !== 'manager' && branchIdFromUrl ? branchIdFromUrl : 'all');
+        : ((!isBranchScopedRole && branchIdFromUrl) ? branchIdFromUrl : 'all');
     let currentMetric = 'revenue';
     let currentRange = '7days';
     let currentMetricsData = {
@@ -83,9 +91,11 @@
     function initBranchSelector() {
         if (!branchSelector) return;
 
-        if (currentUserRole === 'manager') {
-            const currentB = branchesList.find(b => String(b.id) === String(currentBranchId) || b.name === currentUserBranch) || { name: currentUserBranch || 'Chi nhánh' };
-            if (currentB.id && !currentBranchId) {
+        if (isBranchScopedRole) {
+            const currentB = branchesList.find(b => String(b.id) === String(currentBranchId) || (currentUserBranch && b.name === currentUserBranch))
+                || branchesList[0]
+                || { name: currentUserBranch || 'Chi nhánh' };
+            if (currentB.id) {
                 selectedBranchId = currentB.id;
                 sessionStorage.setItem('cp_branch_id', currentB.id);
             }
@@ -154,10 +164,16 @@
         renderBranchPerformance();
     }
 
+    function getVisibleBranches() {
+        if (!isBranchScopedRole) return branchesList;
+        const matched = branchesList.filter(b => String(b.id) === String(selectedBranchId) || (currentUserBranch && b.name === currentUserBranch));
+        return matched.length > 0 ? matched : branchesList.slice(0, 1);
+    }
+
     function updateOpenBranchesBadge() {
         const badge = document.getElementById('openBranchesCount');
         if (badge) {
-            const openCount = branchesList.filter(b => b.status === 'open').length;
+            const openCount = getVisibleBranches().filter(b => b.status === 'open').length;
             badge.textContent = `${openCount} chi nhánh đang mở`;
         }
     }
@@ -198,14 +214,15 @@
         const container = document.getElementById('branchPerformanceList');
         if (!container) return;
 
-        if (!branchesList || branchesList.length === 0) {
+        const visibleBranches = getVisibleBranches();
+        if (!visibleBranches || visibleBranches.length === 0) {
             container.innerHTML = `<div style="text-align: center; padding: 36px; color: var(--muted);">Chưa có chi nhánh nào trong Database.</div>`;
             return;
         }
 
-        const totalChainRev = branchesList.reduce((acc, b) => acc + Number(b.weeklyRevenue || 0), 0);
+        const totalChainRev = visibleBranches.reduce((acc, b) => acc + Number(b.weeklyRevenue || 0), 0);
 
-        container.innerHTML = branchesList.map(b => {
+        container.innerHTML = visibleBranches.map(b => {
             const rev = Number(b.weeklyRevenue || 0);
             const pct = totalChainRev > 0 ? Math.round((rev / totalChainRev) * 100) : 0;
             return `

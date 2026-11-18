@@ -4,7 +4,7 @@
 (function () {
     function normalizeRole(value) {
         const normalized = String(value || '').trim().toLowerCase().replace(/^role_/, '');
-        const aliases = { employee: 'cashier', pos: 'cashier', branch: 'manager' };
+        const aliases = { employee: 'cashier', pos: 'cashier', branch: 'manager', branch_staff: 'manager', admin: 'owner', store_owner: 'owner' };
         const roleName = aliases[normalized] || normalized;
         return ['owner', 'manager', 'cashier'].includes(roleName) ? roleName : 'manager';
     }
@@ -30,6 +30,12 @@
     }
 
     const currentFile = location.pathname.split('/').pop() || 'dashboard.html';
+    const overviewHref = role === 'owner' ? '../admin/dashboard.html' : '../../pos/index.html';
+
+    const logoLink = document.querySelector('.sidebar .logo');
+    if (logoLink) {
+        logoLink.href = overviewHref;
+    }
 
     // 9 Sidebar Items with clean SVG icons
     const BRANCH_MENU = [
@@ -101,8 +107,9 @@
         BRANCH_MENU.forEach(item => {
             const isActive = currentFile === item.file ? 'active' : '';
             const queryParam = branchFromUrl ? `?branch=${encodeURIComponent(currentBranch)}` : '';
+            const href = item.file === 'dashboard.html' ? overviewHref : `${item.file}${queryParam}`;
             navHtml += `
-                <a href="${item.file}${queryParam}" class="${isActive}">
+                <a href="${href}" class="${isActive}">
                     ${item.icon}
                     <span>${item.title}</span>
                     ${item.badge ? `<span class="badge badge-warning" style="margin-left:auto; font-size:10px; padding:1px 6px;">${item.badge}</span>` : ''}

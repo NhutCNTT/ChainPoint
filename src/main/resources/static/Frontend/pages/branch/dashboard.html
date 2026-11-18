@@ -5,8 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ChainPoint — Chuyển hướng Dashboard</title>
   <script>
-    const query = window.location.search || '';
-    window.location.replace(`../admin/dashboard.html${query}`);
+    (function () {
+      var query = window.location.search || '';
+      var get = function (key) { return sessionStorage.getItem(key) || localStorage.getItem(key); };
+      var rawRole = String(get('cp_role') || '').trim().toLowerCase().replace(/^role_/, '');
+      var aliases = { employee: 'cashier', pos: 'cashier', branch: 'manager' };
+      var role = aliases[rawRole] || rawRole;
+
+      if (!get('cp_user')) {
+        window.location.replace('../auth/login.html');
+      } else if (['owner', 'manager', 'admin', 'store_owner'].includes(role)) {
+        window.location.replace('../admin/dashboard.html' + query);
+      } else {
+        window.location.replace('../../pos/index.html');
+      }
+    })();
   </script>
 </head>
 <body>

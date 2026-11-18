@@ -4,9 +4,20 @@
 (function () {
     let branches = [];
     let staffList = [];
-    let currentRoleFilter = 'all';
+    let currentSelectedRole = 'all';
     let currentBranchFilter = 'all';
     let currentSearch = '';
+
+    function normalizeRole(role) {
+        const value = String(role || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toUpperCase()
+            .replace(/[^A-Z]/g, '');
+        if (value.includes('CASHIER') || value.includes('THUNGAN')) return 'CASHIER';
+        if (value.includes('MANAGER') || value.includes('QUANLY')) return 'MANAGER';
+        return null;
+    }
 
     const getStorage = k => sessionStorage.getItem(k) || localStorage.getItem(k);
     const currentUserRole = getStorage('cp_role') || 'owner';
@@ -73,7 +84,7 @@
             console.error('Không thể nạp dữ liệu nhân sự từ MySQL API:', e);
             staffList = [];
         }
-        render();
+        applyStaffFilters();
     }
 
     function initBranchOptions() {
@@ -102,20 +113,20 @@
         const activeStaff = staffList.filter(s => s.status === 'active');
         if (statTotal) statTotal.textContent = activeStaff.length;
         if (statManagers) {
-            statManagers.textContent = activeStaff.filter(s => (s.role || '').toUpperCase().includes('MANAGER')).length;
+            statManagers.textContent = activeStaff.filter(s => normalizeRole(s.role) === 'MANAGER').length;
         }
         if (statCashiers) {
-            statCashiers.textContent = activeStaff.filter(s => (s.role || '').toUpperCase().includes('CASHIER')).length;
+            statCashiers.textContent = activeStaff.filter(s => normalizeRole(s.role) === 'CASHIER').length;
         }
         if (statBranches) statBranches.textContent = branches.length;
     }
 
-    function render() {
+    function applyStaffFilters() {
         updateStats();
         if (!staffTableBody) return;
 
         const filtered = staffList.filter(s => {
-            const roleMatch = currentRoleFilter === 'all' || (s.role && s.role.toUpperCase().includes(currentRoleFilter.toUpperCase()));
+            const roleMatch = currentSelectedRole === 'all' || normalizeRole(s.role) === currentSelectedRole;
             const branchMatch = currentBranchFilter === 'all' || s.branchName === currentBranchFilter;
             const q = currentSearch.toLowerCase().trim();
             const searchMatch = !q ||
@@ -143,7 +154,7 @@
         }
 
         staffTableBody.innerHTML = filtered.map(s => {
-            const isManager = (s.role || '').toUpperCase().includes('MANAGER');
+            const isManager = normalizeRole(s.role) === 'MANAGER';
             const isActive = s.status === 'active';
             const roleBadge = isManager
                 ? `<span class="badge badge-primary">Quản lý</span>`
@@ -308,23 +319,28 @@
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             currentSearch = e.target.value;
-            render();
+            applyStaffFilters();
         });
     }
 
     if (branchFilterSelect) {
         branchFilterSelect.addEventListener('change', (e) => {
             currentBranchFilter = e.target.value;
-            render();
+            applyStaffFilters();
         });
     }
 
     if (roleFilterTabs) {
-        roleFilterTabs.querySelectorAll('.tab').forEach(tab => {
+        const tabs = roleFilterTabs.querySelectorAll('.filter-tab');
+        tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                roleFilterTabs.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t === tab));
-                currentRoleFilter = tab.dataset.role || 'all';
-                render();
+                currentSelectedRole = tab.dataset.role || 'all';
+                tabs.forEach(t => {
+                    const isActive = t === tab;
+                    t.classList.toggle('active', isActive);
+                    t.setAttribute('aria-pressed', String(isActive));
+                });
+                applyStaffFilters();
             });
         });
     }
