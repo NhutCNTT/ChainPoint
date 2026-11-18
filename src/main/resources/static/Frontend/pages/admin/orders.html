@@ -76,7 +76,7 @@
         <div style="background: #ffffff; border-radius: 16px; padding: 18px 20px; border: 1px solid rgba(230, 235, 245, 0.9); box-shadow: 0 4px 16px -6px rgba(31, 64, 160, 0.06); display: flex; align-items: center; gap: 16px;">
           <div style="width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; font-size: 20px; background: #f5f0ff; color: #7c3aed;">🍽️</div>
           <div>
-            <div style="font-size: 13px; font-weight: 600; color: var(--muted);">Bàn đang phục vụ</div>
+            <div style="font-size: 13px; font-weight: 600; color: var(--muted);">Bàn đang hoạt động</div>
             <div style="font-size: 22px; font-weight: 800; color: var(--text);" id="statActiveTables">0</div>
           </div>
         </div>
@@ -88,7 +88,7 @@
           <button class="filter-tab active" data-status="all" type="button">Tất cả đơn hàng</button>
           <button class="filter-tab" data-status="paid" type="button">✓ Đã thanh toán</button>
           <button class="filter-tab" data-status="pending" type="button">⏳ Chờ thanh toán</button>
-          <button class="filter-tab" data-status="busy" type="button">🍽️ Đang phục vụ</button>
+          <button class="filter-tab" data-status="refunded" type="button">↩ Đã hoàn tiền</button>
         </div>
 
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
@@ -176,8 +176,8 @@
     </div>
   </div>
 
+  <script src="../../js/common/api.js"></script>
   <script src="../../js/admin/admin.js"></script>
   <script src="../../js/admin/orders.js"></script>
 </body>
 </html>
-

@@ -5,7 +5,7 @@
   const { bill, billId } = PayCommon;
   if (!billId || !bill) return;
 
-  const grossTotal = bill.total;
+  const grossTotal = bill.grossTotal || bill.total;
   let activeCustomer = null;
   let pointsUsed = 0;
   let discountVND = 0;
@@ -66,6 +66,7 @@
   }
 
   function selectCustomer(cust, initialPoints = 0) {
+    if (!cust) return;
     activeCustomer = cust;
     profileContainer.style.display = 'block';
 
@@ -80,7 +81,6 @@
 
   function calculatePoints(pts) {
     if (!activeCustomer) return;
-    const cfg = LoyaltyStore.getConfig();
     pointsUsed = parseInt(pts, 10) || 0;
 
     if (pointsUsed <= 0) {
@@ -126,18 +126,18 @@
     updateMethods();
   }
 
-  // Find customer by phone
-  function searchCustomer() {
+  // Find customer by phone from Database
+  async function searchCustomer() {
     const phone = (phoneInput.value || '').trim();
     if (!phone) {
       alert('Vui lòng nhập số điện thoại khách hàng.');
       return;
     }
-    const cust = LoyaltyStore.getCustomerByPhone(phone);
+    const cust = await LoyaltyStore.getCustomerByPhone(phone);
     if (cust) {
       selectCustomer(cust);
     } else {
-      if (confirm(`Số điện thoại ${phone} chưa đăng ký hội viên. Bạn có muốn tạo hội viên mới ngay không?`)) {
+      if (confirm(`Số điện thoại ${phone} chưa đăng ký hội viên trong Database. Bạn có muốn tạo hội viên mới ngay không?`)) {
         openQuickModal(phone);
       }
     }
@@ -190,13 +190,13 @@
   if (cancelQuickBtn) cancelQuickBtn.onclick = closeQuickModal;
 
   if (quickForm) {
-    quickForm.onsubmit = (e) => {
+    quickForm.onsubmit = async (e) => {
       e.preventDefault();
       const phone = document.getElementById('quick-cust-phone').value.trim();
       const name = document.getElementById('quick-cust-name').value.trim();
       const dob = document.getElementById('quick-cust-dob').value;
 
-      const newCust = LoyaltyStore.saveCustomer({
+      const newCust = await LoyaltyStore.saveCustomer({
         name,
         phone,
         dob,
@@ -205,10 +205,15 @@
         branch: sessionStorage.getItem('cp_branch') || 'Cửa hàng'
       });
 
+      if (!newCust) {
+        alert('Không thể đăng ký hội viên vào Database. Vui lòng kiểm tra lại số điện thoại.');
+        return;
+      }
+
       closeQuickModal();
       phoneInput.value = phone;
       selectCustomer(newCust);
-      alert(`Đã đăng ký thành công hội viên "${name}"!`);
+      alert(`Đã đăng ký thành công hội viên "${name}" vào Database!`);
     };
   }
 })();

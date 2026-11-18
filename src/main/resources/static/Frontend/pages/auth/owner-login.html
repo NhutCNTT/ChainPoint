@@ -132,8 +132,8 @@
       errEl.hidden = true;
 
       try {
-        const loginUrl = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1/auth/login' : '/api/v1/auth/login';
-        const res = await fetch(loginUrl, {
+        const apiBase = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1' : '/api/v1';
+        const res = await fetch(`${apiBase}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
@@ -141,11 +141,33 @@
 
         if (res.ok) {
           const authData = await res.json();
+          let resolvedBranchId = authData.branchId || '';
+          let resolvedBranchName = authData.branchName || 'Toàn chuỗi nhà hàng';
+
+          if (!resolvedBranchId) {
+            try {
+              const bRes = await fetch(`${apiBase}/branches`);
+              if (bRes.ok) {
+                const branches = await bRes.json();
+                if (Array.isArray(branches) && branches.length > 0) {
+                  const found = branches.find(b =>
+                    (authData.branchCode && b.code === authData.branchCode) ||
+                    (authData.branchName && b.name === authData.branchName)
+                  ) || branches[0];
+                  resolvedBranchId = found.id || '';
+                  if (!authData.branchName && found.name) {
+                    resolvedBranchName = found.name;
+                  }
+                }
+              }
+            } catch (ignored) {}
+          }
+
           sessionStorage.setItem('cp_token', authData.accessToken || authData.token);
           sessionStorage.setItem('cp_role', (authData.role || 'ROLE_OWNER').replace('ROLE_', '').toLowerCase());
           sessionStorage.setItem('cp_user', authData.fullName || authData.username || username);
-          sessionStorage.setItem('cp_branch', authData.branchName || 'Toàn chuỗi nhà hàng');
-          sessionStorage.setItem('cp_branch_id', authData.branchId || '');
+          sessionStorage.setItem('cp_branch', resolvedBranchName);
+          sessionStorage.setItem('cp_branch_id', resolvedBranchId);
           window.location.href = '../owner/dashboard.html';
         } else {
           const errData = await res.json().catch(() => ({}));

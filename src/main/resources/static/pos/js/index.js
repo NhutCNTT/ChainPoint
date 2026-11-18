@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const tabsEl = document.getElementById('area-tabs');
   const gridEl = document.getElementById('table-grid');
   let activeArea = sessionStorage.getItem('pos.area') || 'all';
@@ -6,6 +6,9 @@
   const statusLabel = { free: 'Trống', busy: 'Đang dùng', pending: 'Chờ thanh toán' };
 
   function renderTabs() {
+    if (activeArea !== 'all' && !AREAS.some(a => a.id === activeArea)) {
+      activeArea = 'all';
+    }
     const tabs = [{ id: 'all', name: 'Tất cả' }, ...AREAS];
     tabsEl.innerHTML = tabs.map((a) =>
       `<button id="area-${a.id}" class="area-tab ${a.id === activeArea ? 'active' : ''}" role="tab" data-area="${a.id}" type="button">${a.name}</button>`).join('');
@@ -31,6 +34,11 @@
     TABLES.forEach((t) => counts[Store.getTableStatus(t.id).status]++);
     Object.keys(counts).forEach((k) => (document.getElementById('count-' + k).textContent = counts[k]));
 
+    if (!TABLES.length) {
+      gridEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1; padding:36px; text-align:center;"><div class="big">🍽️</div><p>Chưa có bàn ăn nào trong Database cho chi nhánh này.</p></div>`;
+      return;
+    }
+
     let html = '', n = 0;
     const areas = activeArea === 'all' ? AREAS : AREAS.filter((a) => a.id === activeArea);
     areas.forEach((a) => {
@@ -53,5 +61,10 @@
   UI.initDrawer('tables');
   UI.initClock();
   UI.refreshPendingBadge();
-  renderTabs(); renderGrid();
+
+  if (window.POS_DATA_READY) {
+    await window.POS_DATA_READY;
+  }
+  renderTabs();
+  renderGrid();
 })();

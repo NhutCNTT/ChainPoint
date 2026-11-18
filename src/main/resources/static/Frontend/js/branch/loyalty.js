@@ -3,19 +3,30 @@
 
 (function () {
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
+    const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
     // Elements
     const statMembers = document.getElementById('statTotalMembers');
     const statIssued = document.getElementById('statTotalIssued');
     const statRedeemed = document.getElementById('statTotalRedeemed');
     const statCirculating = document.getElementById('statCirculating');
+    const bannerRatioEl = document.getElementById('loyaltyBannerRatioText');
 
     const topMembersBody = document.getElementById('topMembersBody');
     const txBody = document.getElementById('loyaltyTxBody');
     const configForm = document.getElementById('loyaltyConfigForm');
     const saveNotice = document.getElementById('configSaveNotice');
 
+    function updateBannerText() {
+        const cfg = LoyaltyStore.getConfig();
+        if (bannerRatioEl) {
+            bannerRatioEl.innerHTML = `🎁 Tích điểm theo SĐT: <strong>${Number(cfg.earnRatioVND || 10000).toLocaleString('vi-VN')} ₫ = 1 điểm</strong>. Khi thanh toán: <strong>1 điểm = ${Number(cfg.pointValueVND || 1000).toLocaleString('vi-VN')} ₫</strong> trừ vào hóa đơn POS.`;
+        }
+    }
+
     function renderStats() {
+        const cfg = LoyaltyStore.getConfig();
+        const pointValue = Number(cfg.pointValueVND || 1000);
         const custs = LoyaltyStore.getCustomers();
         const txs = LoyaltyStore.getTransactions();
 
@@ -30,15 +41,29 @@
             else if (t.points < 0) redeemed += Math.abs(t.points);
         });
 
+        if (issued === 0 && totalCirculating > 0) {
+            issued = totalCirculating + redeemed;
+        }
+
         if (statMembers) statMembers.textContent = totalMembers;
-        if (statIssued) statIssued.textContent = `+${issued} pts (${formatVND(issued * 1000)})`;
-        if (statRedeemed) statRedeemed.textContent = `-${redeemed} pts (${formatVND(redeemed * 1000)})`;
-        if (statCirculating) statCirculating.textContent = `${totalCirculating} pts (${formatVND(totalCirculating * 1000)})`;
+        if (statIssued) statIssued.textContent = `+${issued} pts (${formatVND(issued * pointValue)})`;
+        if (statRedeemed) statRedeemed.textContent = `-${redeemed} pts (${formatVND(redeemed * pointValue)})`;
+        if (statCirculating) statCirculating.textContent = `${totalCirculating} pts (${formatVND(totalCirculating * pointValue)})`;
+        updateBannerText();
     }
 
     function renderTopMembers() {
         if (!topMembersBody) return;
         const custs = [...LoyaltyStore.getCustomers()].sort((a, b) => (b.points || 0) - (a.points || 0));
+
+        if (custs.length === 0) {
+            topMembersBody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align:center; padding:28px; color:var(--muted);">Chưa có hội viên nào trong Database.</td>
+                </tr>
+            `;
+            return;
+        }
 
         topMembersBody.innerHTML = custs.slice(0, 5).map((c, idx) => {
             const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`;
@@ -46,15 +71,15 @@
                 <tr style="border-bottom:1px solid #f1f5f9;">
                     <td style="font-size:18px; text-align:center; font-weight:800; width:50px;">${medal}</td>
                     <td>
-                        <div style="font-weight:700; color:var(--text); font-size:14px;">${c.name}</div>
-                        <small style="color:var(--muted); font-size:12px;">SĐT: ${c.phone}</small>
+                        <div style="font-weight:700; color:var(--text); font-size:14px;">${escapeHtml(c.name)}</div>
+                        <small style="color:var(--muted); font-size:12px;">SĐT: ${escapeHtml(c.phone)}</small>
                     </td>
                     <td>
-                        <span style="font-weight:700; font-size:12px; color:#475569;">${c.tier}</span>
+                        <span style="font-weight:700; font-size:12px; color:#475569;">${escapeHtml(c.tier)}</span>
                     </td>
                     <td style="font-weight:800; color:var(--text);">${formatVND(c.totalSpent)}</td>
                     <td style="text-align:right; font-weight:800; color:#059669; font-size:15px;">
-                        ${c.points} <small style="font-size:11px; color:var(--muted); font-weight:600;">pts</small>
+                        ${escapeHtml(c.points)} <small style="font-size:11px; color:var(--muted); font-weight:600;">pts</small>
                     </td>
                 </tr>
             `;
@@ -63,12 +88,14 @@
 
     function renderTransactions() {
         if (!txBody) return;
+        const cfg = LoyaltyStore.getConfig();
+        const pointValue = Number(cfg.pointValueVND || 1000);
         const txs = LoyaltyStore.getTransactions();
 
         if (txs.length === 0) {
             txBody.innerHTML = `
                 <tr>
-                    <td colspan="8" style="text-align:center; padding:30px; color:var(--muted);">Chưa có lịch sử giao dịch điểm.</td>
+                    <td colspan="8" style="text-align:center; padding:30px; color:var(--muted);">Chưa có lịch sử giao dịch điểm trong Database.</td>
                 </tr>
             `;
             return;
@@ -77,25 +104,25 @@
         txBody.innerHTML = txs.map(t => {
             const isEarn = t.points > 0;
             const badge = isEarn
-                ? `<span style="background:#ecfdf5; color:#059669; font-weight:700; font-size:12px; padding:3px 8px; border-radius:999px;">+${t.typeLabel}</span>`
-                : `<span style="background:#fff1f2; color:#e11d48; font-weight:700; font-size:12px; padding:3px 8px; border-radius:999px;">-${t.typeLabel}</span>`;
+                ? `<span style="background:#ecfdf5; color:#059669; font-weight:700; font-size:12px; padding:3px 8px; border-radius:999px;">+${escapeHtml(t.typeLabel)}</span>`
+                : `<span style="background:#fff1f2; color:#e11d48; font-weight:700; font-size:12px; padding:3px 8px; border-radius:999px;">-${escapeHtml(t.typeLabel)}</span>`;
 
             return `
                 <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="font-family:monospace; font-weight:700; color:var(--primary); font-size:13px;">${t.txId}</td>
-                    <td style="font-size:12.5px; color:var(--muted);">${t.createdAt}</td>
+                    <td style="font-family:monospace; font-weight:700; color:var(--primary); font-size:13px;">${escapeHtml(t.txId)}</td>
+                    <td style="font-size:12.5px; color:var(--muted);">${escapeHtml(t.createdAt)}</td>
                     <td>
-                        <div style="font-weight:700; font-size:13.5px; color:var(--text);">${t.customerName}</div>
-                        <small style="color:var(--muted); font-size:12px;">${t.phone}</small>
+                        <div style="font-weight:700; font-size:13.5px; color:var(--text);">${escapeHtml(t.customerName)}</div>
+                        <small style="color:var(--muted); font-size:12px;">${escapeHtml(t.phone)}</small>
                     </td>
                     <td>${badge}</td>
                     <td style="font-weight:800; font-size:14px; color:${isEarn ? '#059669' : '#e11d48'};">
                         ${isEarn ? `+${t.points}` : t.points} pts
-                        <div style="font-size:11px; font-weight:500; color:var(--muted);">${formatVND(Math.abs(t.points) * 1000)}</div>
+                        <div style="font-size:11px; font-weight:500; color:var(--muted);">${formatVND(Math.abs(t.points) * pointValue)}</div>
                     </td>
-                    <td style="font-family:monospace; font-size:13px; color:#475569;">${t.billId || '—'}</td>
-                    <td style="font-size:12.5px; color:#475569;">${t.staff || 'Hệ thống'}</td>
-                    <td style="font-size:12px; color:var(--muted); max-width:200px;">${t.note || ''}</td>
+                    <td style="font-family:monospace; font-size:13px; color:#475569;">${escapeHtml(t.billId || '—')}</td>
+                    <td style="font-size:12.5px; color:#475569;">${escapeHtml(t.staff || 'Hệ thống')}</td>
+                    <td style="font-size:12px; color:var(--muted); max-width:200px;">${escapeHtml(t.note || '')}</td>
                 </tr>
             `;
         }).join('');
@@ -115,7 +142,7 @@
     }
 
     if (configForm) {
-        configForm.onsubmit = (e) => {
+        configForm.onsubmit = async (e) => {
             e.preventDefault();
             const newCfg = {
                 earnRatioVND: parseInt(document.getElementById('earnRatioVND').value, 10) || 10000,
@@ -127,8 +154,9 @@
                 allowEarn: document.getElementById('allowEarn').checked
             };
 
-            LoyaltyStore.saveConfig(newCfg);
+            await LoyaltyStore.saveConfig(newCfg);
             renderStats();
+            renderTransactions();
 
             if (saveNotice) {
                 saveNotice.style.display = 'block';
@@ -139,8 +167,12 @@
 
     // Init
     async function init() {
-        if (window.LoyaltyStore && LoyaltyStore.refreshCustomers) {
-            await LoyaltyStore.refreshCustomers();
+        if (window.LoyaltyStore) {
+            await Promise.all([
+                LoyaltyStore.refreshConfig ? LoyaltyStore.refreshConfig() : Promise.resolve(),
+                LoyaltyStore.refreshCustomers ? LoyaltyStore.refreshCustomers() : Promise.resolve(),
+                LoyaltyStore.refreshTransactions ? LoyaltyStore.refreshTransactions() : Promise.resolve()
+            ]);
         }
         renderStats();
         renderTopMembers();
@@ -150,4 +182,3 @@
 
     init();
 })();
-

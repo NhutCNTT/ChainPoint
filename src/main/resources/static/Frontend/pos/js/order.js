@@ -1,6 +1,10 @@
-(() => {
+(async () => {
+  if (window.POS_DATA_READY) {
+    await window.POS_DATA_READY;
+  }
+
   const tableId = UI.getParam('table');
-  const table = getTable(tableId);
+  const table = getTable(tableId) || (tableId ? { id: tableId, name: 'Bàn ' + tableId, area: (AREAS[0] && AREAS[0].id) || 'Tầng 1', seats: 4 } : null);
   if (!table) { location.replace('index.html'); return; }
 
   // Nạp giỏ: ưu tiên order đã lưu, nếu không thì lấy từ bill chờ thanh toán của bàn
@@ -16,7 +20,7 @@
   const catList = $('cat-list'), menuGrid = $('menu-grid'), cartList = $('cart-list');
 
   const qtyOf = (id) => (cart.find((c) => c.id === id) || {}).qty || 0;
-  const hueOf = (id) => (parseInt(id.slice(1), 10) * 37) % 360;
+  const hueOf = (id) => ((parseInt(String(id).replace(/\D/g, ''), 10) || 1) * 37) % 360;
 
   /* ---------- Danh mục ---------- */
   function renderCats() {
@@ -32,7 +36,7 @@
     const items = MENU.filter((m) => (activeCat === 'all' || m.cat === activeCat) && (!q || m.name.toLowerCase().includes(q)));
     if (!items.length) {
       menuGrid.style.display = 'block';
-      menuGrid.innerHTML = `<div class="empty-state"><div class="big">🍽️</div><p>Không tìm thấy món phù hợp</p></div>`;
+      menuGrid.innerHTML = `<div class="empty-state"><div class="big">🍽️</div><p>Không tìm thấy món phù hợp trong Database</p></div>`;
       return;
     }
     menuGrid.style.display = '';
@@ -83,7 +87,8 @@
   function renderHeader() {
     $('page-title').textContent = 'Chọn món · ' + table.name;
     $('cart-table').textContent = table.name;
-    $('cart-sub').textContent = (AREAS.find((a) => a.id === table.area) || {}).name + ' · ' + (openedAt ? 'Mở lúc ' + UI.formatTime(openedAt) : 'Bàn mới');
+    const areaObj = AREAS.find((a) => a.id === table.area);
+    $('cart-sub').textContent = (areaObj ? areaObj.name : (table.area || 'Tầng 1')) + ' · ' + (openedAt ? 'Mở lúc ' + UI.formatTime(openedAt) : 'Bàn mới');
     const st = Store.getTableStatus(tableId).status;
     const badge = $('cart-status');
     badge.className = 'badge badge-' + st;
@@ -94,7 +99,8 @@
     let line = cart.find((c) => c.id === id);
     if (!line) {
       const m = getMenuItem(id);
-      line = { id, name: m.name, price: m.price, qty: 0, note: '' };
+      if (!m) return;
+      line = { id, realId: m.realId, name: m.name, price: m.price, qty: 0, note: '' };
       cart.push(line);
     }
     line.qty += delta;

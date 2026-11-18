@@ -92,13 +92,13 @@
           <select id="dashboardBranchSelector" style="height: 38px; padding: 0 14px; border-radius: 8px; border: 1.5px solid var(--border); font-size: 13.5px; font-weight: 700; color: var(--text); background: var(--card); outline: none; cursor: pointer;"></select>
 
           <div class="filter-tabs">
-            <button class="filter-tab" type="button">Hôm nay</button>
-            <button class="filter-tab active" type="button">7 ngày qua</button>
-            <button class="filter-tab" type="button">30 ngày qua</button>
-            <button class="filter-tab" type="button">Năm nay</button>
+            <button class="filter-tab" data-range="today" type="button">Hôm nay</button>
+            <button class="filter-tab active" data-range="7days" type="button">7 ngày qua</button>
+            <button class="filter-tab" data-range="30days" type="button">30 ngày qua</button>
+            <button class="filter-tab" data-range="year" type="button">Năm nay</button>
           </div>
 
-          <button class="btn-secondary" type="button">
+          <button class="btn-secondary" type="button" onclick="window.print()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             Xuất dữ liệu
           </button>
@@ -119,11 +119,8 @@
             <div class="metric-value" id="metricRevenueValue">0 ₫</div>
           </div>
           <div class="metric-footer">
-            <span class="trend-badge trend-up">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-              +0.0%
-            </span>
-            <span class="trend-period">so với tuần trước</span>
+            <span class="trend-badge trend-up" id="metricRevenueGrowth">▲ +0.0%</span>
+            <span class="trend-period" id="metricRevenuePeriod">so với kỳ trước</span>
           </div>
         </article>
 
@@ -139,11 +136,8 @@
             <div class="metric-value" id="metricOrdersValue">0 <span style="font-size: 20px; font-weight: 600; color: var(--muted);">đơn</span></div>
           </div>
           <div class="metric-footer">
-            <span class="trend-badge trend-up">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-              +0.0%
-            </span>
-            <span class="trend-period">so với tuần trước</span>
+            <span class="trend-badge trend-up" id="metricOrdersGrowth">▲ +0.0%</span>
+            <span class="trend-period" id="metricOrdersPeriod">so với kỳ trước</span>
           </div>
         </article>
 
@@ -159,10 +153,7 @@
             <div class="metric-value" id="metricCustomersValue">0 <span style="font-size: 20px; font-weight: 600; color: var(--muted);">khách</span></div>
           </div>
           <div class="metric-footer">
-            <span class="trend-badge trend-up">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-              +0.0%
-            </span>
+            <span class="trend-badge trend-up" id="metricCustomersGrowth">▲ +0.0%</span>
             <span class="trend-period">khách thành viên tích điểm</span>
           </div>
         </article>
@@ -256,7 +247,7 @@
         <article class="details-card">
           <div class="details-card-header">
             <h3>Món bán chạy nhất tuần</h3>
-            <a href="menu.html">Xem thực đơn →</a>
+            <a href="../branch/menu.html">Xem thực đơn →</a>
           </div>
 
           <table class="dishes-table">
@@ -294,6 +285,7 @@
     </main>
   </div>
 
+  <script src="../../js/common/api.js"></script>
   <script src="../../js/admin/admin.js"></script>
   <script src="../../js/admin/dashboard.js"></script>
 </body>

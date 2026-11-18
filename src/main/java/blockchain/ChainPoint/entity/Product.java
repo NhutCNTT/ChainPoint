@@ -2,12 +2,9 @@ package blockchain.ChainPoint.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,19 +14,11 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import jakarta.persistence.UniqueConstraint;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(
-        name = "products",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_products_branch_code",
-                columnNames = {"branch_id", "code"}
-        )
-)
+@Table(name = "products")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -41,7 +30,7 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code", nullable = false, length = 20)
+    @Column(name = "code", nullable = false, unique = true, length = 20)
     private String code;
 
     @Column(name = "name", nullable = false, length = 150)
@@ -49,14 +38,6 @@ public class Product {
 
     @Column(name = "category", length = 30)
     private String category;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private Category categoryEntity;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "branch_id")
-    private Branch branch;
 
     @Column(name = "price", nullable = false, precision = 15, scale = 2)
     private BigDecimal price;

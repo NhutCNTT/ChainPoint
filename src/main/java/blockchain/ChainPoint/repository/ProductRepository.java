@@ -22,17 +22,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     boolean existsByCode(String code);
 
-    boolean existsByBranchIdAndCode(Long branchId, String code);
-
     List<Product> findByCategoryIgnoreCase(String category);
 
     List<Product> findByStatus(String status);
-
-    List<Product> findByBranchId(Long branchId);
-
-    List<Product> findByBranchIdAndCategoryIgnoreCase(Long branchId, String category);
-
-    List<Product> findByBranchIdAndStatus(Long branchId, String status);
-
-    List<Product> findByBranchIdAndCategoryIgnoreCaseAndStatus(Long branchId, String category, String status);
 }

@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const listEl = document.getElementById('bill-list');
   const methodLabel = { temp: 'Tạm tính', transfer: 'Chuyển khoản chờ' };
 
@@ -17,7 +17,7 @@
       return `
       <article class="bill-card ${b.method === 'transfer' ? 'transfer' : ''}" id="bill-${b.billId}" style="animation-delay:${i * 50}ms">
         <div class="bill-top">
-          <div><div class="bill-table">${t ? t.name : b.tableId}</div><div class="bill-id">#${b.billId} · ${UI.formatTime(b.createdAt)} · ${UI.minutesAgo(b.createdAt)} trước</div></div>
+          <div><div class="bill-table">${t ? t.name : ('Bàn ' + b.tableId)}</div><div class="bill-id">#${b.billId} · ${UI.formatTime(b.createdAt)} · ${UI.minutesAgo(b.createdAt)} trước</div></div>
           <span class="badge ${b.method === 'transfer' ? 'badge-transfer' : 'badge-pending'}">${methodLabel[b.method] || 'Tạm tính'}</span>
         </div>
         <ul class="bill-items">
@@ -37,4 +37,8 @@
   UI.initClock();
   UI.refreshPendingBadge();
   render();
+  if (window.POS_DATA_READY) {
+    await window.POS_DATA_READY;
+    render();
+  }
 })();

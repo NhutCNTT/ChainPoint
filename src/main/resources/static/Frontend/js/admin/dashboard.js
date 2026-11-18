@@ -10,6 +10,7 @@
     let branchesList = [];
     let selectedBranchId = (currentUserRole === 'manager' && currentBranchId) ? currentBranchId : 'all';
     let currentMetric = 'revenue';
+    let currentRange = '7days';
     let currentMetricsData = {
         totalRevenue: 0,
         revenueGrowth: '+0.0%',
@@ -19,6 +20,8 @@
         customerGrowth: '+0.0%'
     };
     let currentChartPoints = [];
+    let thisWeekTotalVal = 0;
+    let lastWeekTotalVal = 0;
 
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
 
@@ -29,7 +32,11 @@
     const metricRevenue = document.getElementById('metricRevenueValue');
     const metricOrders = document.getElementById('metricOrdersValue');
     const metricCustomers = document.getElementById('metricCustomersValue');
+    const metricRevenueGrowth = document.getElementById('metricRevenueGrowth');
+    const metricOrdersGrowth = document.getElementById('metricOrdersGrowth');
+    const metricCustomersGrowth = document.getElementById('metricCustomersGrowth');
     const chartLegendCurrent = document.getElementById('chartLegendCurrent');
+    const chartLegendLast = document.getElementById('chartLegendLast');
 
     const tooltip = document.getElementById('chartTooltip');
     const tooltipDate = document.getElementById('tooltipDate');
@@ -38,9 +45,17 @@
     const hoverGuide = document.getElementById('hoverGuide');
     const chartSvg = document.querySelector('.chart-svg');
 
-    const API_BASE = (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '') 
-        ? 'http://localhost:8080/api/v1' 
+    const API_BASE = (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '')
+        ? 'http://localhost:8080/api/v1'
         : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
+
+    function applyGrowthBadge(el, growthStr) {
+        if (!el) return;
+        const val = growthStr || '+0.0%';
+        const isNegative = String(val).trim().startsWith('-');
+        el.className = `trend-badge ${isNegative ? 'trend-down' : 'trend-up'}`;
+        el.textContent = `${isNegative ? '▼' : '▲'} ${val}`;
+    }
 
     // 1. Nạp danh sách chi nhánh thực tế từ MySQL
     async function fetchBranches() {
@@ -60,8 +75,12 @@
         if (!branchSelector) return;
 
         if (currentUserRole === 'manager') {
-            const currentB = branchesList.find(b => String(b.id) === String(currentBranchId)) || { name: currentUserBranch || 'Chi nhánh' };
-            branchSelector.innerHTML = `<option value="${currentBranchId || ''}">📍 ${currentB.name}</option>`;
+            const currentB = branchesList.find(b => String(b.id) === String(currentBranchId) || b.name === currentUserBranch) || { name: currentUserBranch || 'Chi nhánh' };
+            if (currentB.id && !currentBranchId) {
+                selectedBranchId = currentB.id;
+                sessionStorage.setItem('cp_branch_id', currentB.id);
+            }
+            branchSelector.innerHTML = `<option value="${selectedBranchId || ''}">📍 ${currentB.name}</option>`;
             branchSelector.disabled = true;
         } else {
             let options = `<option value="all">🌐 Toàn chuỗi nhà hàng (Tổng hợp ${branchesList.length} CN)</option>`;
@@ -79,11 +98,15 @@
 
     // 2. Nạp dữ liệu Metrics & Chart từ MySQL API
     async function loadDashboardData() {
-        const queryBranch = (selectedBranchId && selectedBranchId !== 'all') ? `?branchId=${selectedBranchId}` : '';
+        const hasBranch = selectedBranchId && selectedBranchId !== 'all';
+        const metricsQuery = hasBranch
+            ? `?branchId=${selectedBranchId}&range=${encodeURIComponent(currentRange)}`
+            : `?range=${encodeURIComponent(currentRange)}`;
+        const branchQuery = hasBranch ? `?branchId=${selectedBranchId}` : '';
 
         // Tải metrics từ MySQL
         try {
-            const resMetrics = await fetch(`${API_BASE}/admin/dashboard/metrics${queryBranch}`);
+            const resMetrics = await fetch(`${API_BASE}/admin/dashboard/metrics${metricsQuery}`);
             if (resMetrics.ok) {
                 const data = await resMetrics.json();
                 currentMetricsData = {
@@ -101,26 +124,31 @@
             currentMetricsData = { totalRevenue: 0, revenueGrowth: '+0.0%', totalOrders: 0, ordersGrowth: '+0.0%', totalCustomers: 0, customerGrowth: '+0.0%' };
         }
 
-        // Tải biểu đồ doanh thu từ MySQL
+        // Tải biểu đồ doanh thu từ MySQL (RevenueChartResponse trả về thisWeek, lastWeek, thisWeekTotal, lastWeekTotal)
         try {
-            const resChart = await fetch(`${API_BASE}/admin/dashboard/revenue-chart${queryBranch}`);
+            const resChart = await fetch(`${API_BASE}/admin/dashboard/revenue-chart${branchQuery}`);
             if (resChart.ok) {
                 const chartData = await resChart.json();
-                if (chartData && Array.isArray(chartData.points)) {
-                    currentChartPoints = chartData.points;
-                } else {
-                    currentChartPoints = [];
-                }
+                const points = (chartData && Array.isArray(chartData.thisWeek))
+                    ? chartData.thisWeek
+                    : (chartData && Array.isArray(chartData.points) ? chartData.points : []);
+                currentChartPoints = points;
+                thisWeekTotalVal = Number(chartData?.thisWeekTotal ?? currentMetricsData.totalRevenue ?? 0);
+                lastWeekTotalVal = Number(chartData?.lastWeekTotal ?? 0);
             } else {
                 currentChartPoints = [];
+                thisWeekTotalVal = 0;
+                lastWeekTotalVal = 0;
             }
         } catch (err) {
             currentChartPoints = [];
+            thisWeekTotalVal = 0;
+            lastWeekTotalVal = 0;
         }
 
         updateDashboardUI();
         updateOpenBranchesBadge();
-        loadTopDishes(queryBranch);
+        loadTopDishes(branchQuery);
         renderBranchPerformance();
     }
 
@@ -140,21 +168,25 @@
             if (res.ok) {
                 const list = await res.json();
                 if (Array.isArray(list) && list.length > 0) {
-                    tbody.innerHTML = list.map(item => `
-                        <tr>
-                            <td>
-                                <div class="dish-item">
-                                    <div class="dish-icon">${item.emoji || '🍽️'}</div>
-                                    <div class="dish-info">
-                                        <strong>${item.name}</strong>
-                                        <small>${item.category || 'Món ăn'}</small>
+                    tbody.innerHTML = list.map((item, idx) => {
+                        const qty = item.quantitySold ?? item.quantity ?? item.soldCount ?? 0;
+                        const rev = item.totalRevenue ?? item.revenue ?? 0;
+                        return `
+                            <tr>
+                                <td>
+                                    <div class="dish-item">
+                                        <div class="dish-icon">${item.emoji || '🍽️'}</div>
+                                        <div class="dish-info">
+                                            <strong>${item.name || ('Món #' + (idx + 1))}</strong>
+                                            <small>${item.category || ('Top #' + (idx + 1))}</small>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td><strong>${item.quantity || item.soldCount || 0}</strong> suất</td>
-                            <td style="font-weight: 700; color: var(--text);">${formatVND(item.revenue || 0)}</td>
-                        </tr>
-                    `).join('');
+                                </td>
+                                <td><strong>${Number(qty).toLocaleString('vi-VN')}</strong> suất</td>
+                                <td style="font-weight: 700; color: var(--text);">${formatVND(rev)}</td>
+                            </tr>
+                        `;
+                    }).join('');
                     return;
                 }
             }
@@ -172,10 +204,10 @@
             return;
         }
 
-        const totalChainRev = branchesList.reduce((acc, b) => acc + (b.weeklyRevenue || 0), 0) || 1;
+        const totalChainRev = branchesList.reduce((acc, b) => acc + Number(b.weeklyRevenue || 0), 0);
 
         container.innerHTML = branchesList.map(b => {
-            const rev = b.weeklyRevenue || 0;
+            const rev = Number(b.weeklyRevenue || 0);
             const pct = totalChainRev > 0 ? Math.round((rev / totalChainRev) * 100) : 0;
             return `
                 <div class="branch-item" style="margin-bottom: 16px;">
@@ -211,11 +243,18 @@
         }
 
         if (metricRevenue) metricRevenue.textContent = formatVND(currentMetricsData.totalRevenue);
-        if (metricOrders) metricOrders.innerHTML = `${currentMetricsData.totalOrders.toLocaleString('vi-VN')} <span style="font-size: 20px; font-weight: 600; color: var(--muted);">đơn</span>`;
-        if (metricCustomers) metricCustomers.innerHTML = `${currentMetricsData.totalCustomers.toLocaleString('vi-VN')} <span style="font-size: 20px; font-weight: 600; color: var(--muted);">khách</span>`;
+        if (metricOrders) metricOrders.innerHTML = `${Number(currentMetricsData.totalOrders || 0).toLocaleString('vi-VN')} <span style="font-size: 20px; font-weight: 600; color: var(--muted);">đơn</span>`;
+        if (metricCustomers) metricCustomers.innerHTML = `${Number(currentMetricsData.totalCustomers || 0).toLocaleString('vi-VN')} <span style="font-size: 20px; font-weight: 600; color: var(--muted);">khách</span>`;
+
+        applyGrowthBadge(metricRevenueGrowth, currentMetricsData.revenueGrowth);
+        applyGrowthBadge(metricOrdersGrowth, currentMetricsData.ordersGrowth);
+        applyGrowthBadge(metricCustomersGrowth, currentMetricsData.customerGrowth);
 
         if (chartLegendCurrent) {
-            chartLegendCurrent.textContent = `Tuần này (${formatVND(currentMetricsData.totalRevenue)})`;
+            chartLegendCurrent.textContent = `Tuần này (${formatVND(thisWeekTotalVal)})`;
+        }
+        if (chartLegendLast) {
+            chartLegendLast.textContent = `Tuần trước (${formatVND(lastWeekTotalVal)})`;
         }
 
         renderChartSVG();
@@ -228,18 +267,19 @@
             ? currentChartPoints
             : defaultDays.map(d => ({ day: d, val: 0, label: '0 ₫', orders: 0, growth: '+0.0%' }));
 
-        const maxVal = Math.max(...points.map(p => Number(p.val) || 0), 1000000);
+        const getPointValue = p => currentMetric === 'orders' ? (Number(p.orders) || 0) : (Number(p.val) || 0);
+        const maxVal = Math.max(...points.map(getPointValue), currentMetric === 'orders' ? 10 : 1000000);
         const svgW = 760;
         const svgH = 240;
         const padX = 50;
         const padYTop = 30;
-        const padYBottom = 40;
+        const padYBottom = 45;
         const plotW = svgW - padX * 2;
         const plotH = svgH - padYTop - padYBottom;
 
         const coords = points.map((p, idx) => {
             const x = padX + (idx / Math.max(points.length - 1, 1)) * plotW;
-            const ratio = (Number(p.val) || 0) / maxVal;
+            const ratio = getPointValue(p) / maxVal;
             const y = (svgH - padYBottom) - ratio * plotH;
             return { x, y, ...p };
         });
@@ -256,9 +296,10 @@
         const yTop = document.getElementById('yAxisTop');
         const yMidHigh = document.getElementById('yAxisMidHigh');
         const yMidLow = document.getElementById('yAxisMidLow');
-        if (yTop) yTop.textContent = formatVND(maxVal);
-        if (yMidHigh) yMidHigh.textContent = formatVND(Math.round(maxVal * 2 / 3));
-        if (yMidLow) yMidLow.textContent = formatVND(Math.round(maxVal / 3));
+        const formatAxis = v => currentMetric === 'orders' ? `${Math.round(v)} đơn` : formatVND(Math.round(v));
+        if (yTop) yTop.textContent = formatAxis(maxVal);
+        if (yMidHigh) yMidHigh.textContent = formatAxis((maxVal * 2) / 3);
+        if (yMidLow) yMidLow.textContent = formatAxis(maxVal / 3);
 
         // Render data points
         const pointsContainer = document.querySelector('.chart-points-container') || chartSvg;
@@ -274,10 +315,10 @@
             circle.setAttribute('data-index', idx);
 
             circle.addEventListener('mouseenter', () => {
-                tooltipDate.textContent = `${c.day} (Tuần này)`;
-                tooltipValue.textContent = currentMetric === 'revenue' 
-                    ? `${formatVND(c.val)} (${c.orders || 0} đơn)` 
-                    : `${c.orders || 0} đơn`;
+                tooltipDate.textContent = `${c.day}${c.date ? ' (' + c.date + ')' : ' (Tuần này)'}`;
+                tooltipValue.textContent = currentMetric === 'revenue'
+                    ? `${formatVND(c.val)} (${c.orders || 0} đơn)`
+                    : `${c.orders || 0} đơn (${formatVND(c.val)})`;
                 tooltipSub.textContent = `Tăng trưởng: ${c.growth || '+0.0%'}`;
 
                 const viewport = document.querySelector('.chart-viewport').getBoundingClientRect();
@@ -321,6 +362,7 @@
         tab.addEventListener('click', () => {
             filterTabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
+            currentRange = tab.dataset.range || '7days';
             loadDashboardData();
         });
     });

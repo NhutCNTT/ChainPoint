@@ -93,7 +93,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
-                                "/api/v1/**",
+                                "/api/v1/auth/**",
                                 "/actuator/**",
                                 "/error",
                                 "/favicon.ico",
@@ -101,17 +101,6 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/webjars/**"
-                        ).permitAll()
-                        .requestMatchers(
-                                "/",
-                                "/index.html",
-                                "/*.html",
-                                "/Frontend/**",
-                                "/pos/**",
-                                "/css/**",
-                                "/js/**",
-                                "/assets/**",
-                                "/images/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

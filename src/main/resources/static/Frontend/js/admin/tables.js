@@ -8,6 +8,8 @@
     let currentSearch = '';
     let currentViewMode = 'grid';
 
+    const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
     // DOM Elements
     const gridContainer = document.getElementById('tablesGridContainer');
     const listContainer = document.getElementById('tablesListContainer');
@@ -30,9 +32,27 @@
     const statDisabled = document.getElementById('statDisabledTables');
     const statSeats = document.getElementById('statTotalSeats');
 
+    async function resolveBranchId() {
+        let branchId = sessionStorage.getItem('cp_branch_id') || '';
+        if (branchId) return Number(branchId);
+        try {
+            const branches = window.API
+                ? await window.API.get('/branches')
+                : await (await fetch('http://localhost:8080/api/v1/branches')).json();
+            if (Array.isArray(branches) && branches.length > 0) {
+                const branchName = sessionStorage.getItem('cp_branch') || '';
+                const matched = (branchName && branches.find(b => b.name === branchName)) || branches[0];
+                branchId = matched.id;
+                sessionStorage.setItem('cp_branch_id', branchId);
+                return Number(branchId);
+            }
+        } catch (ignored) {}
+        return null;
+    }
+
     async function loadTables() {
         try {
-            const branchId = sessionStorage.getItem('cp_branch_id');
+            const branchId = await resolveBranchId();
             const endpoint = branchId ? `/tables?branchId=${branchId}` : '/tables';
             let list = [];
             if (window.API) {
@@ -48,16 +68,17 @@
                 area: t.area || 'Tầng 1',
                 seats: t.seats || 4,
                 status: t.status || 'active',
-                note: t.note || ''
+                note: t.note || '',
+                branchId: t.branchId || branchId
             }));
             const uniqueAreas = [...new Set(tables.map(t => t.area).filter(Boolean))];
-            areas = uniqueAreas.length > 0 
-                ? uniqueAreas.map(a => ({ id: a, name: a })) 
+            areas = uniqueAreas.length > 0
+                ? uniqueAreas.map(a => ({ id: a, name: a }))
                 : [{ id: 'Tầng 1', name: 'Tầng 1' }];
         } catch (e) {
             console.error('Không thể nạp dữ liệu bàn từ MySQL API:', e);
             tables = [];
-            areas = [];
+            areas = [{ id: 'Tầng 1', name: 'Tầng 1' }];
         }
 
         updateStats();
@@ -78,7 +99,7 @@
 
     function populateAreaSelect() {
         if (!formTableArea) return;
-        formTableArea.innerHTML = areas.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+        formTableArea.innerHTML = areas.map(a => `<option value="${escapeHtml(a.id)}">${escapeHtml(a.name)}</option>`).join('');
     }
 
     function renderAreaFilterTabs() {
@@ -95,8 +116,8 @@
             const count = tables.filter(t => t.area === a.id).length;
             const isActive = currentAreaFilter === a.id ? 'active' : '';
             html += `
-                <button class="area-tab ${isActive}" data-area="${a.id}" type="button">
-                    <span>${a.name}</span>
+                <button class="area-tab ${isActive}" data-area="${escapeHtml(a.id)}" type="button">
+                    <span>${escapeHtml(a.name)}</span>
                     <span class="area-count">${count}</span>
                 </button>
             `;
@@ -167,26 +188,26 @@
             return `
                 <div class="table-card ${!isActive ? 'is-disabled' : ''}">
                     <div class="table-card-top">
-                        <div class="table-code-badge">${t.id}</div>
+                        <div class="table-code-badge">${escapeHtml(t.id)}</div>
                         <span class="badge ${badgeClass}">${badgeText}</span>
                     </div>
-                    <div class="table-card-name">${t.name}</div>
+                    <div class="table-card-name">${escapeHtml(t.name)}</div>
                     <div class="table-card-meta">
                         <div class="table-meta-item">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                            <span>${getAreaName(t.area)}</span>
+                            <span>${escapeHtml(getAreaName(t.area))}</span>
                         </div>
                         <div class="table-meta-item">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            <span>${t.seats} chỗ ngồi</span>
+                            <span>${escapeHtml(t.seats)} chỗ ngồi</span>
                         </div>
                     </div>
-                    ${t.note ? `<div class="table-card-note">💡 ${t.note}</div>` : ''}
+                    ${t.note ? `<div class="table-card-note">💡 ${escapeHtml(t.note)}</div>` : ''}
                     <div class="table-card-actions">
-                        <button class="action-icon-btn btn-edit-table" data-id="${t.id}" title="Chỉnh sửa bàn" type="button">
+                        <button class="action-icon-btn btn-edit-table" data-id="${escapeHtml(t.id)}" title="Chỉnh sửa bàn" type="button">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
-                        <button class="action-icon-btn btn-delete-table" data-id="${t.realId || t.id}" title="Xóa bàn" type="button" style="color: var(--danger, #ef4444);">
+                        <button class="action-icon-btn btn-delete-table" data-id="${escapeHtml(t.realId || t.id)}" title="Xóa bàn" type="button" style="color: var(--danger, #ef4444);">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                         </button>
                     </div>
@@ -206,16 +227,16 @@
 
         tbody.innerHTML = list.map(t => `
             <tr>
-                <td><code>${t.id}</code></td>
-                <td><strong>${t.name}</strong></td>
-                <td>${getAreaName(t.area)}</td>
-                <td>${t.seats} chỗ</td>
+                <td><code>${escapeHtml(t.id)}</code></td>
+                <td><strong>${escapeHtml(t.name)}</strong></td>
+                <td>${escapeHtml(getAreaName(t.area))}</td>
+                <td>${escapeHtml(t.seats)} chỗ</td>
                 <td><span class="badge ${t.status === 'active' ? 'badge-success' : 'badge-neutral'}">${t.status === 'active' ? 'Hoạt động' : 'Tạm ngừng'}</span></td>
-                <td>${t.note || '—'}</td>
+                <td>${escapeHtml(t.note || '—')}</td>
                 <td>
                     <div style="display:flex; gap:6px;">
-                        <button class="action-icon-btn btn-edit-table" data-id="${t.id}" title="Sửa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-                        <button class="action-icon-btn btn-delete-table" data-id="${t.realId || t.id}" title="Xóa" style="color:var(--danger, #ef4444);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                        <button class="action-icon-btn btn-edit-table" data-id="${escapeHtml(t.id)}" title="Sửa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+                        <button class="action-icon-btn btn-delete-table" data-id="${escapeHtml(t.realId || t.id)}" title="Xóa" style="color:var(--danger, #ef4444);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
                     </div>
                 </td>
             </tr>
@@ -257,6 +278,7 @@
         formTableStatus.value = 'active';
         formTableNote.value = '';
         tableFormModal.classList.add('is-open');
+        tableFormModal.classList.add('active');
     }
 
     function openEditModal(tableId) {
@@ -273,10 +295,12 @@
         formTableStatus.value = table.status;
         formTableNote.value = table.note || '';
         tableFormModal.classList.add('is-open');
+        tableFormModal.classList.add('active');
     }
 
     function closeModal() {
         tableFormModal.classList.remove('is-open');
+        tableFormModal.classList.remove('active');
     }
 
     if (tableForm) {
@@ -289,6 +313,12 @@
             const seats = parseInt(formTableSeats.value, 10) || 4;
             const status = formTableStatus.value;
             const note = formTableNote.value.trim();
+            const branchId = await resolveBranchId();
+
+            if (!branchId) {
+                alert('Chưa có chi nhánh nào trong Database. Vui lòng tạo chi nhánh trước khi thêm bàn.');
+                return;
+            }
 
             const payload = {
                 code,
@@ -297,7 +327,7 @@
                 seats,
                 status,
                 note,
-                branchId: Number(sessionStorage.getItem('cp_branch_id')) || 1
+                branchId
             };
 
             try {
@@ -331,7 +361,7 @@
     }
 
     const modalCloseBtn = document.getElementById('closeModalBtn');
-    const modalCancelBtn = document.getElementById('cancelModalBtn');
+    const modalCancelBtn = document.getElementById('cancelModalBtn') || document.getElementById('cancelFormBtn');
     if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeModal);
     if (modalCancelBtn) modalCancelBtn.addEventListener('click', closeModal);
     if (tableFormModal) {
@@ -342,6 +372,23 @@
 
     const addTableBtn = document.getElementById('addTableBtn');
     if (addTableBtn) addTableBtn.addEventListener('click', openAddModal);
+
+    const btnGridView = document.getElementById('btnGridView');
+    const btnListView = document.getElementById('btnListView');
+    if (btnGridView && btnListView) {
+        btnGridView.addEventListener('click', () => {
+            currentViewMode = 'grid';
+            btnGridView.classList.add('active');
+            btnListView.classList.remove('active');
+            render();
+        });
+        btnListView.addEventListener('click', () => {
+            currentViewMode = 'list';
+            btnListView.classList.add('active');
+            btnGridView.classList.remove('active');
+            render();
+        });
+    }
 
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {

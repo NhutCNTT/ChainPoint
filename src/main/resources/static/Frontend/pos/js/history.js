@@ -1,4 +1,4 @@
-(() => {
+(async () => {
   const $ = (id) => document.getElementById(id);
   const fromEl = $('date-from'), toEl = $('date-to');
   const listEl = $('history-list'), detailEl = $('history-detail');
@@ -22,7 +22,7 @@
   }
 
   function renderStats(rows) {
-    const sum = (m) => rows.filter((r) => !m || r.method === m).reduce((s, r) => s + r.total, 0);
+    const sum = (m) => rows.filter((r) => !m || r.method === m).reduce((s, r) => s + Number(r.total || 0), 0);
     $('stat-count').textContent = rows.length;
     $('stat-cash').textContent = UI.formatVND(sum('cash'));
     $('stat-transfer').textContent = UI.formatVND(sum('transfer'));
@@ -35,8 +35,8 @@
     const t = getTable(h.tableId);
     detailEl.innerHTML = `
       <div class="d-head">
-        <div><h2>${t ? t.name : h.tableId}</h2><small>#${h.billId} · ${UI.formatDate(h.paidAt)} ${UI.formatTime(h.paidAt)}</small></div>
-        <span class="badge badge-${h.method}">${methodLabel[h.method]}</span>
+        <div><h2>${t ? t.name : ('Bàn ' + h.tableId)}</h2><small>#${h.billId} · ${UI.formatDate(h.paidAt)} ${UI.formatTime(h.paidAt)}</small></div>
+        <span class="badge badge-${h.method}">${methodLabel[h.method] || h.method}</span>
       </div>
       <div class="d-items sum-list">
         ${h.items.map((i) => `
@@ -47,7 +47,8 @@
           </div>`).join('')}
       </div>
       <div class="d-pay">
-        ${h.method === 'cash' ? `<div><span>Khách đưa</span><b>${UI.formatVND(h.received)}</b></div><div><span>Tiền thối</span><b>${UI.formatVND(h.change)}</b></div>` : ''}
+        ${h.discountVND > 0 ? `<div><span>Giảm trừ Loyalty (${h.pointsUsed || 0} pts)</span><b style="color:#e11d48;">-${UI.formatVND(h.discountVND)}</b></div>` : ''}
+        ${h.method === 'cash' && h.received ? `<div><span>Khách đưa</span><b>${UI.formatVND(h.received)}</b></div><div><span>Tiền thối</span><b>${UI.formatVND(h.change || 0)}</b></div>` : ''}
         <div class="grand"><span>Tổng thanh toán</span><span class="money">${UI.formatVND(h.total)}</span></div>
       </div>`;
   }
@@ -63,9 +64,9 @@
         const t = getTable(h.tableId);
         return `
         <button id="row-${h.billId}" class="h-row ${h.billId === selected ? 'active' : ''}" data-bill="${h.billId}" type="button" style="animation-delay:${i * 30}ms">
-          <span class="h-table">${t ? t.name : h.tableId}</span>
+          <span class="h-table">${t ? t.name : ('Bàn ' + h.tableId)}</span>
           <span class="h-info"><b>#${h.billId}</b><small>${UI.formatDate(h.paidAt)} · ${UI.formatTime(h.paidAt)} · ${h.items.reduce((s, x) => s + x.qty, 0)} món</small></span>
-          <span class="badge badge-${h.method}">${methodLabel[h.method]}</span>
+          <span class="badge badge-${h.method}">${methodLabel[h.method] || h.method}</span>
           <span class="h-total money">${UI.formatVND(h.total)}</span>
         </button>`;
       }).join('');
@@ -89,5 +90,10 @@
 
   UI.initDrawer('history');
   UI.refreshPendingBadge();
-  setRange(key(new Date()), key(new Date()), 'btn-today');
+
+  await Promise.all([
+    window.POS_DATA_READY || Promise.resolve(),
+    Store.ready || Promise.resolve()
+  ]);
+  setRange('', '', 'btn-all');
 })();

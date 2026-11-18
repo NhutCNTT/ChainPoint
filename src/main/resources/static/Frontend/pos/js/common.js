@@ -63,7 +63,7 @@ const UI = (() => {
     const isOwner = role === 'owner';
     const isManager = role === 'manager';
     const canAccessAdmin = isOwner || isManager;
-    const returnDashboardUrl = isOwner ? '../pages/owner/dashboard.html' : '../pages/branch/dashboard.html';
+    const returnDashboardUrl = isOwner ? '../Frontend/pages/owner/dashboard.html' : '../Frontend/pages/branch/dashboard.html';
 
     drawer.innerHTML = `
       <div class="drawer-head">
@@ -73,13 +73,13 @@ const UI = (() => {
 
       ${canAccessAdmin ? `
         <a id="menu-admin-back" class="drawer-link" style="background:#eef4ff; color:#2f6bff; font-weight:700;" href="${returnDashboardUrl}"><span class="ico">📊</span>Về ${isOwner ? 'Owner Dashboard' : 'Quản trị chi nhánh'}</a>
-        <a id="menu-admin-tables" class="drawer-link" href="../pages/branch/tables.html"><span class="ico">📐</span>Cấu hình vị trí bàn</a>
+        <a id="menu-admin-tables" class="drawer-link" href="../Frontend/pages/branch/tables.html"><span class="ico">📐</span>Cấu hình vị trí bàn</a>
         <hr style="border:0; border-top:1px solid #e2e8f0; margin:8px 0;" />
       ` : ''}
 
       <a id="menu-tables" class="drawer-link ${activeKey === 'tables' ? 'active' : ''}" href="index.html"><span class="ico">🍽️</span>Chọn bàn gọi món</a>
       <a id="menu-history" class="drawer-link ${activeKey === 'history' ? 'active' : ''}" href="history.html"><span class="ico">📜</span>Lịch sử hóa đơn</a>
-      <a id="menu-orders" class="drawer-link" href="../pages/branch/orders.html"><span class="ico">🧾</span>Đơn hàng chi nhánh</a>
+      <a id="menu-orders" class="drawer-link" href="../Frontend/pages/branch/orders.html"><span class="ico">🧾</span>Đơn hàng chi nhánh</a>
 
       <div class="drawer-spacer"></div>
       <button id="menu-reset" class="drawer-link" type="button"><span class="ico">♻️</span>Đặt lại dữ liệu demo</button>
@@ -113,7 +113,7 @@ const UI = (() => {
           sessionStorage.removeItem(k);
           localStorage.removeItem(k);
         });
-        window.location.href = isOwner ? '../pages/auth/owner-login.html' : '../pages/auth/pos-login.html';
+        window.location.href = isOwner ? '../Frontend/pages/auth/owner-login.html' : '../Frontend/pages/auth/pos-login.html';
       });
     }
   }

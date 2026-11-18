@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../../css/base.css" />
   <link rel="stylesheet" href="../../css/admin/admin.css" />
+  <link rel="stylesheet" href="../../css/admin/tables.css" />
 </head>
 <body data-area="employee">
   <div class="app">
@@ -29,7 +30,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6"/><path d="M9 12h6"/></svg>
           Đơn hàng
         </a>
-        <a href="customers.html">
+        <a href="customers.html" class="active">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg>
           Tích điểm
         </a>
@@ -46,22 +47,105 @@
     <main class="main">
       <header class="topbar">
         <div>
-          <h1>Tích điểm</h1>
-          <p>Tra cứu khách hàng thân thiết và cộng điểm thưởng.</p>
+          <h1>Tra cứu khách hàng thân thiết</h1>
+          <p>Dữ liệu hội viên và số dư điểm tích lũy trực tiếp từ MySQL Database.</p>
         </div>
         <div class="user-chip">
-          <span class="avatar" id="userAvatar">?</span>
-          <div><span id="userName">—</span><small id="userRole">—</small></div>
+          <span class="avatar" id="userAvatar">T</span>
+          <div><span id="userName">Thu ngân</span><small id="userRole">Nhân viên</small></div>
         </div>
       </header>
 
-      <section class="panel">
-        <p class="panel-empty">Chức năng tích điểm đang được phát triển.</p>
+      <section class="tables-toolbar">
+        <div class="tables-search" style="width: 360px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="empCustSearch" placeholder="Tìm theo SĐT, họ tên, mã hội viên..." />
+        </div>
+        <a href="../../pos/index.html" class="btn-primary" style="text-decoration:none;">Mở máy POS →</a>
+      </section>
+
+      <section class="panel" style="padding:0; overflow:hidden;">
+        <table class="data-table">
+          <thead>
+            <tr style="background:#f8fafc; border-bottom:1px solid #e2e8f0; text-align:left;">
+              <th style="padding:14px 18px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Mã KH</th>
+              <th style="padding:14px 18px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Họ và tên</th>
+              <th style="padding:14px 18px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Số điện thoại</th>
+              <th style="padding:14px 18px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Hạng thẻ</th>
+              <th style="padding:14px 18px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Điểm tích lũy</th>
+              <th style="padding:14px 18px; font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase;">Tổng chi tiêu</th>
+            </tr>
+          </thead>
+          <tbody id="empCustBody">
+            <tr><td colspan="6" style="text-align:center; padding:32px; color:var(--muted);">Đang tải danh sách khách hàng từ Database...</td></tr>
+          </tbody>
+        </table>
       </section>
     </main>
   </div>
 
-  <script src="../../js/admin/admin.js"></script>
+  <script src="../../js/common/api.js"></script>
+  <script src="../../js/common/loyalty-store.js"></script>
+  <script>
+    (function () {
+      const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
+      const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      const user = sessionStorage.getItem('cp_user') || localStorage.getItem('cp_user') || 'Thu ngân';
+      const branch = sessionStorage.getItem('cp_branch') || localStorage.getItem('cp_branch') || '';
+      document.getElementById('userName').textContent = user;
+      document.getElementById('userRole').textContent = branch ? `Chi nhánh: ${branch}` : 'Thu ngân POS';
+      document.getElementById('userAvatar').textContent = user.charAt(0).toUpperCase();
+
+      document.getElementById('logoutBtn').addEventListener('click', () => {
+        ['cp_token', 'cp_role', 'cp_user', 'cp_branch', 'cp_branch_id'].forEach(k => {
+          sessionStorage.removeItem(k);
+          localStorage.removeItem(k);
+        });
+        window.location.href = '../auth/pos-login.html';
+      });
+
+      let query = '';
+      const tbody = document.getElementById('empCustBody');
+
+      function render() {
+        const list = LoyaltyStore.getCustomers();
+        const filtered = list.filter(c => {
+          if (!query) return true;
+          const q = query.toLowerCase();
+          return (c.phone && c.phone.includes(q)) ||
+                 (c.name && c.name.toLowerCase().includes(q)) ||
+                 (c.id && String(c.id).toLowerCase().includes(q));
+        });
+
+        if (filtered.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:36px; color:var(--muted);">Chưa có khách hàng hội viên nào trong Database.</td></tr>`;
+          return;
+        }
+
+        const pointValue = Number(LoyaltyStore.getConfig().pointValueVND || 1000);
+        tbody.innerHTML = filtered.map(c => `
+          <tr>
+            <td style="padding:12px 18px; font-family:monospace; font-weight:800; color:var(--primary);">${escapeHtml(c.id)}</td>
+            <td style="padding:12px 18px; font-weight:700;">${escapeHtml(c.name)}</td>
+            <td style="padding:12px 18px; font-weight:700;">${escapeHtml(c.phone)}</td>
+            <td style="padding:12px 18px;">${escapeHtml(c.tier || 'Bạc')}</td>
+            <td style="padding:12px 18px; font-weight:800; color:#059669;">${escapeHtml(c.points)} pts <small style="color:var(--muted);">(${formatVND(c.points * pointValue)})</small></td>
+            <td style="padding:12px 18px; font-weight:700;">${formatVND(c.totalSpent)}</td>
+          </tr>
+        `).join('');
+      }
+
+      document.getElementById('empCustSearch').addEventListener('input', (e) => {
+        query = e.target.value.trim();
+        render();
+      });
+
+      async function init() {
+        await LoyaltyStore.refreshCustomers();
+        render();
+      }
+      init();
+    })();
+  </script>
 </body>
 </html>
-

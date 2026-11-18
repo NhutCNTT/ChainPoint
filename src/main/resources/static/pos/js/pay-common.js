@@ -24,10 +24,11 @@ const PayCommon = (() => {
   }
 
   function renderSummary() {
+    if (!bill) return;
     const t = getTable(bill.tableId);
     const title = document.getElementById('pay-sub');
-    if (title) title.textContent = `${t ? t.name : bill.tableId} · #${bill.billId}`;
-    
+    if (title) title.textContent = `${t ? t.name : ('Bàn ' + bill.tableId)} · #${bill.billId}`;
+
     let html = bill.items.map((i) => `
       <div class="sum-row">
         <span class="sum-name">${UI.escapeHtml(i.name)}${i.note ? `<span class="sum-note">📝 ${UI.escapeHtml(i.note)}</span>` : ''}</span>
@@ -47,7 +48,7 @@ const PayCommon = (() => {
 
     const list = document.getElementById('sum-list');
     if (list) list.innerHTML = html;
-    
+
     const total = document.getElementById('sum-total');
     if (total) total.textContent = UI.formatVND(bill.total);
   }
@@ -55,6 +56,11 @@ const PayCommon = (() => {
   const backBtn = document.getElementById('btn-back');
   if (backBtn) backBtn.addEventListener('click', () => history.back());
 
-  if (bill) renderSummary();
+  if (bill) {
+    renderSummary();
+    if (window.POS_DATA_READY) {
+      window.POS_DATA_READY.then(renderSummary);
+    }
+  }
   return { bill, billId, loyaltyData };
 })();

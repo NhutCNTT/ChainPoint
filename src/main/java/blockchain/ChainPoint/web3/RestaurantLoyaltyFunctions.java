@@ -59,28 +59,6 @@ public final class RestaurantLoyaltyFunctions {
         return new Function("recordInvoice", inputParameters, Collections.emptyList());
     }
 
-    public static Function refundOrder(
-            String orderCode,
-            String customerAddress,
-            String phoneNumber,
-            long pointsRestored,
-            long pointsRevoked,
-            BigDecimal refundAmount,
-            String reason
-    ) {
-        List<Type> inputParameters = Arrays.asList(
-                new Utf8String(orderCode),
-                new Address(normalizeAddress(customerAddress)),
-                new Utf8String(phoneNumber != null ? phoneNumber : ""),
-                new Uint256(BigInteger.valueOf(pointsRestored)),
-                new Uint256(BigInteger.valueOf(pointsRevoked)),
-                new Uint256(refundAmount != null ? refundAmount.toBigInteger() : BigInteger.ZERO),
-                new Utf8String(reason != null ? reason : "")
-        );
-
-        return new Function("refundOrder", inputParameters, Collections.emptyList());
-    }
-
     public static Function getPointsByPhone(String phoneNumber) {
         List<Type> inputParameters = Collections.singletonList(new Utf8String(phoneNumber));
         List<TypeReference<?>> outputParameters = Collections.singletonList(

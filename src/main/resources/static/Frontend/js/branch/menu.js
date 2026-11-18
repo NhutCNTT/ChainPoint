@@ -2,7 +2,7 @@
 // Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
 
 (function () {
-    const CATEGORIES = [
+    const DEFAULT_CATEGORIES = [
         { id: 'all', name: 'Tất cả danh mục', icon: '✨' },
         { id: 'hot', name: 'Món nóng', icon: '🔥' },
         { id: 'cold', name: 'Món lạnh', icon: '🥗' },
@@ -11,6 +11,7 @@
         { id: 'other', name: 'Món ăn kèm', icon: '🍚' }
     ];
 
+    let categories = [...DEFAULT_CATEGORIES];
     let menu = [];
     let currentCategory = 'all';
     let searchQuery = '';
@@ -21,41 +22,98 @@
     const gridContainer = document.getElementById('menuGridContainer');
     const tableContainer = document.getElementById('menuTableBody');
     const catTabsContainer = document.getElementById('categoryTabs');
+    const dishCatSelect = document.getElementById('dishCat');
     const searchInput = document.getElementById('menuSearchInput');
     const modal = document.getElementById('dishModal');
     const dishForm = document.getElementById('dishForm');
     const modalTitle = document.getElementById('dishModalTitle');
     const editingIdInput = document.getElementById('editingDishId');
 
-    async function loadMenu() {
+    async function resolveBranchId() {
+        let branchId = sessionStorage.getItem('cp_branch_id') || '';
+        if (branchId) return Number(branchId);
         try {
-            const branchId = sessionStorage.getItem('cp_branch_id') || 1;
-            if (window.API) {
-                const res = await window.API.get(`/products?branchId=${branchId}`);
-                menu = res.map(p => ({
-                    id: p.code || ('m' + p.id),
-                    realId: p.id,
-                    cat: p.category || 'other',
-                    name: p.name,
-                    price: p.price,
-                    emoji: p.emoji || '🍲',
-                    status: p.status || 'available',
-                    soldCount: 0
-                }));
-            } else {
-                const res = await fetch(`http://localhost:8080/api/v1/products?branchId=${branchId}`);
-                const products = await res.json();
-                menu = products.map(p => ({
-                    id: p.code || ('m' + p.id),
-                    realId: p.id,
-                    cat: p.category || 'other',
-                    name: p.name,
-                    price: p.price,
-                    emoji: p.emoji || '🍲',
-                    status: p.status || 'available',
-                    soldCount: 0
-                }));
+            const branches = window.API
+                ? await window.API.get('/branches')
+                : await (await fetch('http://localhost:8080/api/v1/branches')).json();
+            if (Array.isArray(branches) && branches.length > 0) {
+                const branchName = sessionStorage.getItem('cp_branch') || '';
+                const matched = (branchName && branches.find(b => b.name === branchName)) || branches[0];
+                branchId = matched.id;
+                sessionStorage.setItem('cp_branch_id', branchId);
+                return Number(branchId);
             }
+        } catch (ignored) {}
+        return null;
+    }
+
+    async function loadCategoriesFromDB() {
+        try {
+            const list = window.API
+                ? await window.API.get('/categories')
+                : await (await fetch('http://localhost:8080/api/v1/categories')).json();
+            if (Array.isArray(list) && list.length > 0) {
+                categories = [
+                    { id: 'all', name: 'Tất cả danh mục', icon: '✨' },
+                    ...list.map(c => ({
+                        id: c.code,
+                        name: c.name,
+                        icon: c.icon || '🍽️'
+                    }))
+                ];
+            }
+        } catch (ignored) {
+            categories = [...DEFAULT_CATEGORIES];
+        }
+        populateCategorySelect();
+    }
+
+    function populateCategorySelect() {
+        if (!dishCatSelect) return;
+        const selectable = categories.filter(c => c.id !== 'all');
+        dishCatSelect.innerHTML = selectable.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+    }
+
+    function getCategoryDisplay(catId) {
+        const found = categories.find(c => c.id === catId);
+        return found ? `${found.icon} ${found.name}` : catId;
+    }
+
+    async function loadMenu() {
+        await loadCategoriesFromDB();
+        try {
+            const branchId = await resolveBranchId();
+            const endpoint = branchId ? `/products?branchId=${branchId}` : '/products';
+            let products = window.API
+                ? await window.API.get(endpoint)
+                : await (await fetch(`http://localhost:8080/api/v1${endpoint}`)).json();
+
+            if (Array.isArray(products) && products.length === 0 && branchId) {
+                products = window.API
+                    ? await window.API.get('/products')
+                    : await (await fetch('http://localhost:8080/api/v1/products')).json();
+            }
+
+            menu = (Array.isArray(products) ? products : []).map(p => ({
+                id: p.code || ('m' + p.id),
+                realId: p.id,
+                cat: p.category || 'other',
+                name: p.name,
+                price: Number(p.price || 0),
+                emoji: p.emoji || '🍲',
+                status: p.status || 'available',
+                soldCount: 0
+            }));
+
+            // Bổ sung danh mục từ sản phẩm thực tế trong DB nếu chưa có trong danh sách
+            const knownCatIds = new Set(categories.map(c => c.id));
+            menu.forEach(item => {
+                if (item.cat && !knownCatIds.has(item.cat)) {
+                    knownCatIds.add(item.cat);
+                    categories.push({ id: item.cat, name: item.cat, icon: '🍽️' });
+                }
+            });
+            populateCategorySelect();
         } catch (e) {
             console.error('Không thể tải thực đơn từ MySQL API:', e);
             menu = [];
@@ -85,7 +143,7 @@
 
     function renderCategoryTabs() {
         if (!catTabsContainer) return;
-        catTabsContainer.innerHTML = CATEGORIES.map(cat => {
+        catTabsContainer.innerHTML = categories.map(cat => {
             const count = cat.id === 'all' ? menu.length : menu.filter(m => m.cat === cat.id).length;
             const active = currentCategory === cat.id ? 'active' : '';
             return `
@@ -116,14 +174,6 @@
         });
     }
 
-    const CAT_NAMES = {
-        hot: '🔥 Món nóng',
-        cold: '🥗 Món lạnh',
-        drink: '🥤 Đồ uống',
-        dessert: '🍰 Tráng miệng',
-        other: '🍚 Món ăn kèm'
-    };
-
     function renderMenu() {
         const filtered = getFilteredMenu();
 
@@ -151,7 +201,7 @@
                                 </div>
                             </td>
                             <td style="padding:14px 20px;">
-                                <span class="badge" style="background:#f1f5f9; color:#475569; font-weight:600;">${CAT_NAMES[item.cat] || item.cat}</span>
+                                <span class="badge" style="background:#f1f5f9; color:#475569; font-weight:600;">${getCategoryDisplay(item.cat)}</span>
                             </td>
                             <td style="padding:14px 20px; font-weight:700; color:var(--text);">${formatVND(item.price)}</td>
                             <td style="padding:14px 20px;">
@@ -292,6 +342,7 @@
             const price = parseFloat(document.getElementById('dishPrice').value) || 0;
             const emoji = document.getElementById('dishEmoji').value.trim() || '🍽️';
             const status = document.getElementById('dishStatus').value;
+            const branchId = await resolveBranchId();
 
             const payload = {
                 code,
@@ -301,7 +352,7 @@
                 emoji,
                 status,
                 stockQuantity: 100,
-                branchId: Number(sessionStorage.getItem('cp_branch_id')) || 1
+                branchId: branchId || 1
             };
 
             try {

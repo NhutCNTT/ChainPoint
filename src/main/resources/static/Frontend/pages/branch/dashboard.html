@@ -60,7 +60,7 @@
             <div class="metric-value" id="branchRevenueVal">0 ₫</div>
           </div>
           <div class="metric-footer">
-            <span class="trend-badge trend-up">▲ +0.0%</span>
+            <span class="trend-badge trend-up" id="branchRevenueGrowth">▲ +0.0%</span>
             <span class="trend-period">Doanh thu ghi nhận từ MySQL</span>
           </div>
         </article>
@@ -74,7 +74,7 @@
             <div class="metric-value" id="branchOrdersVal">0 <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span></div>
           </div>
           <div class="metric-footer">
-            <span class="trend-badge trend-up">▲ +0.0%</span>
+            <span class="trend-badge trend-up" id="branchOrdersGrowth">▲ +0.0%</span>
             <span class="trend-period">Tổng đơn hàng đã thanh toán</span>
           </div>
         </article>
@@ -139,26 +139,44 @@
     </main>
   </div>
 
+  <script src="../../js/common/api.js"></script>
   <script src="../../js/common/ui.js"></script>
   <script src="../../js/branch/branch-nav.js"></script>
   <script>
     const API_BASE = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1' : '/api/v1';
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
 
+    function updateGrowthBadge(elId, growthStr) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      const val = growthStr || '+0.0%';
+      const isNegative = String(val).trim().startsWith('-');
+      el.className = `trend-badge ${isNegative ? 'trend-down' : 'trend-up'}`;
+      el.textContent = `${isNegative ? '▼' : '▲'} ${val}`;
+    }
+
     async function loadBranchDashboard() {
       const urlParams = new URLSearchParams(window.location.search);
       let bId = urlParams.get('branchId') || sessionStorage.getItem('cp_branch_id') || '';
       let bName = urlParams.get('branch') || sessionStorage.getItem('cp_branch') || '';
 
-      // Nếu chưa có chi nhánh cụ thể trong URL/session, lấy chi nhánh đầu tiên từ DB
+      if (urlParams.get('branchId')) {
+        sessionStorage.setItem('cp_branch_id', urlParams.get('branchId'));
+      }
+      if (urlParams.get('branch')) {
+        sessionStorage.setItem('cp_branch', urlParams.get('branch'));
+      }
+
+      // Nếu chưa có branchId cụ thể trong URL/session, đối chiếu theo tên chi nhánh hoặc lấy chi nhánh đầu tiên từ DB
       if (!bId) {
         try {
           const res = await fetch(`${API_BASE}/branches`);
           if (res.ok) {
             const list = await res.json();
             if (Array.isArray(list) && list.length > 0) {
-              bId = list[0].id;
-              bName = list[0].name;
+              const matched = (bName && list.find(x => x.name === bName)) || list[0];
+              bId = matched.id;
+              bName = matched.name;
               sessionStorage.setItem('cp_branch_id', bId);
               sessionStorage.setItem('cp_branch', bName);
             }
@@ -180,6 +198,8 @@
           const m = await mRes.json();
           document.getElementById('branchRevenueVal').textContent = formatVND(m.totalRevenue || 0);
           document.getElementById('branchOrdersVal').innerHTML = `${(m.totalOrders || 0).toLocaleString('vi-VN')} <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span>`;
+          updateGrowthBadge('branchRevenueGrowth', m.revenueGrowth);
+          updateGrowthBadge('branchOrdersGrowth', m.ordersGrowth);
         }
 
         // 2. Tải số lượng bàn của chi nhánh
@@ -191,12 +211,14 @@
           document.getElementById('branchTableSub').textContent = `${tables.filter(t => t.status === 'active').length} bàn đang hoạt động`;
         }
 
-        // 3. Tải biểu đồ tuần từ MySQL
+        // 3. Tải biểu đồ tuần từ MySQL (RevenueChartResponse trả về thisWeek)
         const cRes = await fetch(`${API_BASE}/admin/dashboard/revenue-chart${qBranch}`);
         let chartPoints = [];
         if (cRes.ok) {
           const cData = await cRes.json();
-          if (cData && Array.isArray(cData.points)) {
+          if (cData && Array.isArray(cData.thisWeek)) {
+            chartPoints = cData.thisWeek;
+          } else if (cData && Array.isArray(cData.points)) {
             chartPoints = cData.points;
           }
         }

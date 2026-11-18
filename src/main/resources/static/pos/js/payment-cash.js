@@ -31,62 +31,71 @@
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !confirmBtn.disabled) confirmBtn.click(); });
   $('btn-cancel').addEventListener('click', () => history.back());
 
-  confirmBtn.addEventListener('click', () => {
+  confirmBtn.addEventListener('click', async () => {
     const received = parse();
     if (received < bill.total) return;
+    confirmBtn.disabled = true;
     const change = received - bill.total;
 
     const cust = bill.loyaltyCustomer || (loyaltyData ? loyaltyData.customer : null);
     const ptsUsed = bill.pointsUsed || (loyaltyData ? loyaltyData.pointsUsed : 0);
     const disc = bill.loyaltyDiscount || (loyaltyData ? loyaltyData.discountVND : 0);
 
-    let loyaltyResult = null;
-    if (cust && window.LoyaltyStore) {
-      loyaltyResult = LoyaltyStore.processCheckoutLoyalty({
-        customerId: cust.id,
+    try {
+      const record = await Store.payBill(billId, 'cash', {
+        received,
+        change,
+        customerId: cust ? cust.id : null,
+        customerName: cust ? cust.name : null,
+        customerPhone: cust ? cust.phone : null,
         pointsUsed: ptsUsed,
-        billAmount: bill.grossTotal || bill.total,
-        billId,
-        branch: sessionStorage.getItem('cp_branch') || 'Cửa hàng',
-        staff: sessionStorage.getItem('cp_user') || 'Thu ngân'
+        discountVND: disc,
+        paidAmount: bill.total
+      });
+
+      // Clear session for this bill
+      sessionStorage.removeItem('pos_loyalty_' + billId);
+
+      const paidTotal = record ? record.total : bill.total;
+      const actualChange = Math.max(0, received - paidTotal);
+      let msg = `Đã thu <b>${UI.formatVND(paidTotal)}</b>. Tiền thối khách: <b>${UI.formatVND(actualChange)}</b>.`;
+
+      if (cust) {
+        const cfg = window.LoyaltyStore ? LoyaltyStore.getConfig() : { pointValueVND: 1000 };
+        const usedPts = record ? Number(record.pointsUsed || 0) : Number(ptsUsed || 0);
+        const discAmount = record ? Number(record.discountVND || 0) : Number(disc || 0);
+        const earnedPts = record ? Number(record.pointsEarned || 0) : 0;
+        const finalBalance = Math.max(0, Number(cust.points || 0) - usedPts + earnedPts);
+
+        msg += `
+          <div style="margin-top:14px; padding:12px; background:#f0fdf4; border-radius:10px; font-size:13.5px; border:1px solid #bbf7d0; text-align:left; line-height:1.6;">
+            <div style="font-weight:700; color:#166534;">🎁 Tích điểm Bách Hóa Xanh (Database):</div>
+            <div>• Hội viên: <b>${UI.escapeHtml(cust.name)}</b> (${UI.escapeHtml(cust.phone)})</div>
+            ${usedPts > 0 ? `<div>• Điểm đã đổi trừ: <b style="color:#e11d48;">-${usedPts} pts</b> (-${UI.formatVND(discAmount)})</div>` : ''}
+            <div>• Điểm mới tích lũy: <b style="color:#16a34a;">+${earnedPts} pts</b></div>
+            <div>• Số dư điểm mới: <b style="color:#2563eb;">${finalBalance} pts</b> (= ${UI.formatVND(finalBalance * (cfg.pointValueVND || 1000))})</div>
+          </div>
+        `;
+      }
+
+      UI.showModal({
+        icon: '✅', tone: 'success', title: 'Thanh toán thành công',
+        message: msg,
+        actions: [
+          { label: 'Xem lịch sử', id: 'modal-history', onClick: () => (location.href = 'history.html') },
+          { label: 'Về chọn bàn', id: 'modal-home', cls: 'btn-primary', onClick: () => (location.href = 'index.html') }
+        ]
+      });
+    } catch (err) {
+      confirmBtn.disabled = false;
+      UI.showModal({
+        icon: '⚠️',
+        tone: 'warn',
+        title: 'Không thể hoàn tất thanh toán',
+        message: UI.escapeHtml(err.message || 'Lỗi kết nối Database khi thanh toán.'),
+        actions: [{ label: 'Đóng', id: 'modal-err-close', cls: 'btn-primary' }]
       });
     }
-
-    Store.payBill(billId, 'cash', {
-      received,
-      change,
-      customerId: cust ? cust.id : null,
-      customerName: cust ? cust.name : null,
-      phone: cust ? cust.phone : null,
-      pointsUsed: ptsUsed,
-      discountVND: disc,
-      paidAmount: bill.total
-    });
-
-    // Clear session for this bill
-    sessionStorage.removeItem('pos_loyalty_' + billId);
-
-    let msg = `Đã thu <b>${UI.formatVND(bill.total)}</b>. Tiền thối khách: <b>${UI.formatVND(change)}</b>.`;
-    if (loyaltyResult) {
-      msg += `
-        <div style="margin-top:14px; padding:12px; background:#f0fdf4; border-radius:10px; font-size:13.5px; border:1px solid #bbf7d0; text-align:left; line-height:1.6;">
-          <div style="font-weight:700; color:#166534;">🎁 Tích điểm Bách Hóa Xanh:</div>
-          <div>• Hội viên: <b>${loyaltyResult.customer.name}</b> (${loyaltyResult.customer.phone})</div>
-          ${loyaltyResult.pointsUsed > 0 ? `<div>• Điểm đã đổi trừ: <b style="color:#e11d48;">-${loyaltyResult.pointsUsed} pts</b> (-${UI.formatVND(loyaltyResult.discountVND)})</div>` : ''}
-          <div>• Điểm mới tích lũy: <b style="color:#16a34a;">+${loyaltyResult.pointsEarned} pts</b></div>
-          <div>• Số dư điểm mới: <b style="color:#2563eb;">${loyaltyResult.finalBalance} pts</b> (= ${UI.formatVND(loyaltyResult.finalBalance * 1000)})</div>
-        </div>
-      `;
-    }
-
-    UI.showModal({
-      icon: '✅', tone: 'success', title: 'Thanh toán thành công',
-      message: msg,
-      actions: [
-        { label: 'Xem lịch sử', id: 'modal-history', onClick: () => (location.href = 'history.html') },
-        { label: 'Về chọn bàn', id: 'modal-home', cls: 'btn-primary', onClick: () => (location.href = 'index.html') }
-      ]
-    });
   });
 
   update();

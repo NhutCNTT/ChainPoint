@@ -42,17 +42,6 @@ public class Branch {
     private String phone;
 
     @Builder.Default
-    @Column(name = "open_hours", length = 50)
-    private String openHours = "08:00 - 22:30";
-
-    @Column(name = "manager_name", length = 100)
-    private String managerName;
-
-    @Builder.Default
-    @Column(name = "vat_percent", precision = 5, scale = 2)
-    private java.math.BigDecimal vatPercent = java.math.BigDecimal.valueOf(8.0);
-
-    @Builder.Default
     @Column(name = "status", nullable = false, length = 20)
     private String status = "open";
 

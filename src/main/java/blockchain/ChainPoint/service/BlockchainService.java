@@ -20,14 +20,4 @@ public interface BlockchainService {
     );
 
     Long getPointsByPhone(String phoneNumber);
-
-    String refundOrder(
-            String orderCode,
-            String customerAddress,
-            String phoneNumber,
-            long pointsRestored,
-            long pointsRevoked,
-            BigDecimal refundAmount,
-            String reason
-    );
 }

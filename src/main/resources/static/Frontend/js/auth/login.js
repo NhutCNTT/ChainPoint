@@ -24,7 +24,7 @@ if (tabs) {
             const role = tab.dataset.role;
             tabs.dataset.active = role;
             tabs.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t === tab));
-            
+
             if (roleConfigs[role] && hint) {
                 hint.textContent = roleConfigs[role].hint;
             }
@@ -83,8 +83,8 @@ if (form) {
         const role = tabs ? (tabs.dataset.active || 'owner') : 'owner';
         const remember = document.getElementById('remember')?.checked;
 
-        const API_BASE = (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '') 
-            ? 'http://localhost:8080/api/v1' 
+        const API_BASE = (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '')
+            ? 'http://localhost:8080/api/v1'
             : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
 
         try {
@@ -96,13 +96,37 @@ if (form) {
 
             if (res.ok) {
                 const data = await res.json();
+                let resolvedBranchId = data.branchId || '';
+                let resolvedBranchName = data.branchName || '';
+
+                if (!resolvedBranchId) {
+                    try {
+                        const bRes = await fetch(`${API_BASE}/branches`);
+                        if (bRes.ok) {
+                            const branches = await bRes.json();
+                            if (Array.isArray(branches) && branches.length > 0) {
+                                const found = branches.find(b =>
+                                    (data.branchCode && b.code === data.branchCode) ||
+                                    (data.branchName && b.name === data.branchName)
+                                ) || branches[0];
+                                resolvedBranchId = found.id || '';
+                                if (!resolvedBranchName && found.name) {
+                                    resolvedBranchName = found.name;
+                                }
+                            }
+                        }
+                    } catch (ignored) {}
+                }
+
                 const storage = remember ? localStorage : sessionStorage;
                 const userRole = data.role ? data.role.replace('ROLE_', '').toLowerCase() : role;
-                storage.setItem('cp_token', data.accessToken || data.token);
-                storage.setItem('cp_role', userRole);
-                storage.setItem('cp_user', data.fullName || data.username || username);
-                storage.setItem('cp_branch', data.branchName || '');
-                storage.setItem('cp_branch_id', data.branchId || '');
+                [sessionStorage, storage].forEach(s => {
+                    s.setItem('cp_token', data.accessToken || data.token);
+                    s.setItem('cp_role', userRole);
+                    s.setItem('cp_user', data.fullName || data.username || username);
+                    s.setItem('cp_branch', resolvedBranchName);
+                    s.setItem('cp_branch_id', resolvedBranchId);
+                });
 
                 if (userRole === 'cashier') {
                     window.location.href = '../../pos/index.html';
