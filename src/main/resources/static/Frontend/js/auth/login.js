@@ -96,27 +96,8 @@ if (form) {
 
             if (res.ok) {
                 const data = await res.json();
-                let resolvedBranchId = data.branchId || '';
-                let resolvedBranchName = data.branchName || '';
-
-                if (!resolvedBranchId) {
-                    try {
-                        const bRes = await fetch(`${API_BASE}/branches`);
-                        if (bRes.ok) {
-                            const branches = await bRes.json();
-                            if (Array.isArray(branches) && branches.length > 0) {
-                                const found = branches.find(b =>
-                                    (data.branchCode && b.code === data.branchCode) ||
-                                    (data.branchName && b.name === data.branchName)
-                                ) || branches[0];
-                                resolvedBranchId = found.id || '';
-                                if (!resolvedBranchName && found.name) {
-                                    resolvedBranchName = found.name;
-                                }
-                            }
-                        }
-                    } catch (ignored) {}
-                }
+                const resolvedBranchId = data.branchId || '';
+                const resolvedBranchName = data.branchName || '';
 
                 const storage = remember ? localStorage : sessionStorage;
                 const userRole = data.role ? data.role.replace('ROLE_', '').toLowerCase() : role;

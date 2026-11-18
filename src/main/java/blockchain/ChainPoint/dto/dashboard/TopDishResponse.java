@@ -17,6 +17,10 @@ public class TopDishResponse {
 
     private String name;
 
+    private String category;
+
+    private String emoji;
+
     private Long quantitySold;
 
     private BigDecimal totalRevenue;

@@ -136,11 +136,15 @@
             document.getElementById('custPoints').value = 0;
             document.getElementById('custTier').value = 'Bạc';
         }
+        modal.classList.add('is-open');
         modal.classList.add('active');
     }
 
     function closeCustomerModal() {
-        if (modal) modal.classList.remove('active');
+        if (modal) {
+            modal.classList.remove('is-open');
+            modal.classList.remove('active');
+        }
     }
 
     async function openHistoryModal(cust) {
@@ -185,6 +189,7 @@
             }).join('');
         }
 
+        historyModal.classList.add('is-open');
         historyModal.classList.add('active');
     }
 
@@ -197,7 +202,10 @@
     if (addBtn) addBtn.onclick = () => openCustomerModal(null);
     if (closeBtn) closeBtn.onclick = closeCustomerModal;
     if (cancelBtn) cancelBtn.onclick = closeCustomerModal;
-    if (closeHistBtn) closeHistBtn.onclick = () => historyModal.classList.remove('active');
+    if (closeHistBtn) closeHistBtn.onclick = () => {
+        historyModal.classList.remove('is-open');
+        historyModal.classList.remove('active');
+    };
 
     if (form) {
         form.onsubmit = async (e) => {

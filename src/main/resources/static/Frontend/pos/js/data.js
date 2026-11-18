@@ -25,11 +25,21 @@ const POS_API_BASE = (typeof window !== 'undefined' && window.location.port && w
   ? 'http://localhost:8080/api/v1'
   : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
 
+const POS_AUTH_HEADERS = (() => {
+  const token = sessionStorage.getItem('cp_token') || localStorage.getItem('cp_token') || '';
+  return token ? { Authorization: `Bearer ${token}` } : {};
+})();
+
+const posFetch = (url, options = {}) => fetch(url, {
+  ...options,
+  headers: { ...POS_AUTH_HEADERS, ...(options.headers || {}) }
+});
+
 async function resolveActiveBranchId() {
   let branchId = sessionStorage.getItem('cp_branch_id') || localStorage.getItem('cp_branch_id') || '';
   if (branchId) return branchId;
   try {
-    const res = await fetch(`${POS_API_BASE}/branches`);
+    const res = await posFetch(`${POS_API_BASE}/branches`);
     if (res.ok) {
       const branches = await res.json();
       if (Array.isArray(branches) && branches.length > 0) {
@@ -49,7 +59,7 @@ async function resolveActiveBranchId() {
 // Nạp danh mục thực đơn từ Backend MySQL (nếu có endpoint /categories)
 async function fetchCategoriesFromDatabase() {
   try {
-    const res = await fetch(`${POS_API_BASE}/categories`);
+    const res = await posFetch(`${POS_API_BASE}/categories`);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -71,12 +81,12 @@ async function fetchMenuFromDatabase() {
   try {
     const branchId = await resolveActiveBranchId();
     const url = branchId ? `${POS_API_BASE}/products?branchId=${branchId}` : `${POS_API_BASE}/products`;
-    const res = await fetch(url);
+    const res = await posFetch(url);
     if (res.ok) {
       let data = await res.json();
       // Nếu chi nhánh hiện tại chưa có món riêng, tải toàn bộ sản phẩm trong DB
       if (Array.isArray(data) && data.length === 0 && branchId) {
-        const fallbackRes = await fetch(`${POS_API_BASE}/products`);
+        const fallbackRes = await posFetch(`${POS_API_BASE}/products`);
         if (fallbackRes.ok) {
           data = await fallbackRes.json();
         }
@@ -114,11 +124,11 @@ async function fetchTablesFromDatabase() {
   try {
     const branchId = await resolveActiveBranchId();
     const url = branchId ? `${POS_API_BASE}/tables?branchId=${branchId}` : `${POS_API_BASE}/tables`;
-    const res = await fetch(url);
+    const res = await posFetch(url);
     if (res.ok) {
       let data = await res.json();
       if (Array.isArray(data) && data.length === 0 && branchId) {
-        const fallbackRes = await fetch(`${POS_API_BASE}/tables`);
+        const fallbackRes = await posFetch(`${POS_API_BASE}/tables`);
         if (fallbackRes.ok) {
           data = await fallbackRes.json();
         }

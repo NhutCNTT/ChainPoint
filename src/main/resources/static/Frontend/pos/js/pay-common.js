@@ -39,7 +39,7 @@ const PayCommon = (() => {
     if (bill.loyaltyDiscount > 0) {
       html += `
         <div class="sum-row" style="color:#e11d48; font-weight:700;">
-          <span class="sum-name">🎁 Giảm trừ Loyalty BHX (${bill.pointsUsed} pts)</span>
+          <span class="sum-name">🎁 Giảm trừ điểm Loyalty (${bill.pointsUsed} pts)</span>
           <span class="sum-qty">—</span>
           <span class="sum-line money" style="color:#e11d48;">-${UI.formatVND(bill.loyaltyDiscount)}</span>
         </div>

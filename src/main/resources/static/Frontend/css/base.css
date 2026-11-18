@@ -101,3 +101,55 @@ select:focus-visible { outline: 3px solid var(--primary-ring); outline-offset: 2
 }
 
 [hidden] { display: none !important; }
+
+@keyframes cp-spin { to { transform: rotate(360deg); } }
+
+button.is-loading {
+    position: relative;
+    pointer-events: none;
+    color: transparent !important;
+}
+button.is-loading > * { visibility: hidden; }
+button.is-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    margin: -9px 0 0 -9px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: rgba(255, 255, 255, 0.95);
+    border-radius: 50%;
+    animation: cp-spin 0.7s linear infinite;
+}
+button.is-loading.btn-outline::after,
+button.is-loading.btn-secondary::after {
+    border-color: rgba(47, 107, 255, 0.25);
+    border-top-color: var(--primary);
+}
+
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--r-sm);
+    background: var(--surface-2, #eef2f8);
+    color: transparent !important;
+}
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+    animation: cp-shimmer 1.3s infinite;
+}
+@keyframes cp-shimmer { to { transform: translateX(100%); } }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -58,7 +58,6 @@ public final class RestaurantLoyaltyFunctions {
 
         return new Function("recordInvoice", inputParameters, Collections.emptyList());
     }
-
     public static Function getPointsByPhone(String phoneNumber) {
         List<Type> inputParameters = Collections.singletonList(new Utf8String(phoneNumber));
         List<TypeReference<?>> outputParameters = Collections.singletonList(
@@ -67,6 +66,46 @@ public final class RestaurantLoyaltyFunctions {
         );
 
         return new Function("getPointsByPhone", inputParameters, outputParameters);
+    }
+
+    public static Function redeemPoints(
+            String customerAddress,
+            String phoneNumber,
+            long points,
+            String orderCode,
+            BigDecimal discountAmount
+    ) {
+        List<Type> inputParameters = Arrays.asList(
+                new Address(normalizeAddress(customerAddress)),
+                new Utf8String(phoneNumber),
+                new Uint256(BigInteger.valueOf(points)),
+                new Utf8String(orderCode),
+                new Uint256(discountAmount.toBigInteger())
+        );
+
+        return new Function("redeemPoints", inputParameters, Collections.emptyList());
+    }
+
+    public static Function refundOrder(
+            String orderCode,
+            String customerAddress,
+            String phoneNumber,
+            long pointsRestored,
+            long pointsRevoked,
+            BigDecimal refundAmount,
+            String reason
+    ) {
+        List<Type> inputParameters = Arrays.asList(
+                new Utf8String(orderCode),
+                new Address(normalizeAddress(customerAddress)),
+                new Utf8String(phoneNumber != null ? phoneNumber : ""),
+                new Uint256(BigInteger.valueOf(pointsRestored)),
+                new Uint256(BigInteger.valueOf(pointsRevoked)),
+                new Uint256(refundAmount.toBigInteger()),
+                new Utf8String(reason != null ? reason : "")
+        );
+
+        return new Function("refundOrder", inputParameters, Collections.emptyList());
     }
 
     public static String encode(Function function) {

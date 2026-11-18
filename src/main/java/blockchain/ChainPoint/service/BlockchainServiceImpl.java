@@ -30,7 +30,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BlockchainServiceImpl implements BlockchainService {
 
-    private static final long SEPOLIA_CHAIN_ID = 11_155_111L;
     private static final long RECEIPT_POLLING_INTERVAL_MS = 3_000L;
     private static final int RECEIPT_POLLING_ATTEMPTS = 60;
 
@@ -70,6 +69,48 @@ public class BlockchainServiceImpl implements BlockchainService {
                 branchId,
                 netAmount,
                 invoiceHash
+        );
+
+        return execute(function);
+    }
+
+    @Override
+    public String redeemPoints(
+            String customerAddress,
+            String phoneNumber,
+            long points,
+            String orderCode,
+            BigDecimal discountAmount
+    ) {
+        Function function = RestaurantLoyaltyFunctions.redeemPoints(
+                customerAddress,
+                phoneNumber,
+                points,
+                orderCode,
+                discountAmount
+        );
+
+        return execute(function);
+    }
+
+    @Override
+    public String refundOrder(
+            String orderCode,
+            String customerAddress,
+            String phoneNumber,
+            long pointsRestored,
+            long pointsRevoked,
+            BigDecimal refundAmount,
+            String reason
+    ) {
+        Function function = RestaurantLoyaltyFunctions.refundOrder(
+                orderCode,
+                customerAddress,
+                phoneNumber,
+                pointsRestored,
+                pointsRevoked,
+                refundAmount,
+                reason
         );
 
         return execute(function);
@@ -122,7 +163,7 @@ public class BlockchainServiceImpl implements BlockchainService {
             RawTransactionManager transactionManager = new RawTransactionManager(
                     web3j,
                     credentials,
-                    SEPOLIA_CHAIN_ID
+                    resolveChainId()
             );
 
             EthSendTransaction response = transactionManager.sendTransaction(
@@ -166,5 +207,10 @@ public class BlockchainServiceImpl implements BlockchainService {
                     exception
             );
         }
+    }
+
+    private long resolveChainId() {
+        Long configured = web3Config.getChainId();
+        return configured != null ? configured : 11_155_111L;
     }
 }

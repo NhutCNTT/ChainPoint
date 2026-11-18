@@ -25,6 +25,7 @@ public class Web3Config {
 
     private static final BigInteger GAS_PRICE = BigInteger.valueOf(20_000_000_000L);
     private static final long DEFAULT_GAS_LIMIT = 300_000L;
+    private static final long DEFAULT_CHAIN_ID = 11_155_111L;
 
     private String rpcUrl;
 
@@ -33,6 +34,8 @@ public class Web3Config {
     private String masterWalletPrivateKey;
 
     private Long gasLimit = DEFAULT_GAS_LIMIT;
+
+    private Long chainId = DEFAULT_CHAIN_ID;
 
     @Bean(destroyMethod = "shutdown")
     public Web3j web3j() {

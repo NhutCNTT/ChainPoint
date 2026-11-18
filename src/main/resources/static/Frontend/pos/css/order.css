@@ -77,11 +77,11 @@
 .ci-line { font-weight: 800; white-space: nowrap; color: var(--text); }
 .ci-ctrl { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
 .qty { display: inline-flex; align-items: center; background: #ffffff; border-radius: 12px; border: 1px solid var(--border-strong); }
-.qty button { width: 38px; height: 38px; font-size: 20px; font-weight: 700; border-radius: 12px; color: var(--text); transition: background .15s, color .15s; }
+.qty button { width: 44px; height: 44px; font-size: 20px; font-weight: 700; border-radius: 12px; color: var(--text); transition: background .15s, color .15s; }
 .qty button:hover { background: var(--blue-light); color: var(--accent-1); }
 .qty button:active { transform: scale(.85); }
-.qty .n { min-width: 34px; text-align: center; font-weight: 800; color: var(--text); }
-.ci-btn { margin-left: auto; padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--muted); background: #ffffff; border: 1px solid var(--border); transition: all .2s; }
+.qty .n { min-width: 38px; text-align: center; font-weight: 800; color: var(--text); }
+.ci-btn { margin-left: auto; min-height: 44px; padding: 8px 12px; border-radius: 10px; font-size: 13px; color: var(--muted); background: #ffffff; border: 1px solid var(--border); transition: all .2s; }
 .ci-btn:hover { color: var(--accent-1); background: var(--blue-light); border-color: var(--accent-1); }
 .ci-btn.has-note { color: var(--pending); border-color: rgba(245, 158, 11, 0.45); }
 .ci-btn.del:hover { color: var(--danger); border-color: var(--danger); background: rgba(239, 68, 68, 0.08); }
@@ -99,7 +99,15 @@
 
 @keyframes bump { 50% { transform: scale(.94); } }
 
+@media (max-width: 1280px) and (min-width: 1101px) {
+  .order-shell { grid-template-columns: 190px minmax(0, 1fr) 360px; gap: 12px; padding: 12px; }
+  .cat-item { padding: 14px 12px; font-size: 14px; }
+  .menu-grid { grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); gap: 12px; }
+  .cart-actions .btn { padding: 14px 4px; font-size: 13px; }
+}
+
 @media (max-width: 1100px) {
   .order-shell { grid-template-columns: 150px minmax(0, 1fr) 340px; gap: 10px; padding: 10px; }
-  .cat-item { padding: 12px 10px; font-size: 14px; }
+  .cat-item { padding: 14px 10px; font-size: 14px; }
+  .menu-grid { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 12px; }
 }

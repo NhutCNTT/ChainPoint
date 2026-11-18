@@ -29,7 +29,6 @@ public class CheckoutRequest {
     @NotBlank(message = "Table code is required")
     private String tableCode;
 
-    @NotBlank(message = "Cashier username is required")
     private String cashierUsername;
 
     private String customerPhone;

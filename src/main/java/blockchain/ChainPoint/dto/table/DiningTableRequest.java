@@ -33,8 +33,8 @@ public class DiningTableRequest {
 
     @Builder.Default
     @Pattern(
-            regexp = "active|disabled",
-            message = "Status must be either active or disabled"
+            regexp = "active|available|busy|pending|disabled",
+            message = "Status must be active, available, busy, pending or disabled"
     )
     private String status = "active";
 

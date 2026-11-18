@@ -1,4 +1,4 @@
-// ChainPoint — Quản trị Chương trình Khách hàng thân thiết Loyalty (Mô hình Bách Hóa Xanh)
+// ChainPoint — Quản trị Chương trình Khách hàng thân thiết Loyalty
 // Used by: pages/branch/loyalty.html
 
 (function () {

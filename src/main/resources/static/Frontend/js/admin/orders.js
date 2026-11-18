@@ -32,19 +32,13 @@
     const statPendingBills = document.getElementById('statPendingBills');
     const statActiveTables = document.getElementById('statActiveTables');
 
-    const API_BASE = (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '')
-        ? 'http://localhost:8080/api/v1'
-        : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
-
     async function loadOrdersFromDB() {
         const branchId = sessionStorage.getItem('cp_branch_id') || '';
         const qBranch = branchId ? `?branchId=${branchId}` : '';
 
         try {
-            const res = await fetch(`${API_BASE}/orders${qBranch}`);
-            if (res.ok) {
-                const data = await res.json();
-                orders = (Array.isArray(data) ? data : []).map(b => ({
+            const data = await window.API.get(`/orders${qBranch}`);
+            orders = (Array.isArray(data) ? data : []).map(b => ({
                     billId: b.billCode,
                     tableId: b.tableCode,
                     customerName: b.customerName || 'Khách vãng lai',
@@ -67,9 +61,6 @@
                     billHash: b.billHash,
                     blockchainTxHash: b.blockchainTxHash
                 }));
-            } else {
-                orders = [];
-            }
         } catch (e) {
             console.warn('Không thể nạp danh sách hóa đơn từ MySQL API:', e);
             orders = [];
@@ -77,11 +68,8 @@
 
         // Nạp số lượng bàn đang hoạt động thực tế từ Database (/tables)
         try {
-            const tRes = await fetch(`${API_BASE}/tables${qBranch}`);
-            if (tRes.ok) {
-                const tables = await tRes.json();
-                activeTablesCount = (Array.isArray(tables) ? tables : []).filter(t => t.status === 'active').length;
-            }
+            const tables = await window.API.get(`/tables${qBranch}`);
+            activeTablesCount = (Array.isArray(tables) ? tables : []).filter(t => t.status === 'active').length;
         } catch (ignored) {}
 
         render();

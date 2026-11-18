@@ -460,7 +460,8 @@ button.badge:hover { filter: brightness(0.96); }
     opacity: 0; pointer-events: none;
     transition: opacity .2s var(--ease);
 }
-.modal-overlay.is-open { opacity: 1; pointer-events: auto; }
+.modal-overlay.is-open,
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
 .modal-box {
     width: 100%; max-width: 520px; max-height: calc(100vh - 40px);
     display: flex; flex-direction: column;
@@ -472,7 +473,8 @@ button.badge:hover { filter: brightness(0.96); }
     overflow: hidden;
 }
 .modal-box.modal-lg { max-width: 640px; }
-.modal-overlay.is-open .modal-box { transform: none; }
+.modal-overlay.is-open .modal-box,
+.modal-overlay.active .modal-box { transform: none; }
 .modal-head {
     display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
     padding: var(--sp-5) var(--sp-6) 0;
@@ -717,4 +719,30 @@ button.badge:hover { filter: brightness(0.96); }
     .toast { max-width: none; }
     .bar-chart { gap: var(--sp-1); height: 180px; }
     .bar-value { font-size: 10px; }
+}
+
+/* ===================== POLISH ===================== */
+.stat,
+.table-stat-card {
+    transition: transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
+}
+@media (hover: hover) {
+    .stat:hover,
+    .table-stat-card:hover {
+        transform: translateY(-2px);
+        border-color: #d5e0f7;
+        box-shadow: var(--shadow-md);
+    }
+}
+
+.data-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.data-table td { transition: background-color .15s var(--ease); }
+
+.modal-overlay {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
 }

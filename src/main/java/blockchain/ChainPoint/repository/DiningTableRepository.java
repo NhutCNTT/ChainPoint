@@ -20,8 +20,10 @@ public interface DiningTableRepository extends JpaRepository<DiningTable, Long> 
 
     List<DiningTable> findByStatus(String status);
 
+    long countByBranchId(Long branchId);
+
     @Query("SELECT COUNT(t) FROM DiningTable t "
             + "WHERE (:branchId IS NULL OR t.branch.id = :branchId) "
-            + "AND t.status = 'busy'")
+            + "AND lower(t.status) IN ('busy', 'occupied', 'in_use', 'pending')")
     Long countBusyTables(@Param("branchId") Long branchId);
 }

@@ -8,6 +8,8 @@ import blockchain.ChainPoint.entity.Branch;
 import blockchain.ChainPoint.entity.Bill;
 import blockchain.ChainPoint.entity.BillDetail;
 import blockchain.ChainPoint.entity.Customer;
+import blockchain.ChainPoint.entity.DiningTable;
+import blockchain.ChainPoint.entity.LoyaltyConfig;
 import blockchain.ChainPoint.entity.Product;
 import blockchain.ChainPoint.event.CheckoutWeb3Event;
 import blockchain.ChainPoint.exception.InsufficientStockException;
@@ -17,10 +19,15 @@ import blockchain.ChainPoint.repository.BillRepository;
 import blockchain.ChainPoint.repository.BranchRepository;
 import blockchain.ChainPoint.repository.CustomerRepository;
 import blockchain.ChainPoint.repository.DiningTableRepository;
+import blockchain.ChainPoint.repository.LoyaltyConfigRepository;
 import blockchain.ChainPoint.repository.ProductRepository;
 import blockchain.ChainPoint.util.HashUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -34,23 +41,35 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CheckoutServiceImpl implements CheckoutService {
 
-    private static final BigDecimal VND_PER_REDEEMED_POINT = BigDecimal.valueOf(1000L);
-    private static final BigDecimal VND_PER_EARNED_POINT = BigDecimal.valueOf(10000L);
-    private static final long MINIMUM_POINTS_TO_REDEEM = 5L;
+    private static final long DEFAULT_EARN_RATIO_VND = 10_000L;
+    private static final long DEFAULT_POINT_VALUE_VND = 1_000L;
+    private static final long DEFAULT_MIN_POINTS_TO_REDEEM = 5L;
+    private static final int DEFAULT_MAX_DISCOUNT_PERCENT = 50;
+    private static final long LOYALTY_CONFIG_ID = 1L;
     private static final String BILL_STATUS_PAID = "paid";
+    private static final String TABLE_STATUS_DISABLED = "disabled";
+    private static final String PRODUCT_STATUS_OUT_OF_STOCK = "out_of_stock";
+    private static final String TIER_SILVER = "Bạc";
+    private static final String TIER_GOLD = "Vàng";
+    private static final String TIER_DIAMOND = "Kim Cương";
+    private static final BigDecimal GOLD_TIER_THRESHOLD = new BigDecimal("5000000");
+    private static final BigDecimal DIAMOND_TIER_THRESHOLD = new BigDecimal("20000000");
 
     private final BranchRepository branchRepository;
     private final DiningTableRepository diningTableRepository;
     private final ProductRepository productRepository;
     private final CustomerRepository customerRepository;
     private final BillRepository billRepository;
+    private final LoyaltyConfigRepository loyaltyConfigRepository;
     private final RabbitTemplate rabbitTemplate;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = "products", allEntries = true)
     public CheckoutResponse processCheckout(CheckoutRequest request) {
         Branch branch = findBranch(request.getBranchId());
         validateTable(request.getTableCode(), branch.getId());
@@ -82,6 +101,9 @@ public class CheckoutServiceImpl implements CheckoutService {
             }
 
             product.setStockQuantity(availableStock - quantity);
+            if (availableStock - quantity <= 0) {
+                product.setStatus(PRODUCT_STATUS_OUT_OF_STOCK);
+            }
 
             BigDecimal subtotal = product.getPrice()
                     .multiply(BigDecimal.valueOf(quantity))
@@ -101,6 +123,25 @@ public class CheckoutServiceImpl implements CheckoutService {
                 ? customerRepository.findByPhone(customerPhone).orElse(null)
                 : null;
 
+        LoyaltyConfig loyaltyConfig = loadLoyaltyConfig();
+        long pointValueVnd = positiveOrDefault(
+                loyaltyConfig.getPointValueVnd(),
+                DEFAULT_POINT_VALUE_VND
+        );
+        long earnRatioVnd = positiveOrDefault(
+                loyaltyConfig.getEarnRatioVnd(),
+                DEFAULT_EARN_RATIO_VND
+        );
+        long minPointsToRedeem = positiveOrDefault(
+                loyaltyConfig.getMinPointsToRedeem(),
+                DEFAULT_MIN_POINTS_TO_REDEEM
+        );
+        int maxDiscountPercent = loyaltyConfig.getMaxDiscountPercent() != null
+                ? loyaltyConfig.getMaxDiscountPercent()
+                : DEFAULT_MAX_DISCOUNT_PERCENT;
+        boolean allowEarn = loyaltyConfig.getAllowEarn() == null || loyaltyConfig.getAllowEarn();
+        boolean allowRedeem = loyaltyConfig.getAllowRedeem() == null || loyaltyConfig.getAllowRedeem();
+
         long pointsToUse = request.getPointsToUse() != null ? request.getPointsToUse() : 0L;
         if (pointsToUse < 0) {
             throw new InvalidRedemptionException("Points to use cannot be negative");
@@ -109,15 +150,21 @@ public class CheckoutServiceImpl implements CheckoutService {
         BigDecimal discountAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
         if (pointsToUse > 0) {
+            if (!allowRedeem) {
+                throw new InvalidRedemptionException(
+                        "Loyalty point redemption is currently disabled"
+                );
+            }
+
             if (customer == null) {
                 throw new InvalidRedemptionException(
                         "A registered customer is required to redeem loyalty points"
                 );
             }
 
-            if (pointsToUse < MINIMUM_POINTS_TO_REDEEM) {
+            if (pointsToUse < minPointsToRedeem) {
                 throw new InvalidRedemptionException(
-                        "Minimum points to redeem is " + MINIMUM_POINTS_TO_REDEEM
+                        "Minimum points to redeem is " + minPointsToRedeem
                 );
             }
 
@@ -130,12 +177,16 @@ public class CheckoutServiceImpl implements CheckoutService {
             }
 
             discountAmount = BigDecimal.valueOf(pointsToUse)
-                    .multiply(VND_PER_REDEEMED_POINT)
+                    .multiply(BigDecimal.valueOf(pointValueVnd))
                     .setScale(2, RoundingMode.HALF_UP);
 
-            if (discountAmount.multiply(BigDecimal.valueOf(2L)).compareTo(grossAmount) > 0) {
+            BigDecimal maxDiscount = grossAmount
+                    .multiply(BigDecimal.valueOf(maxDiscountPercent))
+                    .divide(BigDecimal.valueOf(100L), 2, RoundingMode.HALF_UP);
+            if (discountAmount.compareTo(maxDiscount) > 0) {
                 throw new InvalidRedemptionException(
-                        "Discount cannot exceed 50% of the gross amount"
+                        "Discount cannot exceed " + maxDiscountPercent
+                                + "% of the gross amount"
                 );
             }
         }
@@ -144,20 +195,22 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .subtract(discountAmount)
                 .setScale(2, RoundingMode.HALF_UP);
 
-        long pointsEarned = finalAmount
-                .divideToIntegralValue(VND_PER_EARNED_POINT)
-                .longValue();
+        long pointsEarned = allowEarn && customer != null
+                ? finalAmount.divideToIntegralValue(BigDecimal.valueOf(earnRatioVnd)).longValue()
+                : 0L;
 
         if (customer != null) {
             long currentPoints = customer.getPoints() != null ? customer.getPoints() : 0L;
-            customer.setPoints(currentPoints - pointsToUse + pointsEarned);
+            customer.setPoints(Math.max(0L, currentPoints - pointsToUse + pointsEarned));
 
             BigDecimal currentTotalSpent = customer.getTotalSpent() != null
                     ? customer.getTotalSpent()
                     : BigDecimal.ZERO;
-            customer.setTotalSpent(
-                    currentTotalSpent.add(finalAmount).setScale(2, RoundingMode.HALF_UP)
-            );
+            BigDecimal newTotalSpent = currentTotalSpent
+                    .add(finalAmount)
+                    .setScale(2, RoundingMode.HALF_UP);
+            customer.setTotalSpent(newTotalSpent);
+            customer.setTier(resolveTier(newTotalSpent));
 
             customerRepository.save(customer);
         }
@@ -174,7 +227,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         Bill bill = Bill.builder()
                 .billCode(billCode)
                 .tableCode(request.getTableCode())
-                .cashierUsername(request.getCashierUsername())
+                .cashierUsername(resolveCashier(request.getCashierUsername()))
                 .customerPhone(customerPhone)
                 .grossAmount(grossAmount)
                 .discountAmount(discountAmount)
@@ -222,18 +275,60 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .walletAddress(customer != null ? customer.getWalletAddress() : null)
                 .pointsEarned(savedBill.getPointsEarned())
                 .pointsUsed(savedBill.getPointsUsed())
+                .discountAmount(savedBill.getDiscountAmount())
                 .finalAmount(savedBill.getFinalAmount())
                 .billHash(savedBill.getBillHash())
                 .timestamp(savedBill.getCreatedAt())
                 .build();
 
-        rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE_NAME,
-                RabbitMQConfig.ROUTING_KEY,
-                event
-        );
+        try {
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.EXCHANGE_NAME,
+                    RabbitMQConfig.ROUTING_KEY,
+                    event
+            );
+        } catch (Exception exception) {
+            log.warn(
+                    "Could not publish checkout event for billCode={}; blockchain sync will be skipped",
+                    savedBill.getBillCode(),
+                    exception
+            );
+        }
 
         return toResponse(savedBill);
+    }
+
+    private LoyaltyConfig loadLoyaltyConfig() {
+        return loyaltyConfigRepository.findById(LOYALTY_CONFIG_ID)
+                .orElseGet(() -> LoyaltyConfig.builder()
+                        .id(LOYALTY_CONFIG_ID)
+                        .earnRatioVnd(DEFAULT_EARN_RATIO_VND)
+                        .pointValueVnd(DEFAULT_POINT_VALUE_VND)
+                        .minPointsToRedeem(DEFAULT_MIN_POINTS_TO_REDEEM)
+                        .maxDiscountPercent(DEFAULT_MAX_DISCOUNT_PERCENT)
+                        .allowEarn(true)
+                        .allowRedeem(true)
+                        .build());
+    }
+
+    private long positiveOrDefault(Long value, long fallback) {
+        return value != null && value > 0 ? value : fallback;
+    }
+
+    private String resolveTier(BigDecimal totalSpent) {
+        if (totalSpent == null) {
+            return TIER_SILVER;
+        }
+
+        if (totalSpent.compareTo(DIAMOND_TIER_THRESHOLD) >= 0) {
+            return TIER_DIAMOND;
+        }
+
+        if (totalSpent.compareTo(GOLD_TIER_THRESHOLD) >= 0) {
+            return TIER_GOLD;
+        }
+
+        return TIER_SILVER;
     }
 
     private Branch findBranch(Long branchId) {
@@ -244,11 +339,29 @@ public class CheckoutServiceImpl implements CheckoutService {
     }
 
     private void validateTable(String tableCode, Long branchId) {
-        diningTableRepository.findByCodeAndBranchId(tableCode, branchId)
+        DiningTable table = diningTableRepository.findByCodeAndBranchId(tableCode, branchId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Dining table not found with code " + tableCode
                                 + " in branch " + branchId
                 ));
+
+        if (TABLE_STATUS_DISABLED.equalsIgnoreCase(table.getStatus())) {
+            throw new InvalidRedemptionException(
+                    "Dining table " + tableCode + " is currently disabled"
+            );
+        }
+    }
+
+    private String resolveCashier(String fallbackUsername) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null
+                && authentication.isAuthenticated()
+                && StringUtils.hasText(authentication.getName())
+                && !"anonymousUser".equals(authentication.getName())) {
+            return authentication.getName();
+        }
+
+        return StringUtils.hasText(fallbackUsername) ? fallbackUsername.trim() : "pos";
     }
 
     private Map<Long, Integer> aggregateQuantities(List<CheckoutItemRequest> items) {

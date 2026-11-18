@@ -281,11 +281,15 @@
         document.getElementById('modalNetTotal').textContent = formatVND(order.paidAmount);
         document.getElementById('modalEarned').textContent = order.pointsEarned > 0 ? `+${order.pointsEarned} điểm (Loyalty CPL)` : '0 điểm';
 
+        detailModal.classList.add('is-open');
         detailModal.classList.add('active');
     }
 
     function closeDetail() {
-        if (detailModal) detailModal.classList.remove('active');
+        if (detailModal) {
+            detailModal.classList.remove('is-open');
+            detailModal.classList.remove('active');
+        }
     }
 
     if (closeOrderModal) closeOrderModal.onclick = closeDetail;

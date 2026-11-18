@@ -80,6 +80,15 @@ public class Bill {
     @Column(name = "blockchain_tx_hash", length = 66)
     private String blockchainTxHash;
 
+    @Column(name = "loyalty_tx_hash", length = 66)
+    private String loyaltyTxHash;
+
+    @Column(name = "refund_reason", length = 255)
+    private String refundReason;
+
+    @Column(name = "refund_tx_hash", length = 66)
+    private String refundTxHash;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "branch_id", nullable = false)
     private Branch branch;

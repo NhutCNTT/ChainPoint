@@ -1,4 +1,4 @@
-// ChainPoint POS — Payment & Loyalty Checkout (Bách Hóa Xanh Model)
+// ChainPoint POS — Payment & Loyalty Checkout
 // Used by: pos/payment.html
 
 (() => {

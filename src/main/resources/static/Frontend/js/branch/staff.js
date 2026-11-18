@@ -7,7 +7,7 @@
     let searchQuery = '';
 
     const currentBranchName = sessionStorage.getItem('cp_branch') || '';
-    const currentBranchId = sessionStorage.getItem('cp_branch_id') || '';
+    let currentBranchId = sessionStorage.getItem('cp_branch_id') || '';
 
     const tbody = document.getElementById('staffTableBody');
     const searchInput = document.getElementById('staffSearchInput');
@@ -17,9 +17,28 @@
     const modalTitle = document.getElementById('staffModalTitle');
     const editingIdInput = document.getElementById('editingStaffId');
 
+    async function resolveBranchId() {
+        if (currentBranchId && !isNaN(Number(currentBranchId)) && Number(currentBranchId) > 0) {
+            return Number(currentBranchId);
+        }
+        try {
+            const branches = window.API
+                ? await window.API.get('/branches')
+                : await (await fetch('http://localhost:8080/api/v1/branches')).json();
+            if (Array.isArray(branches) && branches.length > 0) {
+                const matched = (currentBranchName && branches.find(b => b.name === currentBranchName)) || branches[0];
+                currentBranchId = String(matched.id);
+                sessionStorage.setItem('cp_branch_id', currentBranchId);
+                return Number(matched.id);
+            }
+        } catch (ignored) { }
+        return null;
+    }
+
     async function loadBranchStaff() {
         try {
-            const endpoint = currentBranchId ? `/staff?branchId=${currentBranchId}` : '/staff';
+            const resolvedId = await resolveBranchId();
+            const endpoint = resolvedId ? `/staff?branchId=${resolvedId}` : '/staff';
             let data;
             if (window.API) {
                 data = await window.API.get(endpoint);
@@ -28,7 +47,7 @@
                 data = await res.json();
             }
 
-            staffList = data.map(s => ({
+            staffList = (Array.isArray(data) ? data : []).map(s => ({
                 id: s.id,
                 name: s.fullName,
                 username: s.username,
@@ -38,7 +57,7 @@
                 phone: s.phone || '—',
                 email: s.email || '—',
                 status: s.status || 'active',
-                joinedAt: s.createdAt ? new Date(s.createdAt).toLocaleDateString('vi-VN') : '2026'
+                joinedAt: s.createdAt ? new Date(s.createdAt).toLocaleDateString('vi-VN') : 'Hôm nay'
             }));
         } catch (e) {
             console.warn('Không thể nạp dữ liệu nhân sự chi nhánh từ MySQL API:', e);
@@ -53,14 +72,17 @@
         const total = staffList.length;
         const managers = staffList.filter(s => s.role === 'manager').length;
         const cashiers = staffList.filter(s => s.role === 'cashier').length;
+        const activeCount = staffList.filter(s => s.status === 'active').length;
 
         const statTotal = document.getElementById('statTotalStaff');
-        const statMgr = document.getElementById('statManagers');
-        const statCash = document.getElementById('statCashiers');
+        const statMgr = document.getElementById('statTotalManagers') || document.getElementById('statManagers');
+        const statCash = document.getElementById('statTotalCashiers') || document.getElementById('statCashiers');
+        const statActive = document.getElementById('statActiveStaff');
 
         if (statTotal) statTotal.textContent = total;
         if (statMgr) statMgr.textContent = managers;
         if (statCash) statCash.textContent = cashiers;
+        if (statActive) statActive.textContent = activeCount;
     }
 
     function getFilteredStaff() {
@@ -80,7 +102,7 @@
         const filtered = getFilteredStaff();
 
         if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 32px; color: var(--muted);">Không tìm thấy nhân viên nào trong Database.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 32px; color: var(--muted);">Không tìm thấy nhân viên nào trong Database.</td></tr>`;
             return;
         }
 
@@ -93,14 +115,15 @@
                 <tr>
                     <td>
                         <div style="font-weight: 700; color: var(--text);">${s.name}</div>
-                        <div style="font-size: 11px; color: var(--muted);">${s.email}</div>
+                        <div style="font-size: 12px; color: var(--muted);"><code>@${s.username}</code></div>
                     </td>
-                    <td><code>${s.username}</code></td>
                     <td>${roleBadge}</td>
                     <td>${s.phone}</td>
+                    <td>${s.email}</td>
+                    <td style="font-size: 13px; color: var(--muted);">${s.joinedAt}</td>
                     <td><span class="badge badge-success">● Đang làm</span></td>
-                    <td>
-                        <div style="display:flex; gap:6px;">
+                    <td style="text-align:right;">
+                        <div style="display:inline-flex; gap:6px; justify-content:flex-end;">
                             <button type="button" class="action-icon-btn btn-edit-staff" data-id="${s.id}" title="Sửa">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </button>
@@ -152,7 +175,8 @@
             document.getElementById('staffRole').value = staff.role;
             document.getElementById('staffPhone').value = staff.phone === '—' ? '' : staff.phone;
             document.getElementById('staffEmail').value = staff.email === '—' ? '' : staff.email;
-            document.getElementById('staffPasswordRow').style.display = 'none';
+            const pwdRow = document.getElementById('staffPasswordRow');
+            if (pwdRow) pwdRow.style.display = 'none';
         } else {
             modalTitle.textContent = 'Thêm nhân viên mới';
             editingIdInput.value = '';
@@ -162,13 +186,22 @@
             document.getElementById('staffRole').value = 'cashier';
             document.getElementById('staffPhone').value = '';
             document.getElementById('staffEmail').value = '';
-            document.getElementById('staffPasswordRow').style.display = 'block';
+            const pwdInput = document.getElementById('staffPassword');
+            if (pwdInput) pwdInput.value = 'ChainPoint@123';
+            const pwdRow = document.getElementById('staffPasswordRow');
+            if (pwdRow) pwdRow.style.display = 'grid';
         }
-        modal.classList.add('active');
+        if (modal) {
+            modal.classList.add('is-open');
+            modal.classList.add('active');
+        }
     }
 
     function closeModal() {
-        if (modal) modal.classList.remove('active');
+        if (modal) {
+            modal.classList.remove('is-open');
+            modal.classList.remove('active');
+        }
     }
 
     const addBtn = document.getElementById('btnAddStaff');
@@ -188,15 +221,16 @@
             const role = document.getElementById('staffRole').value;
             const phone = document.getElementById('staffPhone').value.trim();
             const email = document.getElementById('staffEmail').value.trim();
-            const password = document.getElementById('staffPassword') ? document.getElementById('staffPassword').value : '123456';
+            const password = document.getElementById('staffPassword') ? document.getElementById('staffPassword').value : 'ChainPoint@123';
+            const branchId = await resolveBranchId();
 
             const payload = {
                 username,
                 fullName: name,
                 role: role === 'manager' ? 'ROLE_MANAGER' : 'ROLE_CASHIER',
-                branchId: Number(currentBranchId),
-                phone,
-                email,
+                branchId: branchId || null,
+                phone: phone || null,
+                email: email || null,
                 password: password || undefined,
                 status: 'active'
             };

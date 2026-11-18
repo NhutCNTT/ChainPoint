@@ -32,13 +32,15 @@ spring:
       port: 6379
       timeout: 3000ms
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    dynamic: false
     listener:
       simple:
         auto-startup: false
+#  rabbitmq:
+#    host: localhost
+#    port: 5672
+#    username: guest
+#    password: guest
 jwt:
   secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
   expiration: 86400000
@@ -49,6 +51,13 @@ blockchain:
   contract-address: "0x0000000000000000000000000000000000000000"
   master-wallet-private-key: ""
   gas-limit: 300000
+  chain-id: 11155111
+payment:
+  bank-code: "970422"
+  bank-name: "MBBank (Napas 247)"
+  account-number: "0387654321"
+  account-name: "CONG TY CO PHAN CHAINPOINT"
+  template: "compact2"
 cloudinary:
   cloud-name: your_cloud_name
   api-key: your_api_key

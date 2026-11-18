@@ -7,8 +7,10 @@ import blockchain.ChainPoint.repository.BillRepository;
 import blockchain.ChainPoint.service.BlockchainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Slf4j
 @Component
@@ -21,59 +23,96 @@ public class BlockchainWorker {
     @RabbitListener(queues = RabbitMQConfig.QUEUE_NAME)
     public void handleCheckoutEvent(CheckoutWeb3Event event) {
         if (event == null) {
-            log.warn("Received a null checkout Web3 event; ignoring");
-            return;
+            log.warn("Received a null checkout Web3 event; routing to dead letter queue");
+            throw new AmqpRejectAndDontRequeueException("Checkout Web3 event is null");
+        }
+
+        if (!StringUtils.hasText(event.getBillCode())) {
+            log.warn("Checkout Web3 event has no billCode; routing to dead letter queue");
+            throw new AmqpRejectAndDontRequeueException("Checkout Web3 event has no billCode");
         }
 
         try {
             log.info(
-                    "Processing checkout Web3 event for billCode={}, pointsEarned={}",
+                    "Processing checkout Web3 event for billCode={}, pointsEarned={}, pointsUsed={}",
                     event.getBillCode(),
-                    event.getPointsEarned()
+                    event.getPointsEarned(),
+                    event.getPointsUsed()
             );
 
-            String transactionHash = blockchainService.recordInvoice(
+            String invoiceTxHash = blockchainService.recordInvoice(
                     event.getBillCode(),
                     event.getBranchId(),
                     event.getFinalAmount(),
                     event.getBillHash()
             );
+            updateBillHashes(event.getBillCode(), invoiceTxHash, null);
 
-            if (event.getPointsEarned() != null && event.getPointsEarned() > 0) {
-                transactionHash = blockchainService.earnPoints(
+            if (event.getPointsUsed() != null && event.getPointsUsed() > 0
+                    && StringUtils.hasText(event.getCustomerPhone())) {
+                String redeemTxHash = blockchainService.redeemPoints(
+                        event.getWalletAddress(),
+                        event.getCustomerPhone(),
+                        event.getPointsUsed(),
+                        event.getBillCode(),
+                        event.getDiscountAmount() != null
+                                ? event.getDiscountAmount()
+                                : java.math.BigDecimal.ZERO
+                );
+                updateBillHashes(event.getBillCode(), null, redeemTxHash);
+            }
+
+            if (event.getPointsEarned() != null && event.getPointsEarned() > 0
+                    && StringUtils.hasText(event.getCustomerPhone())) {
+                String loyaltyTxHash = blockchainService.earnPoints(
                         event.getWalletAddress(),
                         event.getCustomerPhone(),
                         event.getPointsEarned(),
                         event.getBillCode(),
                         event.getFinalAmount()
                 );
+                updateBillHashes(event.getBillCode(), null, loyaltyTxHash);
             }
 
-            updateBillTransactionHash(event.getBillCode(), transactionHash);
+            log.info("Finished processing checkout Web3 event for billCode={}", event.getBillCode());
         } catch (Exception exception) {
             log.error(
-                    "Failed to process checkout Web3 event for billCode={}",
+                    "Failed to process checkout Web3 event for billCode={}; routing to dead letter queue",
                     event.getBillCode(),
+                    exception
+            );
+            throw new AmqpRejectAndDontRequeueException(
+                    "Failed to process checkout event for bill " + event.getBillCode(),
                     exception
             );
         }
     }
 
-    private void updateBillTransactionHash(String billCode, String transactionHash) {
-        if (billCode == null || billCode.isBlank()) {
-            log.warn("Checkout Web3 event has no billCode; cannot persist blockchain transaction hash");
+    private void updateBillHashes(String billCode, String invoiceTxHash, String loyaltyTxHash) {
+        if (invoiceTxHash == null && loyaltyTxHash == null) {
             return;
         }
 
         Bill bill = billRepository.findByBillCode(billCode).orElse(null);
         if (bill == null) {
-            log.warn("Bill not found for billCode={}; cannot persist blockchain transaction hash", billCode);
+            log.warn("Bill not found for billCode={}; cannot persist blockchain transaction hashes", billCode);
             return;
         }
 
-        bill.setBlockchainTxHash(transactionHash);
-        billRepository.save(bill);
+        if (StringUtils.hasText(invoiceTxHash)) {
+            bill.setBlockchainTxHash(invoiceTxHash);
+        }
 
-        log.info("Persisted blockchain transaction hash {} for billCode={}", transactionHash, billCode);
+        if (StringUtils.hasText(loyaltyTxHash)) {
+            bill.setLoyaltyTxHash(loyaltyTxHash);
+        }
+
+        billRepository.save(bill);
+        log.info(
+                "Persisted blockchain hashes for billCode={} (invoice={}, loyalty={})",
+                billCode,
+                bill.getBlockchainTxHash(),
+                bill.getLoyaltyTxHash()
+        );
     }
 }

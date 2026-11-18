@@ -96,16 +96,38 @@ public class SecurityConfig {
                                 "/",
                                 "/index.html",
                                 "/Frontend/**",
-                                "/api/v1/auth/**",
-                                "/actuator/**",
-                                "/error",
+                                "/pos/**",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/assets/**",
                                 "/favicon.ico",
+                                "/*.html",
+                                "/*.css",
+                                "/*.js",
+                                "/*.png",
+                                "/*.jpg",
+                                "/*.jpeg",
+                                "/*.svg",
+                                "/*.ico",
+                                "/*.webp",
+                                "/*.woff",
+                                "/*.woff2",
+                                "/*.ttf"
+                        ).permitAll()
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/actuator/health",
+                                "/actuator/health/**",
+                                "/error",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/webjars/**"
                         ).permitAll()
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/v1/**").authenticated()
+                        .requestMatchers("/actuator/**").authenticated()
+                        .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

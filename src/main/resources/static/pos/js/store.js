@@ -35,6 +35,14 @@ const Store = (() => {
     return 'http://localhost:8080/api/v1';
   };
 
+  const getAuthHeaders = (extra = {}) => {
+    const token = sessionStorage.getItem('cp_token') || localStorage.getItem('cp_token') || '';
+    return {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...extra
+    };
+  };
+
   const calcTotal = (items) => items.reduce((s, i) => s + i.price * i.qty, 0);
   const newBillId = () => 'HD' + Date.now().toString().slice(-8);
 
@@ -119,7 +127,7 @@ const Store = (() => {
 
     if (!branchId) {
       try {
-        const bRes = await fetch(`${apiBase}/branches`);
+        const bRes = await fetch(`${apiBase}/branches`, { headers: getAuthHeaders() });
         if (bRes.ok) {
           const branches = await bRes.json();
           if (Array.isArray(branches) && branches.length > 0) {
@@ -159,7 +167,7 @@ const Store = (() => {
 
     const res = await fetch(`${apiBase}/pos/checkout`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify(payload)
     });
 
@@ -198,7 +206,7 @@ const Store = (() => {
       const apiBase = getApiBase();
       const branchId = sessionStorage.getItem('cp_branch_id') || localStorage.getItem('cp_branch_id') || '';
       const url = branchId ? `${apiBase}/orders?branchId=${branchId}` : `${apiBase}/orders`;
-      const res = await fetch(url);
+      const res = await fetch(url, { headers: getAuthHeaders() });
       if (res.ok) {
         const list = await res.json();
         cachedHistory = (Array.isArray(list) ? list : []).map(b => ({

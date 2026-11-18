@@ -7,12 +7,21 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     Optional<Customer> findByPhone(String phone);
+
+    boolean existsByPhone(String phone);
+
+    boolean existsByCode(String code);
+
+    List<Customer> findByBranchId(Long branchId);
+
+    List<Customer> findAllByOrderByCreatedAtDesc();
 
     @Query("SELECT COUNT(c) FROM Customer c "
             + "WHERE (:branchId IS NULL OR c.branch.id = :branchId)")

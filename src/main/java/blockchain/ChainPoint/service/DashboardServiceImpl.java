@@ -243,15 +243,23 @@ public class DashboardServiceImpl implements DashboardService {
         String name = row != null && row.length > 0 && row[0] != null
                 ? row[0].toString()
                 : "";
-        long quantitySold = row != null && row.length > 1 && row[1] instanceof Number quantity
+        String category = row != null && row.length > 1 && row[1] != null
+                ? row[1].toString()
+                : "other";
+        String emoji = row != null && row.length > 2 && row[2] != null
+                ? row[2].toString()
+                : "🍽️";
+        long quantitySold = row != null && row.length > 3 && row[3] instanceof Number quantity
                 ? quantity.longValue()
                 : 0L;
-        BigDecimal revenue = row != null && row.length > 2
-                ? toBigDecimal(row[2])
+        BigDecimal revenue = row != null && row.length > 4
+                ? toBigDecimal(row[4])
                 : BigDecimal.ZERO;
 
         return TopDishResponse.builder()
                 .name(name)
+                .category(category)
+                .emoji(emoji)
                 .quantitySold(quantitySold)
                 .totalRevenue(money(revenue))
                 .build();

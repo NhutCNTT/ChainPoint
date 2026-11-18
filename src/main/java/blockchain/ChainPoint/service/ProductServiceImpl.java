@@ -8,6 +8,7 @@ import blockchain.ChainPoint.exception.ResourceNotFoundException;
 import blockchain.ChainPoint.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -108,7 +109,17 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public void deleteProduct(Long id) {
-        productRepository.delete(findProduct(id));
+        Product product = findProduct(id);
+
+        try {
+            productRepository.delete(product);
+            productRepository.flush();
+        } catch (DataIntegrityViolationException exception) {
+            throw new DuplicateResourceException(
+                    "Không thể xóa sản phẩm vì đã có hóa đơn tham chiếu. "
+                            + "Hãy chuyển sản phẩm sang trạng thái 'out_of_stock' thay vì xóa."
+            );
+        }
     }
 
     @Override

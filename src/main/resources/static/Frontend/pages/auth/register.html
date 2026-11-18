@@ -103,9 +103,7 @@
         </div>
 
         <div class="pill-select-wrap">
-          
-<div class="pill-select-wrap">
-  <select id="province" name="province" class="pill-select" required>
+          <select id="province" name="province" class="pill-select" required>
     <option value="" disabled selected>Bạn ở tỉnh/thành phố nào?</option>
 
     <!-- 6 thành phố trực thuộc Trung ương -->
@@ -146,7 +144,6 @@
     <option value="Tuyên Quang">Tuyên Quang</option>
     <option value="Vĩnh Long">Vĩnh Long</option>
   </select>
-</div>
 
           <div class="pill-select-arrow">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -295,6 +292,7 @@
 
       // Khóa nút để tránh click nhiều lần
       submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
       const originalText = submitBtn.querySelector('.btn-pill-text').textContent;
       submitBtn.querySelector('.btn-pill-text').textContent = 'Đang khởi tạo quán...';
 
@@ -345,12 +343,14 @@
           const errorMsg = data.message || data.error || 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin!';
           showAlert(errorMsg, 'error');
           submitBtn.disabled = false;
+          submitBtn.classList.remove('is-loading');
           submitBtn.querySelector('.btn-pill-text').textContent = originalText;
         }
       } catch (err) {
         console.error('Lỗi khi gọi API đăng ký:', err);
         showAlert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng hoặc thử lại sau!', 'error');
         submitBtn.disabled = false;
+        submitBtn.classList.remove('is-loading');
         submitBtn.querySelector('.btn-pill-text').textContent = originalText;
       }
     });

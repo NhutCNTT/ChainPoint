@@ -332,6 +332,12 @@ body {
   transform: none;
 }
 
+.btn-submit-pill.is-loading {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  opacity: 1;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+}
+
 .btn-pill-text {
   letter-spacing: 0.2px;
 }
