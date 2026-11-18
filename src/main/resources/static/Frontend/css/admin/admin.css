@@ -718,3 +718,29 @@ button.badge:hover { filter: brightness(0.96); }
     .bar-chart { gap: var(--sp-1); height: 180px; }
     .bar-value { font-size: 10px; }
 }
+
+/* ===================== POLISH ===================== */
+.stat,
+.table-stat-card {
+    transition: transform .18s var(--ease), box-shadow .18s var(--ease), border-color .18s var(--ease);
+}
+@media (hover: hover) {
+    .stat:hover,
+    .table-stat-card:hover {
+        transform: translateY(-2px);
+        border-color: #d5e0f7;
+        box-shadow: var(--shadow-md);
+    }
+}
+
+.data-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+.data-table td { transition: background-color .15s var(--ease); }
+
+.modal-overlay {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}

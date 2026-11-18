@@ -19,7 +19,23 @@ public interface BlockchainService {
             String invoiceHash
     );
 
-    String redeemPoints(String phoneNumber, long points, String orderCode);
+    String redeemPoints(
+            String customerAddress,
+            String phoneNumber,
+            long points,
+            String orderCode,
+            BigDecimal discountAmount
+    );
+
+    String refundOrder(
+            String orderCode,
+            String customerAddress,
+            String phoneNumber,
+            long pointsRestored,
+            long pointsRevoked,
+            BigDecimal refundAmount,
+            String reason
+    );
 
     Long getPointsByPhone(String phoneNumber);
 }

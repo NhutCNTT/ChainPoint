@@ -292,6 +292,7 @@
 
       // Khóa nút để tránh click nhiều lần
       submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
       const originalText = submitBtn.querySelector('.btn-pill-text').textContent;
       submitBtn.querySelector('.btn-pill-text').textContent = 'Đang khởi tạo quán...';
 
@@ -342,12 +343,14 @@
           const errorMsg = data.message || data.error || 'Đăng ký không thành công. Vui lòng kiểm tra lại thông tin!';
           showAlert(errorMsg, 'error');
           submitBtn.disabled = false;
+          submitBtn.classList.remove('is-loading');
           submitBtn.querySelector('.btn-pill-text').textContent = originalText;
         }
       } catch (err) {
         console.error('Lỗi khi gọi API đăng ký:', err);
         showAlert('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng hoặc thử lại sau!', 'error');
         submitBtn.disabled = false;
+        submitBtn.classList.remove('is-loading');
         submitBtn.querySelector('.btn-pill-text').textContent = originalText;
       }
     });

@@ -11,10 +11,18 @@
     ? 'http://localhost:8080/api/v1'
     : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
 
+  const paymentHeaders = (extra = {}) => {
+    const token = sessionStorage.getItem('cp_token') || localStorage.getItem('cp_token') || '';
+    return {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...extra
+    };
+  };
+
   // Nạp thông tin tài khoản và mã VietQR động từ Backend API (/api/v1/payment/vietqr-info)
   async function loadVietQRInfo() {
     try {
-      const res = await fetch(`${PAYMENT_API_BASE}/payment/vietqr-info?billCode=${encodeURIComponent(bill.billId)}&amount=${AMOUNT}`);
+      const res = await fetch(`${PAYMENT_API_BASE}/payment/vietqr-info?billCode=${encodeURIComponent(bill.billId)}&amount=${AMOUNT}`, { headers: paymentHeaders() });
       if (res.ok) {
         const info = await res.json();
         if ($('qr-img') && info.qrImageUrl) $('qr-img').src = info.qrImageUrl;
@@ -129,7 +137,7 @@
       if (isCompleted) return;
 
       try {
-        const res = await fetch(`${PAYMENT_API_BASE}/payment/status/${encodeURIComponent(billId)}`);
+        const res = await fetch(`${PAYMENT_API_BASE}/payment/status/${encodeURIComponent(billId)}`, { headers: paymentHeaders() });
         if (res.ok) {
           const data = await res.json();
           if (data && data.paid) {
@@ -160,7 +168,7 @@
       try {
         await fetch(`${PAYMENT_API_BASE}/payment/simulate`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: paymentHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({ billCode: billId, amount: bill.total })
         });
       } catch (e) {
@@ -180,7 +188,7 @@
 
       let paid = Store.isMockPaid(billId);
       try {
-        const res = await fetch(`${PAYMENT_API_BASE}/payment/status/${encodeURIComponent(billId)}`);
+        const res = await fetch(`${PAYMENT_API_BASE}/payment/status/${encodeURIComponent(billId)}`, { headers: paymentHeaders() });
         if (res.ok) {
           const data = await res.json();
           if (data && data.paid) paid = true;

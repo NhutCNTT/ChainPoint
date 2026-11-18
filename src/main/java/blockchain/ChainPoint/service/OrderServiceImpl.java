@@ -4,6 +4,7 @@ import blockchain.ChainPoint.dto.order.OrderItemResponse;
 import blockchain.ChainPoint.dto.order.OrderResponse;
 import blockchain.ChainPoint.dto.order.RefundRequest;
 import blockchain.ChainPoint.dto.order.RefundResponse;
+import blockchain.ChainPoint.config.Web3Config;
 import blockchain.ChainPoint.entity.Bill;
 import blockchain.ChainPoint.entity.BillDetail;
 import blockchain.ChainPoint.entity.Customer;
@@ -14,6 +15,7 @@ import blockchain.ChainPoint.repository.BillRepository;
 import blockchain.ChainPoint.repository.CustomerRepository;
 import blockchain.ChainPoint.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -23,6 +25,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -32,10 +35,13 @@ public class OrderServiceImpl implements OrderService {
     private static final String STATUS_REFUNDED = "refunded";
     private static final String STATUS_AVAILABLE = "available";
     private static final String STATUS_OUT_OF_STOCK = "out_of_stock";
+    private static final String ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
     private final BillRepository billRepository;
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
+    private final BlockchainService blockchainService;
+    private final Web3Config web3Config;
 
     @Override
     public List<OrderResponse> getOrders(
@@ -76,10 +82,12 @@ public class OrderServiceImpl implements OrderService {
         long pointsRestored = bill.getPointsUsed() != null ? bill.getPointsUsed() : 0L;
         long pointsRevoked = bill.getPointsEarned() != null ? bill.getPointsEarned() : 0L;
 
+        Customer customer = null;
         if (StringUtils.hasText(bill.getCustomerPhone())) {
-            customerRepository.findByPhone(bill.getCustomerPhone()).ifPresent(customer ->
-                    adjustCustomer(customer, bill, pointsRestored, pointsRevoked)
-            );
+            customer = customerRepository.findByPhone(bill.getCustomerPhone()).orElse(null);
+            if (customer != null) {
+                adjustCustomer(customer, bill, pointsRestored, pointsRevoked);
+            }
         }
 
         bill.setStatus(STATUS_REFUNDED);
@@ -87,12 +95,23 @@ public class OrderServiceImpl implements OrderService {
             bill.setRefundReason(request.getReason().trim());
         }
 
-        Bill saved = billRepository.save(bill);
         String actor = StringUtils.hasText(processedBy)
                 ? processedBy
                 : (request != null && StringUtils.hasText(request.getManagerUsername())
                 ? request.getManagerUsername()
                 : "manager");
+
+        Bill saved = billRepository.saveAndFlush(bill);
+
+        String refundTxHash = syncRefundOnChain(saved, customer, pointsRestored, pointsRevoked);
+        if (StringUtils.hasText(refundTxHash)) {
+            saved.setRefundTxHash(refundTxHash);
+            saved = billRepository.saveAndFlush(saved);
+        }
+
+        String reportedTxHash = StringUtils.hasText(saved.getRefundTxHash())
+                ? saved.getRefundTxHash()
+                : saved.getBlockchainTxHash();
 
         return RefundResponse.builder()
                 .billCode(saved.getBillCode())
@@ -102,10 +121,50 @@ public class OrderServiceImpl implements OrderService {
                 .pointsRestored(pointsRestored)
                 .pointsRevoked(pointsRevoked)
                 .processedBy(actor)
-                .blockchainTxHash(saved.getBlockchainTxHash())
+                .blockchainTxHash(reportedTxHash)
                 .status(saved.getStatus())
                 .reason(saved.getRefundReason())
                 .build();
+    }
+
+    private String syncRefundOnChain(
+            Bill bill,
+            Customer customer,
+            long pointsRestored,
+            long pointsRevoked
+    ) {
+        if (!isBlockchainConfigured()
+                || !StringUtils.hasText(bill.getBlockchainTxHash())
+                || !StringUtils.hasText(bill.getCustomerPhone())) {
+            return null;
+        }
+
+        try {
+            String txHash = blockchainService.refundOrder(
+                    bill.getBillCode(),
+                    customer != null ? customer.getWalletAddress() : null,
+                    bill.getCustomerPhone(),
+                    pointsRestored,
+                    pointsRevoked,
+                    bill.getFinalAmount() != null ? bill.getFinalAmount() : BigDecimal.ZERO,
+                    bill.getRefundReason() != null ? bill.getRefundReason() : ""
+            );
+            log.info("Refund synced on-chain for billCode={} txHash={}", bill.getBillCode(), txHash);
+            return txHash;
+        } catch (Exception exception) {
+            log.warn(
+                    "On-chain refund sync failed for billCode={}; database refund is kept",
+                    bill.getBillCode(),
+                    exception
+            );
+            return null;
+        }
+    }
+
+    private boolean isBlockchainConfigured() {
+        String contractAddress = web3Config.getContractAddress();
+        return StringUtils.hasText(contractAddress)
+                && !ZERO_ADDRESS.equalsIgnoreCase(contractAddress.trim());
     }
 
     private void restoreStock(Bill bill) {

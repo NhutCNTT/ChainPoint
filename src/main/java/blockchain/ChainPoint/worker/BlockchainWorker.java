@@ -51,9 +51,13 @@ public class BlockchainWorker {
             if (event.getPointsUsed() != null && event.getPointsUsed() > 0
                     && StringUtils.hasText(event.getCustomerPhone())) {
                 String redeemTxHash = blockchainService.redeemPoints(
+                        event.getWalletAddress(),
                         event.getCustomerPhone(),
                         event.getPointsUsed(),
-                        event.getBillCode()
+                        event.getBillCode(),
+                        event.getDiscountAmount() != null
+                                ? event.getDiscountAmount()
+                                : java.math.BigDecimal.ZERO
                 );
                 updateBillHashes(event.getBillCode(), null, redeemTxHash);
             }

@@ -83,9 +83,13 @@
       transition: border-color .15s, transform .15s, box-shadow .15s;
     }
     .portal-card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px);
       border-color: #cbd8f5;
       box-shadow: var(--shadow-md);
+    }
+    .portal-card:focus-visible {
+      outline: 3px solid var(--primary-ring);
+      outline-offset: 3px;
     }
 
     .card-icon {
@@ -188,7 +192,14 @@
       <!-- CỔNG 1: OWNER LOGIN -->
       <a class="portal-card owner" href="Frontend/pages/auth/owner-login.html">
         <div>
-          <div class="card-icon blue"></div>
+          <div class="card-icon blue" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 21h18" />
+              <path d="M5 21V7l7-4 7 4v14" />
+              <path d="M9 21v-6h6v6" />
+              <path d="M9 10h.01M15 10h.01" />
+            </svg>
+          </div>
           <div class="card-content">
             <h2>Chủ chuỗi (Owner)</h2>
             <p>Quản trị điều hành toàn bộ hệ thống đa chi nhánh</p>

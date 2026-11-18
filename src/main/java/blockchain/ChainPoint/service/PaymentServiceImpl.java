@@ -76,9 +76,17 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public PaymentStatusResponse getStatus(String billCode) {
+        boolean paid = Boolean.TRUE.equals(simulatedPayments.get(billCode));
+
+        if (!paid && StringUtils.hasText(billCode)) {
+            paid = billRepository.findByBillCode(billCode)
+                    .map(bill -> "paid".equalsIgnoreCase(bill.getStatus()))
+                    .orElse(false);
+        }
+
         return PaymentStatusResponse.builder()
                 .billCode(billCode)
-                .paid(Boolean.TRUE.equals(simulatedPayments.get(billCode)))
+                .paid(paid)
                 .build();
     }
 

@@ -75,11 +75,42 @@ public class BlockchainServiceImpl implements BlockchainService {
     }
 
     @Override
-    public String redeemPoints(String phoneNumber, long points, String orderCode) {
+    public String redeemPoints(
+            String customerAddress,
+            String phoneNumber,
+            long points,
+            String orderCode,
+            BigDecimal discountAmount
+    ) {
         Function function = RestaurantLoyaltyFunctions.redeemPoints(
+                customerAddress,
                 phoneNumber,
                 points,
-                orderCode
+                orderCode,
+                discountAmount
+        );
+
+        return execute(function);
+    }
+
+    @Override
+    public String refundOrder(
+            String orderCode,
+            String customerAddress,
+            String phoneNumber,
+            long pointsRestored,
+            long pointsRevoked,
+            BigDecimal refundAmount,
+            String reason
+    ) {
+        Function function = RestaurantLoyaltyFunctions.refundOrder(
+                orderCode,
+                customerAddress,
+                phoneNumber,
+                pointsRestored,
+                pointsRevoked,
+                refundAmount,
+                reason
         );
 
         return execute(function);

@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,6 +43,7 @@ public class DiningTableController {
         return ResponseEntity.ok(diningTableService.getTableById(id));
     }
 
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER')")
     @PostMapping
     public ResponseEntity<DiningTableResponse> createTable(
             @Valid @RequestBody DiningTableRequest request
@@ -50,6 +52,7 @@ public class DiningTableController {
                 .body(diningTableService.createTable(request));
     }
 
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER')")
     @PutMapping("/{id}")
     public ResponseEntity<DiningTableResponse> updateTable(
             @PathVariable Long id,
@@ -58,6 +61,7 @@ public class DiningTableController {
         return ResponseEntity.ok(diningTableService.updateTable(id, request));
     }
 
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTable(@PathVariable Long id) {
         diningTableService.deleteTable(id);

@@ -31,6 +31,8 @@ public class CheckoutWeb3Event implements Serializable {
 
     private Long pointsUsed;
 
+    private BigDecimal discountAmount;
+
     private BigDecimal finalAmount;
 
     private String billHash;

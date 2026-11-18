@@ -111,6 +111,7 @@
     const pInput = document.getElementById('ownerPassword');
     const errEl = document.getElementById('ownerFormError');
     const toggleBtn = document.getElementById('togglePasswordBtn');
+    const submitBtn = form.querySelector('button[type="submit"]');
 
     toggleBtn.addEventListener('click', () => {
       const isPwd = pInput.type === 'password';
@@ -130,6 +131,8 @@
       }
 
       errEl.hidden = true;
+      submitBtn.disabled = true;
+      submitBtn.classList.add('is-loading');
 
       try {
         const apiBase = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1' : '/api/v1';
@@ -141,27 +144,8 @@
 
         if (res.ok) {
           const authData = await res.json();
-          let resolvedBranchId = authData.branchId || '';
-          let resolvedBranchName = authData.branchName || 'Toàn chuỗi nhà hàng';
-
-          if (!resolvedBranchId) {
-            try {
-              const bRes = await fetch(`${apiBase}/branches`);
-              if (bRes.ok) {
-                const branches = await bRes.json();
-                if (Array.isArray(branches) && branches.length > 0) {
-                  const found = branches.find(b =>
-                    (authData.branchCode && b.code === authData.branchCode) ||
-                    (authData.branchName && b.name === authData.branchName)
-                  ) || branches[0];
-                  resolvedBranchId = found.id || '';
-                  if (!authData.branchName && found.name) {
-                    resolvedBranchName = found.name;
-                  }
-                }
-              }
-            } catch (ignored) {}
-          }
+          const resolvedBranchId = authData.branchId || '';
+          const resolvedBranchName = authData.branchName || 'Toàn chuỗi nhà hàng';
 
           sessionStorage.setItem('cp_token', authData.accessToken || authData.token);
           sessionStorage.setItem('cp_role', (authData.role || 'ROLE_OWNER').replace('ROLE_', '').toLowerCase());
@@ -177,6 +161,9 @@
       } catch (err) {
         errEl.textContent = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra lại kết nối mạng.';
         errEl.hidden = false;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('is-loading');
       }
     });
   </script>

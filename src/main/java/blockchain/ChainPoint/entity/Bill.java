@@ -86,6 +86,9 @@ public class Bill {
     @Column(name = "refund_reason", length = 255)
     private String refundReason;
 
+    @Column(name = "refund_tx_hash", length = 66)
+    private String refundTxHash;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "branch_id", nullable = false)
     private Branch branch;

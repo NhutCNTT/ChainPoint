@@ -143,7 +143,6 @@
   <script src="../../js/common/ui.js"></script>
   <script src="../../js/branch/branch-nav.js"></script>
   <script>
-    const API_BASE = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1' : '/api/v1';
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
 
     function updateGrowthBadge(elId, growthStr) {
@@ -170,16 +169,13 @@
       // Nếu chưa có branchId cụ thể trong URL/session, đối chiếu theo tên chi nhánh hoặc lấy chi nhánh đầu tiên từ DB
       if (!bId) {
         try {
-          const res = await fetch(`${API_BASE}/branches`);
-          if (res.ok) {
-            const list = await res.json();
-            if (Array.isArray(list) && list.length > 0) {
-              const matched = (bName && list.find(x => x.name === bName)) || list[0];
-              bId = matched.id;
-              bName = matched.name;
-              sessionStorage.setItem('cp_branch_id', bId);
-              sessionStorage.setItem('cp_branch', bName);
-            }
+          const list = await window.API.get('/branches');
+          if (Array.isArray(list) && list.length > 0) {
+            const matched = (bName && list.find(x => x.name === bName)) || list[0];
+            bId = matched.id;
+            bName = matched.name;
+            sessionStorage.setItem('cp_branch_id', bId);
+            sessionStorage.setItem('cp_branch', bName);
           }
         } catch (e) {}
       }
@@ -193,34 +189,25 @@
 
       try {
         // 1. Tải metrics chi nhánh
-        const mRes = await fetch(`${API_BASE}/admin/dashboard/metrics${qBranch}`);
-        if (mRes.ok) {
-          const m = await mRes.json();
-          document.getElementById('branchRevenueVal').textContent = formatVND(m.totalRevenue || 0);
-          document.getElementById('branchOrdersVal').innerHTML = `${(m.totalOrders || 0).toLocaleString('vi-VN')} <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span>`;
-          updateGrowthBadge('branchRevenueGrowth', m.revenueGrowth);
-          updateGrowthBadge('branchOrdersGrowth', m.ordersGrowth);
-        }
+        const m = await window.API.get(`/admin/dashboard/metrics${qBranch}`);
+        document.getElementById('branchRevenueVal').textContent = formatVND(m.totalRevenue || 0);
+        document.getElementById('branchOrdersVal').innerHTML = `${(m.totalOrders || 0).toLocaleString('vi-VN')} <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span>`;
+        updateGrowthBadge('branchRevenueGrowth', m.revenueGrowth);
+        updateGrowthBadge('branchOrdersGrowth', m.ordersGrowth);
 
         // 2. Tải số lượng bàn của chi nhánh
-        const tRes = await fetch(`${API_BASE}/tables${qBranch}`);
-        if (tRes.ok) {
-          const tables = await tRes.json();
-          const tCount = Array.isArray(tables) ? tables.length : 0;
-          document.getElementById('branchTablesVal').innerHTML = `${tCount} <span style="font-size:20px; font-weight:600; color:var(--muted);">bàn</span>`;
-          document.getElementById('branchTableSub').textContent = `${tables.filter(t => t.status === 'active').length} bàn đang hoạt động`;
-        }
+        const tables = await window.API.get(`/tables${qBranch}`);
+        const tCount = Array.isArray(tables) ? tables.length : 0;
+        document.getElementById('branchTablesVal').innerHTML = `${tCount} <span style="font-size:20px; font-weight:600; color:var(--muted);">bàn</span>`;
+        document.getElementById('branchTableSub').textContent = `${(Array.isArray(tables) ? tables : []).filter(t => t.status === 'active').length} bàn đang hoạt động`;
 
         // 3. Tải biểu đồ tuần từ MySQL (RevenueChartResponse trả về thisWeek)
-        const cRes = await fetch(`${API_BASE}/admin/dashboard/revenue-chart${qBranch}`);
+        const cData = await window.API.get(`/admin/dashboard/revenue-chart${qBranch}`);
         let chartPoints = [];
-        if (cRes.ok) {
-          const cData = await cRes.json();
-          if (cData && Array.isArray(cData.thisWeek)) {
-            chartPoints = cData.thisWeek;
-          } else if (cData && Array.isArray(cData.points)) {
-            chartPoints = cData.points;
-          }
+        if (cData && Array.isArray(cData.thisWeek)) {
+          chartPoints = cData.thisWeek;
+        } else if (cData && Array.isArray(cData.points)) {
+          chartPoints = cData.points;
         }
         renderBranchWeeklyGrid(chartPoints);
       } catch (err) {
