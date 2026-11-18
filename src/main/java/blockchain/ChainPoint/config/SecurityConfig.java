@@ -93,6 +93,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
+                                "/",
+                                "/index.html",
+                                "/Frontend/**",
                                 "/api/v1/auth/**",
                                 "/actuator/**",
                                 "/error",
