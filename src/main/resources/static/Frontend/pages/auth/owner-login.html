@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../../css/base.css" />
   <link rel="stylesheet" href="../../css/auth/login.css" />
+  <script src="/Frontend/js/common/api.js"></script>
 </head>
 <body>
   <main class="layout">
@@ -97,7 +98,7 @@
             </div>
             <div>
               <strong>Hỗ trợ kỹ thuật</strong>
-              <a href="tel:1800123456">1800 1234</a> · <a href="mailto:support@chainpoint.io">support@chainpoint.io</a>
+              Liên hệ quản trị viên hệ thống của bạn
             </div>
           </div>
         </div>
@@ -133,7 +134,7 @@
 
       try {
         const apiBase = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1' : '/api/v1';
-        const res = await fetch(`${apiBase}/auth/login`, {
+        const res = await window.API.fetch(`${apiBase}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
@@ -144,25 +145,8 @@
           let resolvedBranchId = authData.branchId || '';
           let resolvedBranchName = authData.branchName || 'Toàn chuỗi nhà hàng';
 
-          if (!resolvedBranchId) {
-            try {
-              const bRes = await fetch(`${apiBase}/branches`);
-              if (bRes.ok) {
-                const branches = await bRes.json();
-                if (Array.isArray(branches) && branches.length > 0) {
-                  const found = branches.find(b =>
-                    (authData.branchCode && b.code === authData.branchCode) ||
-                    (authData.branchName && b.name === authData.branchName)
-                  ) || branches[0];
-                  resolvedBranchId = found.id || '';
-                  if (!authData.branchName && found.name) {
-                    resolvedBranchName = found.name;
-                  }
-                }
-              }
-            } catch (ignored) {}
-          }
-
+          if (authData.role !== 'ROLE_OWNER') { errEl.textContent = 'Tài khoản này không có quyền Chủ chuỗi.'; errEl.hidden = false; return; }
+          window.API.clearToken();
           sessionStorage.setItem('cp_token', authData.accessToken || authData.token);
           sessionStorage.setItem('cp_role', (authData.role || 'ROLE_OWNER').replace('ROLE_', '').toLowerCase());
           sessionStorage.setItem('cp_user', authData.fullName || authData.username || username);

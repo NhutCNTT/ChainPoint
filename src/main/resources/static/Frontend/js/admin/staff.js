@@ -51,7 +51,7 @@
             if (window.API) {
                 branches = await window.API.get('/branches');
             } else {
-                const bRes = await fetch('http://localhost:8080/api/v1/branches');
+                const bRes = await window.API.fetch('http://localhost:8080/api/v1/branches');
                 branches = await bRes.json();
             }
             initBranchOptions();
@@ -66,7 +66,7 @@
             if (window.API) {
                 staffList = await window.API.get(endpoint);
             } else {
-                const sRes = await fetch(`http://localhost:8080/api/v1${endpoint}`);
+                const sRes = await window.API.fetch(`http://localhost:8080/api/v1${endpoint}`);
                 staffList = await sRes.json();
             }
         } catch (e) {
@@ -193,7 +193,7 @@
                         if (window.API) {
                             await window.API.delete(`/staff/${id}`);
                         } else {
-                            await fetch(`http://localhost:8080/api/v1/staff/${id}`, { method: 'DELETE' });
+                            await window.API.fetch(`http://localhost:8080/api/v1/staff/${id}`, { method: 'DELETE' });
                         }
                         await loadData();
                     } catch (err) {
@@ -210,7 +210,7 @@
         formStaffName.value = '';
         formStaffUsername.value = '';
         formStaffUsername.disabled = false;
-        formStaffPassword.value = '123456';
+        formStaffPassword.value = '';
         formStaffPhone.value = '';
         formStaffEmail.value = '';
         formStaffRole.value = 'ROLE_CASHIER';
@@ -268,7 +268,7 @@
                     if (window.API) {
                         await window.API.put(`/staff/${id}`, payload);
                     } else {
-                        await fetch(`http://localhost:8080/api/v1/staff/${id}`, {
+                        await window.API.fetch(`http://localhost:8080/api/v1/staff/${id}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
@@ -278,7 +278,7 @@
                     if (window.API) {
                         await window.API.post('/staff', payload);
                     } else {
-                        await fetch('http://localhost:8080/api/v1/staff', {
+                        await window.API.fetch('http://localhost:8080/api/v1/staff', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)

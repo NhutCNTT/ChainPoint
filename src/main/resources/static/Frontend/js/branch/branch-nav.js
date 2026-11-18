@@ -2,16 +2,18 @@
 // Used by all pages in pages/branch/*.html
 
 (function () {
+    const token = sessionStorage.getItem('cp_token') || localStorage.getItem('cp_token');
+    if (!token) { location.replace('/Frontend/pages/auth/pos-login.html'); return; }
     const urlParams = new URLSearchParams(window.location.search);
     const branchFromUrl = urlParams.get('branch');
     if (branchFromUrl) {
-        sessionStorage.setItem('cp_branch', branchFromUrl);
         sessionStorage.setItem('cp_branch', branchFromUrl);
     }
 
     const getStorage = k => sessionStorage.getItem(k) || localStorage.getItem(k);
     const user = getStorage('cp_user') || 'Quản lý cơ sở';
     const role = getStorage('cp_role') || 'manager';
+    if (role === 'owner' && urlParams.get('branchId')) sessionStorage.setItem('cp_branch_id', urlParams.get('branchId'));
     const currentBranch = getStorage('cp_branch') || '';
 
     const currentFile = location.pathname.split('/').pop() || 'dashboard.html';
@@ -86,7 +88,7 @@
 
         BRANCH_MENU.forEach(item => {
             const isActive = currentFile === item.file ? 'active' : '';
-            const queryParam = branchFromUrl ? `?branch=${encodeURIComponent(currentBranch)}` : '';
+            const queryParam = `?branchId=${encodeURIComponent(getStorage('cp_branch_id') || '')}&branch=${encodeURIComponent(currentBranch)}`;
             navHtml += `
                 <a href="${item.file}${queryParam}" class="${isActive}">
                     ${item.icon}
@@ -99,7 +101,7 @@
         // Quick POS launcher link
         navHtml += `
             <div class="nav-divider"></div>
-            <a href="../../pos/index.html" style="color:var(--success); font-weight:600;">
+            <a href="/pos/index.html" style="color:var(--success); font-weight:600;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
                 <span>Mở máy POS bán hàng</span>
             </a>
@@ -128,8 +130,7 @@
             if (role === 'owner') {
                 window.location.href = '../owner/dashboard.html';
             } else {
-                localStorage.removeItem('cp_role');
-                localStorage.removeItem('cp_user');
+                window.API.clearToken();
                 window.location.href = '../auth/pos-login.html';
             }
         });

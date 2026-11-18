@@ -61,7 +61,7 @@ const LoyaltyStore = (() => {
         if (inflightConfigPromise && !force) return inflightConfigPromise;
         inflightConfigPromise = (async () => {
             try {
-                const res = await fetch(`${getApiBase()}/loyalty/config`, { headers: authHeaders() });
+                const res = await window.API.fetch(`${getApiBase()}/loyalty/config`, { headers: authHeaders() });
                 if (res.ok) {
                     const cfg = await res.json();
                     currentConfig = {
@@ -88,7 +88,7 @@ const LoyaltyStore = (() => {
         if (inflightCustomersPromise && !force) return inflightCustomersPromise;
         inflightCustomersPromise = (async () => {
             try {
-                const res = await fetch(`${getApiBase()}/customers`, { headers: authHeaders() });
+                const res = await window.API.fetch(`${getApiBase()}/customers`, { headers: authHeaders() });
                 if (res.ok) {
                     const list = await res.json();
                     cachedCustomers = (Array.isArray(list) ? list : []).map(mapCustomerDto);
@@ -109,7 +109,7 @@ const LoyaltyStore = (() => {
         if (inflightTransactionsPromise && !force) return inflightTransactionsPromise;
         inflightTransactionsPromise = (async () => {
             try {
-                const txRes = await fetch(`${getApiBase()}/loyalty/transactions`, { headers: authHeaders() });
+                const txRes = await window.API.fetch(`${getApiBase()}/loyalty/transactions`, { headers: authHeaders() });
                 if (txRes.ok) {
                     const txList = await txRes.json();
                     if (Array.isArray(txList) && txList.length > 0) {
@@ -143,7 +143,7 @@ const LoyaltyStore = (() => {
             try {
                 const branchId = sessionStorage.getItem('cp_branch_id') || '';
                 const url = branchId ? `${getApiBase()}/orders?branchId=${branchId}` : `${getApiBase()}/orders`;
-                const res = await fetch(url, { headers: authHeaders() });
+                const res = await window.API.fetch(url, { headers: authHeaders() });
                 if (res.ok) {
                     const bills = await res.json();
                     const derived = [];
@@ -236,23 +236,13 @@ const LoyaltyStore = (() => {
         },
 
         async saveConfig(newConfig) {
-            Object.assign(currentConfig, newConfig);
-            try {
-                await fetch(`${getApiBase()}/loyalty/config`, {
-                    method: 'PUT',
-                    headers: authHeaders({ 'Content-Type': 'application/json' }),
-                    body: JSON.stringify({
-                        earnRatioVnd: currentConfig.earnRatioVND,
-                        pointValueVnd: currentConfig.pointValueVND,
-                        minPointsToRedeem: currentConfig.minPointsToRedeem,
-                        maxDiscountPercent: currentConfig.maxDiscountPercent,
-                        pointExpiryDays: currentConfig.pointExpiryDays,
-                        allowEarn: currentConfig.allowEarn,
-                        allowRedeem: currentConfig.allowRedeem
-                    })
-                });
-            } catch (ignored) {}
-            return { ...currentConfig };
+            const cfg = { ...currentConfig, ...newConfig };
+            await window.API.put('/loyalty/config', {
+                earnRatioVnd: cfg.earnRatioVND, pointValueVnd: cfg.pointValueVND,
+                minPointsToRedeem: cfg.minPointsToRedeem, maxDiscountPercent: cfg.maxDiscountPercent,
+                pointExpiryDays: cfg.pointExpiryDays, allowEarn: cfg.allowEarn, allowRedeem: cfg.allowRedeem
+            });
+            return await fetchConfigFromDB(true);
         },
 
         getCustomers() {
@@ -267,7 +257,7 @@ const LoyaltyStore = (() => {
             if (!phone) return null;
             const cleanPhone = phone.trim();
             try {
-                const res = await fetch(`${getApiBase()}/customers/by-phone/${encodeURIComponent(cleanPhone)}`, { headers: authHeaders() });
+                const res = await window.API.fetch(`${getApiBase()}/customers/by-phone/${encodeURIComponent(cleanPhone)}`, { headers: authHeaders() });
                 if (res.ok) {
                     const c = await res.json();
                     return mapCustomerDto(c);
@@ -281,18 +271,7 @@ const LoyaltyStore = (() => {
         async saveCustomer(custData) {
             try {
                 let branchId = Number(sessionStorage.getItem('cp_branch_id')) || null;
-                if (!branchId) {
-                    try {
-                        const bRes = await fetch(`${getApiBase()}/branches`, { headers: authHeaders() });
-                        if (bRes.ok) {
-                            const branches = await bRes.json();
-                            if (Array.isArray(branches) && branches.length > 0) {
-                                branchId = branches[0].id;
-                                sessionStorage.setItem('cp_branch_id', branchId);
-                            }
-                        }
-                    } catch (ignored) {}
-                }
+                if (!branchId) throw new Error('Vui lòng chọn chi nhánh trước khi thêm hội viên.');
 
                 const payload = {
                     name: custData.name,
@@ -311,13 +290,13 @@ const LoyaltyStore = (() => {
 
                 let res;
                 if (targetId) {
-                    res = await fetch(`${getApiBase()}/customers/${targetId}`, {
+                    res = await window.API.fetch(`${getApiBase()}/customers/${targetId}`, {
                         method: 'PUT',
                         headers: authHeaders({ 'Content-Type': 'application/json' }),
                         body: JSON.stringify(payload)
                     });
                 } else {
-                    res = await fetch(`${getApiBase()}/customers`, {
+                    res = await window.API.fetch(`${getApiBase()}/customers`, {
                         method: 'POST',
                         headers: authHeaders({ 'Content-Type': 'application/json' }),
                         body: JSON.stringify(payload)

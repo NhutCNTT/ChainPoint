@@ -15,6 +15,7 @@ import java.util.List;
 @RequestMapping("/api/v1/categories")
 @CrossOrigin
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'CASHIER')")
 public class CategoryController {
 
     private final CategoryService categoryService;

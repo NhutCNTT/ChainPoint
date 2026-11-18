@@ -22,4 +22,7 @@ public interface BlockchainService {
     String redeemPoints(String customerAddress, String phoneNumber, long points, String orderCode, BigDecimal discountAmount);
 
     Long getPointsByPhone(String phoneNumber);
+
+    String refundOrder(String orderCode, String customerAddress, String phoneNumber,
+            long pointsRestored, long pointsRevoked, BigDecimal refundAmount, String reason);
 }

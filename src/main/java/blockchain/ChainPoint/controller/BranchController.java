@@ -24,6 +24,7 @@ import java.util.List;
 @RequestMapping("/api/v1/branches")
 @CrossOrigin
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'CASHIER')")
 public class BranchController {
 
     private final BranchService branchService;

@@ -6,6 +6,7 @@ import blockchain.ChainPoint.dto.staff.StaffResponse;
 import java.util.List;
 
 public interface StaffService {
+    StaffResponse toggleStatus(Long id);
 
     List<StaffResponse> getStaff(Long branchId);
 

@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="../../css/base.css" />
   <link rel="stylesheet" href="../../css/admin/admin.css" />
   <link rel="stylesheet" href="../../css/admin/dashboard.css" />
+  <script src="/Frontend/js/common/api.js"></script>
 </head>
 <body data-area="owner">
   <div class="app">
@@ -131,7 +132,6 @@
     </main>
   </div>
 
-  <script src="../../js/common/api.js"></script>
   <script src="../../js/common/ui.js"></script>
   <script>
     const API_BASE = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1' : '/api/v1';
@@ -153,9 +153,9 @@
     async function loadOwnerDashboard() {
       try {
         // 1. Tải metrics tổng từ MySQL
-        const mRes = await fetch(`${API_BASE}/admin/dashboard/metrics`);
-        if (mRes.ok) {
-          const m = await mRes.json();
+        const mRes = await window.API.get(`/admin/dashboard/metrics`);
+        if (mRes) {
+          const m = mRes;
           document.getElementById('ownerTotalRevenue').textContent = formatVND(m.totalRevenue || 0);
           document.getElementById('ownerTotalOrders').innerHTML = `${(m.totalOrders || 0).toLocaleString('vi-VN')} <span style="font-size:20px; font-weight:600; color:var(--muted);">đơn</span>`;
           document.getElementById('ownerTotalCustomers').innerHTML = `${(m.totalCustomers || 0).toLocaleString('vi-VN')} <span style="font-size:20px; font-weight:600; color:var(--muted);">khách</span>`;
@@ -165,9 +165,9 @@
         }
 
         // 2. Tải danh sách chi nhánh thực tế từ MySQL
-        const bRes = await fetch(`${API_BASE}/branches`);
-        if (bRes.ok) {
-          const branches = await bRes.json();
+        const bRes = await window.API.get(`/branches`);
+        if (bRes) {
+          const branches = bRes;
           renderOwnerBranches(branches);
         }
       } catch (err) {

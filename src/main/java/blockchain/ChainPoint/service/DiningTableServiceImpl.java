@@ -125,6 +125,18 @@ public class DiningTableServiceImpl implements DiningTableService {
         return table;
     }
 
+    @Override
+    @Transactional
+    public DiningTableResponse changeStatus(Long id, String status) {
+        if (!List.of("available", "busy", "pending").contains(status)) {
+            throw new IllegalArgumentException("Status must be available, busy or pending");
+        }
+        DiningTable table = findTable(id);
+        if ("disabled".equals(table.getStatus())) throw new IllegalArgumentException("Table is disabled");
+        table.setStatus(status);
+        return toResponse(diningTableRepository.save(table));
+    }
+
     private Branch findBranch(Long branchId) {
         branchAccess.require(branchId);
         return branchRepository.findById(branchId)

@@ -43,6 +43,7 @@ public class StaffServiceImpl implements StaffService {
     @Override
     @Transactional
     public StaffResponse createStaff(StaffRequest request) {
+        validateAssignment(request);
         String username = request.getUsername().trim().toLowerCase();
 
         if (userRepository.existsByUsername(username)) {
@@ -70,6 +71,7 @@ public class StaffServiceImpl implements StaffService {
     @Override
     @Transactional
     public StaffResponse updateStaff(Long id, StaffRequest request) {
+        validateAssignment(request);
         User user = findUser(id);
         String username = request.getUsername().trim().toLowerCase();
 
@@ -109,8 +111,22 @@ public class StaffServiceImpl implements StaffService {
         return user;
     }
 
+    private void validateAssignment(StaffRequest request) {
+        if (!"ROLE_OWNER".equals(request.getRole()) && request.getBranchId() == null) {
+            throw new IllegalArgumentException("Manager and cashier accounts require an assigned branch");
+        }
+    }
+
+    @Override
+    @Transactional
+    public StaffResponse toggleStatus(Long id) {
+        User user = findUser(id);
+        user.setStatus("active".equals(user.getStatus()) ? "inactive" : "active");
+        return toResponse(userRepository.save(user));
+    }
+
     private Branch resolveBranch(Long branchId) {
-        branchId = branchAccess.scope(branchId);
+        branchAccess.require(branchId);
         if (branchId == null) {
             return null;
         }

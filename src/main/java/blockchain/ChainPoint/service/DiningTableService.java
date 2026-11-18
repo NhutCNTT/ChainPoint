@@ -16,4 +16,6 @@ public interface DiningTableService {
     DiningTableResponse updateTable(Long id, DiningTableRequest request);
 
     void deleteTable(Long id);
+
+    DiningTableResponse changeStatus(Long id, String status);
 }

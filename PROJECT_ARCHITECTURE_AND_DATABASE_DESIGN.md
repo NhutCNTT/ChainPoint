@@ -305,9 +305,9 @@ erDiagram
 Các bảng được thiết kế đầy đủ khóa ngoại, chỉ mục tìm kiếm theo số điện thoại, mã đơn, và ràng buộc toàn vẹn dữ liệu:
 
 ```sql
--- ========================================================
+-- --------------------------------------------------------
 -- DDL DATABASE SCHEMA CHO HỆ THỐNG CHAINPOINT
--- ========================================================
+-- --------------------------------------------------------
 
 -- 1. BẢNG CHI NHÁNH CƠ SỞ (BRANCHES)
 CREATE TABLE IF NOT EXISTS branches (

@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../../css/base.css" />
   <link rel="stylesheet" href="../../css/auth/register.css" />
+  <script src="/Frontend/js/common/api.js"></script>
 </head>
 <body>
   <div class="register-container">
@@ -308,7 +309,7 @@
           ? 'http://localhost:8080/api/v1/auth/register'
           : '/api/v1/auth/register';
 
-        const res = await fetch(apiUrl, {
+        const res = await window.API.fetch(apiUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -322,6 +323,7 @@
         if (res.ok) {
           showAlert('Đăng ký thành công! Đang chuyển hướng vào hệ thống...', 'success');
           
+          window.API.clearToken();
           // Lưu thông tin phiên đăng nhập
           if (data.accessToken) {
             sessionStorage.setItem('cp_token', data.accessToken);

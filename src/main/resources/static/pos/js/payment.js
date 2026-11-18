@@ -1,7 +1,8 @@
 // ChainPoint POS — Payment & Loyalty Checkout (Bách Hóa Xanh Model)
 // Used by: pos/payment.html
 
-(() => {
+(async () => {
+  await LoyaltyStore.refreshConfig();
   const { bill, billId } = PayCommon;
   if (!billId || !bill) return;
 

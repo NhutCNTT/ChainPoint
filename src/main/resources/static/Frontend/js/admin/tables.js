@@ -38,7 +38,7 @@
         try {
             const branches = window.API
                 ? await window.API.get('/branches')
-                : await (await fetch('http://localhost:8080/api/v1/branches')).json();
+                : await (await window.API.fetch('http://localhost:8080/api/v1/branches')).json();
             if (Array.isArray(branches) && branches.length > 0) {
                 const branchName = sessionStorage.getItem('cp_branch') || '';
                 const matched = (branchName && branches.find(b => b.name === branchName)) || branches[0];
@@ -58,7 +58,7 @@
             if (window.API) {
                 list = await window.API.get(endpoint);
             } else {
-                const res = await fetch(`http://localhost:8080/api/v1${endpoint}`);
+                const res = await window.API.fetch(`http://localhost:8080/api/v1${endpoint}`);
                 list = await res.json();
             }
             tables = (Array.isArray(list) ? list : []).map(t => ({
@@ -256,7 +256,7 @@
                         if (window.API) {
                             await window.API.delete(`/tables/${id}`);
                         } else {
-                            await fetch(`http://localhost:8080/api/v1/tables/${id}`, { method: 'DELETE' });
+                            await window.API.fetch(`http://localhost:8080/api/v1/tables/${id}`, { method: 'DELETE' });
                         }
                         await loadTables();
                     } catch (err) {
@@ -335,7 +335,7 @@
                     if (window.API) {
                         await window.API.put(`/tables/${realId}`, payload);
                     } else {
-                        await fetch(`http://localhost:8080/api/v1/tables/${realId}`, {
+                        await window.API.fetch(`http://localhost:8080/api/v1/tables/${realId}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
@@ -345,7 +345,7 @@
                     if (window.API) {
                         await window.API.post('/tables', payload);
                     } else {
-                        await fetch('http://localhost:8080/api/v1/tables', {
+                        await window.API.fetch('http://localhost:8080/api/v1/tables', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)

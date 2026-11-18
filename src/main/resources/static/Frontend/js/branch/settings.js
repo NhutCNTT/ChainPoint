@@ -16,7 +16,7 @@
                 const branches = await window.API.get('/branches');
                 branch = branches.find(b => String(b.id) === String(currentBranchId) || b.name === currentBranchName) || branches[0];
             } else {
-                const res = await fetch('http://localhost:8080/api/v1/branches');
+                const res = await window.API.fetch('http://localhost:8080/api/v1/branches');
                 const branches = await res.json();
                 branch = branches.find(b => String(b.id) === String(currentBranchId) || b.name === currentBranchName) || branches[0];
             }
@@ -65,7 +65,7 @@
                 if (window.API) {
                     await window.API.put(`/branches/${currentBranchId}`, payload);
                 } else {
-                    await fetch(`http://localhost:8080/api/v1/branches/${currentBranchId}`, {
+                    await window.API.fetch(`http://localhost:8080/api/v1/branches/${currentBranchId}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)

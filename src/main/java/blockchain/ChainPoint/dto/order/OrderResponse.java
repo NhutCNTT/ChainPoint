@@ -17,6 +17,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class OrderResponse {
+    private String refundTxHash;
+    private String redeemTxHash;
+    private String earnTxHash;
 
     private Long id;
 

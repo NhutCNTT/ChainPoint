@@ -37,6 +37,8 @@ public class OrderServiceImpl implements OrderService {
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
     private final blockchain.ChainPoint.security.BranchAccess branchAccess;
+    private final blockchain.ChainPoint.repository.CheckoutOutboxRepository outboxRepository;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @Override
     public List<OrderResponse> getOrders(
@@ -67,7 +69,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(rollbackFor = Exception.class)
     @org.springframework.cache.annotation.CacheEvict(value = "products", allEntries = true)
     public RefundResponse refundOrder(String billCode, RefundRequest request, String processedBy) {
-        Bill bill = billRepository.findDetailedByBillCode(billCode)
+        Bill bill = billRepository.findByBillCodeForUpdate(billCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Bill not found: " + billCode));
 
         branchAccess.require(bill.getBranch().getId());
@@ -84,7 +86,7 @@ public class OrderServiceImpl implements OrderService {
         long pointsRevoked = bill.getPointsEarned() != null ? bill.getPointsEarned() : 0L;
 
         if (StringUtils.hasText(bill.getCustomerPhone())) {
-            customerRepository.findByPhone(bill.getCustomerPhone()).ifPresent(customer ->
+            customerRepository.findByPhoneForUpdate(bill.getCustomerPhone()).ifPresent(customer ->
                     adjustCustomer(customer, bill, pointsRestored, pointsRevoked)
             );
         }
@@ -95,6 +97,20 @@ public class OrderServiceImpl implements OrderService {
         }
 
         Bill saved = billRepository.save(bill);
+        Customer member = StringUtils.hasText(saved.getCustomerPhone())
+                ? customerRepository.findByPhone(saved.getCustomerPhone()).orElse(null) : null;
+        var event = blockchain.ChainPoint.event.CheckoutWeb3Event.builder()
+                .billCode(saved.getBillCode()).branchId(saved.getBranch().getId())
+                .customerPhone(saved.getCustomerPhone()).walletAddress(member != null ? member.getWalletAddress() : null)
+                .pointsEarned(saved.getPointsEarned()).pointsUsed(saved.getPointsUsed())
+                .finalAmount(saved.getFinalAmount()).discountAmount(saved.getDiscountAmount())
+                .billHash(saved.getBillHash()).timestamp(saved.getCreatedAt()).build();
+        try {
+            outboxRepository.save(blockchain.ChainPoint.entity.CheckoutOutbox.builder()
+                    .payload(objectMapper.writeValueAsString(event)).build());
+        } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+            throw new IllegalStateException("Cannot serialize refund event", exception);
+        }
         String actor = StringUtils.hasText(processedBy)
                 ? processedBy
                 : (request != null && StringUtils.hasText(request.getManagerUsername())
@@ -161,6 +177,9 @@ public class OrderServiceImpl implements OrderService {
                 .toList();
 
         return OrderResponse.builder()
+                .earnTxHash(bill.getEarnTxHash())
+                .redeemTxHash(bill.getRedeemTxHash())
+                .refundTxHash(bill.getRefundTxHash())
                 .id(bill.getId())
                 .billCode(bill.getBillCode())
                 .branchId(bill.getBranch() != null ? bill.getBranch().getId() : null)

@@ -3,8 +3,9 @@
  */
 
 const Store = (() => {
-  const STORAGE_ORDERS_KEY = 'cp_pos_session_orders';
-  const STORAGE_PENDING_KEY = 'cp_pos_session_pending';
+  const branchKey = (sessionStorage.getItem('cp_branch_id') || localStorage.getItem('cp_branch_id') || '') + '_' + (sessionStorage.getItem('cp_user') || localStorage.getItem('cp_user') || '');
+  const STORAGE_ORDERS_KEY = 'cp_pos_session_orders_' + branchKey;
+  const STORAGE_PENDING_KEY = 'cp_pos_session_pending_' + branchKey;
 
   function loadSessionState(key, fallback) {
     try {
@@ -36,13 +37,22 @@ const Store = (() => {
   };
 
   const calcTotal = (items) => items.reduce((s, i) => s + i.price * i.qty, 0);
-  const newBillId = () => 'HD' + Date.now().toString().slice(-8);
+  const newBillId = () => 'POS-' + crypto.randomUUID();
 
   /* ---------- Orders (bàn đang dùng) ---------- */
   const getOrders = () => sessionOrders;
   const getOrder = (tableId) => sessionOrders[tableId] || null;
 
-  function saveOrder(tableId, items) {
+  async function setTableStatus(tableId, status) {
+    await window.POS_DATA_READY;
+    const table = getTable(tableId);
+    if (!table) throw new Error('Bàn không tồn tại trong chi nhánh hiện tại.');
+    await window.API.patch('/tables/' + table.realId + '/status', { status });
+    table.status = status;
+  }
+
+  async function saveOrder(tableId, items) {
+    await setTableStatus(tableId, items.length ? 'busy' : 'available');
     const pend = sessionPending.find((p) => p.tableId === tableId);
     const base = sessionOrders[tableId] || pend || {};
     if (!items.length) {
@@ -71,9 +81,10 @@ const Store = (() => {
   const getPending = () => sessionPending;
   const getPendingByTable = (tableId) => sessionPending.find((p) => p.tableId === tableId) || null;
 
-  function moveToPending(billId, method) {
+  async function moveToPending(billId, method) {
     const entry = Object.values(sessionOrders).find((o) => o.billId === billId);
     const existing = sessionPending.find((p) => p.billId === billId);
+    if (entry || existing) await setTableStatus((entry || existing).tableId, 'pending');
     if (entry) {
       delete sessionOrders[entry.tableId];
       sessionPending.push({ ...entry, total: calcTotal(entry.items), method, createdAt: new Date().toISOString() });
@@ -114,33 +125,20 @@ const Store = (() => {
     };
 
     const apiBase = getApiBase();
-    const cashierUser = sessionStorage.getItem('cp_user') || localStorage.getItem('cp_user') || 'Thu ngân';
     let branchId = Number(sessionStorage.getItem('cp_branch_id') || localStorage.getItem('cp_branch_id')) || null;
 
-    if (!branchId) {
-      try {
-        const bRes = await fetch(`${apiBase}/branches`);
-        if (bRes.ok) {
-          const branches = await bRes.json();
-          if (Array.isArray(branches) && branches.length > 0) {
-            branchId = branches[0].id;
-            sessionStorage.setItem('cp_branch_id', branchId);
-          }
-        }
-      } catch (ignored) {}
-    }
+    if (!branchId) throw new Error('Vui lòng chọn chi nhánh trước khi thanh toán.');
 
+    await window.POS_DATA_READY;
     const checkoutItems = bill.items.map(item => {
       let pId = item.realId;
       if (!pId && typeof getMenuItem === 'function') {
         const menuObj = getMenuItem(item.id);
         if (menuObj && menuObj.realId) pId = menuObj.realId;
       }
-      if (!pId && item.id && String(item.id).startsWith('m')) {
-        pId = parseInt(String(item.id).replace('m', ''), 10) || 1;
-      }
+      if (!pId) throw new Error('Món ăn không còn tồn tại. Vui lòng tải lại thực đơn.');
       return {
-        productId: Number(pId) || 1,
+        productId: Number(pId),
         quantity: Number(item.qty) || 1
       };
     });
@@ -148,16 +146,18 @@ const Store = (() => {
     const customerPhone = extra.customerPhone || extra.phone || null;
 
     const payload = {
-      branchId: branchId || 1,
+      branchId,
+      checkoutReference: billId,
+      expectedAmount: extra.paidAmount,
+      receivedAmount: extra.received,
       tableCode: bill.tableId,
-      cashierUsername: cashierUser,
       customerPhone: customerPhone,
       paymentMethod: method === 'transfer' ? 'transfer' : 'cash',
       pointsToUse: extra.pointsUsed ? Number(extra.pointsUsed) : 0,
       items: checkoutItems
     };
 
-    const res = await fetch(`${apiBase}/pos/checkout`, {
+    const res = await window.API.fetch(`${apiBase}/pos/checkout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -186,6 +186,7 @@ const Store = (() => {
     saveSessionState(STORAGE_PENDING_KEY, sessionPending);
 
     cachedHistory.unshift(record);
+    if (window.refreshPosData) await window.refreshPosData();
     if (window.LoyaltyStore && LoyaltyStore.refreshCustomers) {
       LoyaltyStore.refreshCustomers(true);
     }
@@ -197,8 +198,8 @@ const Store = (() => {
     try {
       const apiBase = getApiBase();
       const branchId = sessionStorage.getItem('cp_branch_id') || localStorage.getItem('cp_branch_id') || '';
-      const url = branchId ? `${apiBase}/orders?branchId=${branchId}` : `${apiBase}/orders`;
-      const res = await fetch(url);
+      const url = `${apiBase}/orders?status=paid${branchId ? '&branchId=' + branchId : ''}`;
+      const res = await window.API.fetch(url);
       if (res.ok) {
         const list = await res.json();
         cachedHistory = (Array.isArray(list) ? list : []).map(b => ({
@@ -235,14 +236,9 @@ const Store = (() => {
     if (p) return { status: 'pending', total: calcTotal(p.items), count: p.items.reduce((s, i) => s + i.qty, 0), openedAt: p.openedAt };
     const o = getOrder(tableId);
     if (o) return { status: 'busy', total: calcTotal(o.items), count: o.items.reduce((s, i) => s + i.qty, 0), openedAt: o.openedAt };
-    return { status: 'free', total: 0, count: 0 };
+    const table = getTable(tableId);
+    return { status: ['busy', 'pending'].includes(table?.status) ? table.status : 'free', total: 0, count: 0 };
   }
-
-  /* ---------- Giả lập kiểm tra giao dịch chuyển khoản VietQR ---------- */
-  let mockPaidMap = {};
-  const isMockPaid = (billId) => !!mockPaidMap[billId];
-  function setMockPaid(billId, v) { if (v) mockPaidMap[billId] = true; else delete mockPaidMap[billId]; }
-  const checkTransferPaid = (billId) => new Promise((res) => setTimeout(() => res(isMockPaid(billId)), 1000));
 
   return {
     ready: historyReadyPromise,
@@ -250,7 +246,6 @@ const Store = (() => {
     calcTotal, getOrders, getOrder, saveOrder,
     getPending, getPendingByTable, moveToPending,
     getBill, payBill, getHistory, getTableStatus,
-    isMockPaid, setMockPaid, checkTransferPaid,
     reset() {
       sessionOrders = {};
       sessionPending = [];

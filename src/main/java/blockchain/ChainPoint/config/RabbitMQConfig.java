@@ -12,9 +12,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    public static final String QUEUE_NAME = "blockchain.loyalty.queue";
+    // Queue arguments are immutable in RabbitMQ. Version this topology rather than deleting a legacy queue.
+    public static final String QUEUE_NAME = "blockchain.loyalty.v2.queue";
     public static final String EXCHANGE_NAME = "chainpoint.event.exchange";
-    public static final String ROUTING_KEY = "chainpoint.checkout.success";
+    public static final String ROUTING_KEY = "chainpoint.checkout.v2.success";
 
     public static final String DEAD_LETTER_QUEUE_NAME = "blockchain.loyalty.dlq";
     public static final String DEAD_LETTER_EXCHANGE_NAME = "chainpoint.event.dlx";

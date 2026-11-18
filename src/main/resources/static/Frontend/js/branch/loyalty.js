@@ -154,7 +154,7 @@
                 allowEarn: document.getElementById('allowEarn').checked
             };
 
-            await LoyaltyStore.saveConfig(newCfg);
+            try { await LoyaltyStore.saveConfig(newCfg); } catch (error) { alert(error.message); return; }
             renderStats();
             renderTransactions();
 

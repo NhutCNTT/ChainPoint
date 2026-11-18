@@ -32,7 +32,7 @@
             if (window.API) {
                 branches = await window.API.get('/branches');
             } else {
-                const res = await fetch('http://localhost:8080/api/v1/branches');
+                const res = await window.API.fetch('http://localhost:8080/api/v1/branches');
                 branches = await res.json();
             }
         } catch (e) {
@@ -217,7 +217,7 @@
                     if (window.API) {
                         await window.API.put(`/branches/${id}`, payload);
                     } else {
-                        await fetch(`http://localhost:8080/api/v1/branches/${id}`, {
+                        await window.API.fetch(`http://localhost:8080/api/v1/branches/${id}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
@@ -227,7 +227,7 @@
                     if (window.API) {
                         await window.API.post('/branches', payload);
                     } else {
-                        await fetch('http://localhost:8080/api/v1/branches', {
+                        await window.API.fetch('http://localhost:8080/api/v1/branches', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)

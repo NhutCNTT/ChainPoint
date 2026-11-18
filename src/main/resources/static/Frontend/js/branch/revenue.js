@@ -13,7 +13,7 @@
             if (window.API) {
                 history = await window.API.get(endpoint);
             } else {
-                const res = await fetch(`http://localhost:8080/api/v1${endpoint}`);
+                const res = await window.API.fetch(`http://localhost:8080/api/v1${endpoint}`);
                 history = await res.json();
             }
         } catch (e) {
@@ -21,7 +21,7 @@
             history = [];
         }
 
-        renderRevenueReport(history);
+        renderRevenueReport(history.filter(bill => bill.status === 'paid'));
     }
 
     function renderRevenueReport(history) {

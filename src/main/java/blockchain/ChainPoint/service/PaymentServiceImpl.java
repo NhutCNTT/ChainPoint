@@ -18,7 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PaymentServiceImpl implements PaymentService {
 
     private final BillRepository billRepository;
-    private final Map<String, Boolean> simulatedPayments = new ConcurrentHashMap<>();
 
     private final String bankCode;
     private final String bankName;
@@ -28,10 +27,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     public PaymentServiceImpl(
             BillRepository billRepository,
-            @Value("${payment.bank-code:970422}") String bankCode,
-            @Value("${payment.bank-name:MBBank (Napas 247)}") String bankName,
-            @Value("${payment.account-number:0387654321}") String accountNumber,
-            @Value("${payment.account-name:CONG TY CO PHAN CHAINPOINT}") String accountName,
+            @Value("${payment.bank-code:}") String bankCode,
+            @Value("${payment.bank-name:}") String bankName,
+            @Value("${payment.account-number:}") String accountNumber,
+            @Value("${payment.account-name:}") String accountName,
             @Value("${payment.template:compact2}") String template
     ) {
         this.billRepository = billRepository;
@@ -44,6 +43,11 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public VietQrInfoResponse getVietQrInfo(String billCode, BigDecimal amount) {
+        if (!StringUtils.hasText(bankCode) || !StringUtils.hasText(accountNumber) || !StringUtils.hasText(accountName)) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE, "Payment bank account has not been configured");
+        }
+        if (amount != null && amount.signum() < 0) throw new IllegalArgumentException("Amount cannot be negative");
         BigDecimal resolvedAmount = amount;
 
         if (resolvedAmount == null && StringUtils.hasText(billCode)) {
@@ -78,17 +82,8 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentStatusResponse getStatus(String billCode) {
         return PaymentStatusResponse.builder()
                 .billCode(billCode)
-                .paid(Boolean.TRUE.equals(simulatedPayments.get(billCode)))
-                .build();
-    }
-
-    @Override
-    public PaymentStatusResponse simulatePayment(String billCode) {
-        simulatedPayments.put(billCode, Boolean.TRUE);
-
-        return PaymentStatusResponse.builder()
-                .billCode(billCode)
-                .paid(true)
+                .paid(billRepository.findByBillCode(billCode)
+                        .map(bill -> "paid".equals(bill.getStatus())).orElse(false))
                 .build();
     }
 

@@ -20,6 +20,7 @@ import java.util.List;
 @RequestMapping("/api/v1/loyalty")
 @CrossOrigin
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'CASHIER')")
 public class LoyaltyController {
 
     private final LoyaltyService loyaltyService;

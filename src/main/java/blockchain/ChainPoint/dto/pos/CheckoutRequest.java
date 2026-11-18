@@ -22,6 +22,15 @@ import java.util.List;
 @Builder
 public class CheckoutRequest {
 
+    @jakarta.validation.constraints.Size(max = 80)
+    private String checkoutReference;
+
+    @jakarta.validation.constraints.DecimalMin("0.0")
+    private java.math.BigDecimal expectedAmount;
+
+    @jakarta.validation.constraints.DecimalMin("0.0")
+    private java.math.BigDecimal receivedAmount;
+
     @NotNull(message = "Branch ID is required")
     @Positive(message = "Branch ID must be positive")
     private Long branchId;

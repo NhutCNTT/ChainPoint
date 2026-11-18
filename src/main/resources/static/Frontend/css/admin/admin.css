@@ -1,4 +1,4 @@
-/* ==========================================================
+/* ----------------------------------------------------------
    ChainPoint — App shell & component library
    Requires: ../base.css
    Dùng cho: pages/owner/*, pages/branch/*, pages/admin/*, pages/employee/*
@@ -17,9 +17,9 @@
    11. Notice, empty state, loading, toast
    12. Utilities
    13. Responsive
-   ========================================================== */
+   ---------------------------------------------------------- */
 
-/* ===================== 1. LAYOUT ===================== */
+/* --------------------- 1. LAYOUT --------------------- */
 body { min-height: 100vh; }
 
 .app {
@@ -147,7 +147,7 @@ body { min-height: 100vh; }
 .menu-toggle { display: none; }
 .sidebar-backdrop { display: none; }
 
-/* ===================== 2. BUTTONS ===================== */
+/* --------------------- 2. BUTTONS --------------------- */
 .btn,
 .btn-primary,
 .btn-secondary,
@@ -195,7 +195,7 @@ body { min-height: 100vh; }
 .btn-icon:hover, .action-icon-btn:hover { background: var(--primary-soft); border-color: transparent; color: var(--primary); }
 .btn-icon.danger:hover, .action-icon-btn.danger:hover { background: var(--danger-soft); color: var(--danger); }
 
-/* ===================== 3. FORM CONTROLS ===================== */
+/* --------------------- 3. FORM CONTROLS --------------------- */
 .input,
 .select,
 .form-group input,
@@ -255,7 +255,7 @@ body { min-height: 100vh; }
 .search input:focus,
 .tables-search input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); }
 
-/* ===================== 4. TOOLBAR & FILTER ===================== */
+/* --------------------- 4. TOOLBAR & FILTER --------------------- */
 .toolbar,
 .tables-toolbar {
     display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
@@ -289,7 +289,7 @@ body { min-height: 100vh; }
 }
 .filter-tab.active .count { background: #fff; color: var(--primary); }
 
-/* ===================== 5. STAT CARDS ===================== */
+/* --------------------- 5. STAT CARDS --------------------- */
 .stats,
 .tables-overview-stats {
     display: grid;
@@ -328,7 +328,7 @@ body { min-height: 100vh; }
 .stat-icon.amber { background: var(--warning-soft); }
 .stat-icon.purple { background: var(--accent-soft); }
 
-/* ===================== 6. PANEL / CARD ===================== */
+/* --------------------- 6. PANEL / CARD --------------------- */
 .panel,
 .data-table-card {
     border: 1px solid var(--border); border-radius: var(--r-lg);
@@ -358,7 +358,7 @@ body { min-height: 100vh; }
 .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-5); align-items: start; }
 .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--sp-4); }
 
-/* ===================== 7. DATA TABLE ===================== */
+/* --------------------- 7. DATA TABLE --------------------- */
 .table-wrap,
 .table-responsive { width: 100%; overflow-x: auto; }
 
@@ -401,7 +401,7 @@ body { min-height: 100vh; }
     font-size: var(--fs-sm); font-weight: var(--fw-bold);
 }
 
-/* ===================== 8. BADGE ===================== */
+/* --------------------- 8. BADGE --------------------- */
 .badge {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 3px 10px;
@@ -422,7 +422,7 @@ body { min-height: 100vh; }
 button.badge { border: 0; cursor: pointer; }
 button.badge:hover { filter: brightness(0.96); }
 
-/* ===================== 9. DROPDOWN & ROW ACTIONS ===================== */
+/* --------------------- 9. DROPDOWN & ROW ACTIONS --------------------- */
 .row-actions { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; }
 
 .dropdown { position: relative; display: inline-flex; }
@@ -450,7 +450,7 @@ button.badge:hover { filter: brightness(0.96); }
 .dropdown-item.danger:hover { background: var(--danger-soft); }
 .dropdown-divider { height: 1px; margin: var(--sp-1) 0; background: var(--border); }
 
-/* ===================== 10. MODAL ===================== */
+/* --------------------- 10. MODAL --------------------- */
 .modal-overlay {
     position: fixed; inset: 0;
     display: grid; place-items: center;
@@ -524,7 +524,7 @@ button.badge:hover { filter: brightness(0.96); }
 .summary-row strong { font-variant-numeric: tabular-nums; }
 .summary-total { padding-top: var(--sp-2); border-top: 1px dashed var(--border-strong); font-size: var(--fs-md); font-weight: var(--fw-bold); color: var(--text); }
 
-/* ===================== 11. NOTICE, EMPTY, LOADING, TOAST ===================== */
+/* --------------------- 11. NOTICE, EMPTY, LOADING, TOAST --------------------- */
 .notice,
 .pos-sync-banner {
     display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3);
@@ -582,7 +582,7 @@ button.badge:hover { filter: brightness(0.96); }
 .toast.is-leaving { opacity: 0; transform: translateY(6px); transition: .2s; }
 @keyframes cp-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
-/* ===================== 12. UTILITIES ===================== */
+/* --------------------- 12. UTILITIES --------------------- */
 .text-muted { color: var(--muted); }
 .text-success { color: var(--success); }
 .text-danger { color: var(--danger); }
@@ -618,7 +618,7 @@ button.badge:hover { filter: brightness(0.96); }
 .rank-item:first-child { padding-top: 0; }
 .rank-item .progress { grid-column: 1 / -1; }
 
-/* ===================== 13. RESPONSIVE ===================== */
+/* --------------------- 13. RESPONSIVE --------------------- */
 @media (max-width: 1199px) {
     .main { padding: var(--sp-5) var(--sp-6) var(--sp-8); }
     .grid-2 { grid-template-columns: 1fr; }

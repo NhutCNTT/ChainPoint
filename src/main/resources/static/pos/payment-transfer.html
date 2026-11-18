@@ -1,12 +1,59 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=../Frontend/pos/payment-transfer.html">
-    <title>Chuyển hướng tới POS | ChainPoint</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán chuyển khoản | ChainPoint POS</title>
+  <meta name="description" content="Thanh toán chuyển khoản: khách quét mã QR, thu ngân kiểm tra trạng thái hoặc chuyển bill sang chờ thanh toán.">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/payment.css">
+  <script src="/Frontend/js/common/api.js"></script>
 </head>
 <body>
-    <p>Đang chuyển hướng tới màn hình thanh toán chuyển khoản… <a href="../Frontend/pos/payment-transfer.html">Bấm vào đây nếu không tự chuyển</a></p>
-    <script>location.replace('../Frontend/pos/payment-transfer.html' + location.search + location.hash);</script>
+  <div class="pay-shell">
+    <header class="pay-head">
+      <button id="btn-back" class="icon-btn back" type="button" aria-label="Quay lại">←</button>
+      <div><h1 id="pay-title">Thanh toán chuyển khoản</h1><p id="pay-sub" class="sub"></p></div>
+    </header>
+
+    <div class="pay-body">
+      <section class="glass pay-card" aria-label="Chi tiết bill">
+        <h2>Danh sách món</h2>
+        <div class="sum-list" id="sum-list"></div>
+        <div class="sum-total"><span>Tổng cộng</span><span id="sum-total" class="money">0đ</span></div>
+      </section>
+
+      <section class="glass pay-card qr-card" aria-label="Mã QR chuyển khoản VietQR">
+        <div class="qr-frame">
+          <img id="qr-img" src="" alt="Mã QR VietQR Napas 247" style="max-width:280px; height:auto; border-radius:8px;" />
+        </div>
+        <p class="qr-hint">Khách mở App Ngân hàng quét mã VietQR để thanh toán</p>
+        <div id="qr-amount" class="amount-big">0đ</div>
+        <div class="info-list">
+          <div class="info-row"><span>Ngân hàng</span><b id="qr-bank-name">Đang tải...</b></div>
+          <div class="info-row"><span>Chủ tài khoản</span><b id="qr-account-name">Đang tải...</b></div>
+          <div class="info-row"><span>Số tài khoản</span><b id="qr-account-no" style="font-family:monospace; letter-spacing:1px;">—</b></div>
+          <div class="info-row"><span>Nội dung CK</span><b id="qr-memo" style="color:#2563eb; font-family:monospace;"></b></div>
+        </div>
+
+        <div id="qr-status-indicator" style="margin:12px 0; padding:10px; border-radius:8px; background:#eff6ff; border:1px solid #bfdbfe; font-size:13px; font-weight:700; color:#1d4ed8; text-align:center;">
+          <span class="spinner" style="display:inline-block; vertical-align:middle; width:14px; height:14px; margin-right:6px;"></span>
+          Kiểm tra tài khoản ngân hàng trước khi xác nhận đã nhận tiền.
+        </div>
+
+<div class="pay-actions" style="width:100%">
+          <button id="btn-wait" class="btn btn-warn btn-lg" type="button">⏳ Chờ thanh toán</button>
+          <button id="btn-check" class="btn btn-primary btn-lg" type="button">✔ Xác nhận thủ công</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/Frontend/js/common/loyalty-store.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/pay-common.js"></script>
+  <script src="js/payment-transfer.js"></script>
 </body>
 </html>

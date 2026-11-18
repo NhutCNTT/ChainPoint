@@ -18,6 +18,7 @@ import java.util.List;
 @RequestMapping("/api/v1/admin/dashboard")
 @CrossOrigin
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'CASHIER')")
 public class DashboardController {
 
     private final DashboardService dashboardService;

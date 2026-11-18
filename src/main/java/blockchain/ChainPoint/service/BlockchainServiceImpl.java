@@ -131,6 +131,7 @@ public class BlockchainServiceImpl implements BlockchainService {
     private String execute(Function function) {
         if (web3Config.getMasterWalletPrivateKey() == null || web3Config.getMasterWalletPrivateKey().isBlank()
                 || web3Config.getContractAddress() == null
+                || web3Config.getContractAddress().isBlank()
                 || web3Config.getContractAddress().matches("(?i)0x0{40}")) {
             throw new BlockchainTransactionException("Configure a funded signing key and deployed loyalty contract before syncing");
         }
@@ -184,6 +185,13 @@ public class BlockchainServiceImpl implements BlockchainService {
                     exception
             );
         }
+    }
+
+    @Override
+    public String refundOrder(String orderCode, String customerAddress, String phoneNumber,
+            long pointsRestored, long pointsRevoked, BigDecimal refundAmount, String reason) {
+        return execute(RestaurantLoyaltyFunctions.refundOrder(orderCode, customerAddress, phoneNumber,
+                pointsRestored, pointsRevoked, refundAmount, reason));
     }
 
     private long resolveChainId() {

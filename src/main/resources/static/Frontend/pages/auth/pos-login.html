@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../../css/base.css" />
   <link rel="stylesheet" href="../../css/auth/login.css" />
+  <script src="/Frontend/js/common/api.js"></script>
 </head>
 <body>
   <main class="layout">
@@ -119,24 +120,8 @@
 
     let currentRole = 'cashier';
 
-    // Nạp danh sách chi nhánh thực tế từ MySQL
-    async function fetchBranchesForLogin() {
-      try {
-        const url = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1/branches' : '/api/v1/branches';
-        const res = await fetch(url);
-        if (res.ok) {
-          const list = await res.json();
-          if (Array.isArray(list) && list.length > 0) {
-            branchSelect.innerHTML = list.map(b => `<option value="${b.name}" data-id="${b.id}">${b.name} (${b.code || ''})</option>`).join('');
-          } else {
-            branchSelect.innerHTML = '<option value="">Chưa có chi nhánh (Vui lòng tạo ở Owner)</option>';
-          }
-        }
-      } catch (e) {
-        branchSelect.innerHTML = '<option value="">Lỗi kết nối máy chủ</option>';
-      }
-    }
-    fetchBranchesForLogin();
+    branchSelect.innerHTML = '<option value="">Chi nhánh được xác định theo tài khoản đăng nhập</option>';
+    branchSelect.disabled = true;
 
     tabs.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -178,7 +163,7 @@
 
       try {
         const loginUrl = (window.location.port && window.location.port !== '8080' && window.location.port !== '') ? 'http://localhost:8080/api/v1/auth/login' : '/api/v1/auth/login';
-        const res = await fetch(loginUrl, {
+        const res = await window.API.fetch(loginUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
@@ -186,16 +171,19 @@
 
         if (res.ok) {
           const authData = await res.json();
+          window.API.clearToken();
           sessionStorage.setItem('cp_token', authData.accessToken || authData.token);
           sessionStorage.setItem('cp_role', authData.role ? authData.role.replace('ROLE_', '').toLowerCase() : currentRole);
           sessionStorage.setItem('cp_user', authData.fullName || authData.username || username);
-          sessionStorage.setItem('cp_branch', authData.branchName || branchName);
-          sessionStorage.setItem('cp_branch_id', authData.branchId || branchId || '');
+          sessionStorage.setItem('cp_branch', authData.branchName || '');
+          sessionStorage.setItem('cp_branch_id', authData.branchId || '');
 
-          if (currentRole === 'manager') {
+          const resolvedRole = (authData.role || '').replace('ROLE_', '').toLowerCase();
+          if (resolvedRole === 'owner') { location.href = '../owner/dashboard.html'; return; }
+          if (resolvedRole === 'manager') {
             window.location.href = '../branch/dashboard.html';
           } else {
-            window.location.href = '../../pos/index.html';
+            window.location.href = '/pos/index.html';
           }
         } else {
           const errData = await res.json().catch(() => ({}));

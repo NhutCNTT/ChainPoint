@@ -8,7 +8,7 @@
     const branch = get('cp_branch') || '';
 
     // 1. Kiểm tra đăng nhập — Chưa đăng nhập thì chuyển về trang login
-    if (!user) {
+    if (!get('cp_token') || !user) {
         window.location.replace('../auth/login.html');
         return;
     }
@@ -27,7 +27,7 @@
     // Chặn truy cập nếu không có quyền
     if (!allowedPages.includes(currentFile)) {
         if (role === 'cashier') {
-            window.location.replace('../../pos/index.html');
+            window.location.replace('/pos/index.html');
             return;
         } else if (role === 'manager') {
             window.location.replace('dashboard.html');
@@ -52,7 +52,7 @@
         },
         pos: {
             title: 'Bán hàng (POS)',
-            href: '../../pos/index.html',
+            href: '/pos/index.html',
             icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>`,
             badge: 'Bán hàng'
         },
@@ -114,7 +114,7 @@
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            ['cp_role', 'cp_user', 'cp_branch'].forEach(k => {
+            ['cp_token', 'cp_role', 'cp_user', 'cp_branch', 'cp_branch_id'].forEach(k => {
                 sessionStorage.removeItem(k);
                 localStorage.removeItem(k);
             });

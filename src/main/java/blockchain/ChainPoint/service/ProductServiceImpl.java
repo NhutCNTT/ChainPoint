@@ -51,7 +51,7 @@ public class ProductServiceImpl implements ProductService {
 
         return products.stream()
                 .map(this::toResponse)
-                .toList();
+                .collect(java.util.stream.Collectors.toCollection(java.util.ArrayList::new));
     }
 
     @Override

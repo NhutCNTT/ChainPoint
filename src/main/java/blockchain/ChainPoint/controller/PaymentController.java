@@ -1,7 +1,6 @@
 package blockchain.ChainPoint.controller;
 
 import blockchain.ChainPoint.dto.payment.PaymentStatusResponse;
-import blockchain.ChainPoint.dto.payment.SimulatePaymentRequest;
 import blockchain.ChainPoint.dto.payment.VietQrInfoResponse;
 import blockchain.ChainPoint.service.PaymentService;
 import jakarta.validation.Valid;
@@ -22,6 +21,7 @@ import java.math.BigDecimal;
 @RequestMapping("/api/v1/payment")
 @CrossOrigin
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'CASHIER')")
 public class PaymentController {
 
     private final PaymentService paymentService;
@@ -39,10 +39,4 @@ public class PaymentController {
         return ResponseEntity.ok(paymentService.getStatus(billCode));
     }
 
-    @PostMapping("/simulate")
-    public ResponseEntity<PaymentStatusResponse> simulate(
-            @Valid @RequestBody SimulatePaymentRequest request
-    ) {
-        return ResponseEntity.ok(paymentService.simulatePayment(request.getBillCode()));
-    }
 }

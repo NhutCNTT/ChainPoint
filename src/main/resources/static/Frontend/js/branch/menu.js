@@ -35,7 +35,7 @@
         try {
             const branches = window.API
                 ? await window.API.get('/branches')
-                : await (await fetch('http://localhost:8080/api/v1/branches')).json();
+                : await (await window.API.fetch('http://localhost:8080/api/v1/branches')).json();
             if (Array.isArray(branches) && branches.length > 0) {
                 const branchName = sessionStorage.getItem('cp_branch') || '';
                 const matched = (branchName && branches.find(b => b.name === branchName)) || branches[0];
@@ -51,7 +51,7 @@
         try {
             const list = window.API
                 ? await window.API.get('/categories')
-                : await (await fetch('http://localhost:8080/api/v1/categories')).json();
+                : await (await window.API.fetch('http://localhost:8080/api/v1/categories')).json();
             if (Array.isArray(list) && list.length > 0) {
                 categories = [
                     { id: 'all', name: 'Tất cả danh mục', icon: '✨' },
@@ -86,12 +86,12 @@
             const endpoint = branchId ? `/products?branchId=${branchId}` : '/products';
             let products = window.API
                 ? await window.API.get(endpoint)
-                : await (await fetch(`http://localhost:8080/api/v1${endpoint}`)).json();
+                : await (await window.API.fetch(`http://localhost:8080/api/v1${endpoint}`)).json();
 
             if (Array.isArray(products) && products.length === 0 && branchId) {
                 products = window.API
                     ? await window.API.get('/products')
-                    : await (await fetch('http://localhost:8080/api/v1/products')).json();
+                    : await (await window.API.fetch('http://localhost:8080/api/v1/products')).json();
             }
 
             menu = (Array.isArray(products) ? products : []).map(p => ({
@@ -100,6 +100,7 @@
                 cat: p.category || 'other',
                 name: p.name,
                 price: Number(p.price || 0),
+                    stockQuantity: p.stockQuantity,
                 emoji: p.emoji || '🍲',
                 status: p.status || 'available',
                 soldCount: 0
@@ -275,7 +276,7 @@
                     if (window.API) {
                         await window.API.patch(`/products/${id}/toggle-status`);
                     } else {
-                        await fetch(`http://localhost:8080/api/v1/products/${id}/toggle-status`, { method: 'PATCH' });
+                        await window.API.fetch(`http://localhost:8080/api/v1/products/${id}/toggle-status`, { method: 'PATCH' });
                     }
                     await loadMenu();
                 } catch (e) {
@@ -303,6 +304,7 @@
             document.getElementById('dishName').value = dish.name;
             document.getElementById('dishCat').value = dish.cat;
             document.getElementById('dishPrice').value = dish.price;
+            document.getElementById('dishStock').value = dish.stockQuantity || 0;
             document.getElementById('dishEmoji').value = dish.emoji || '🍽️';
             document.getElementById('dishStatus').value = dish.status;
         } else {
@@ -313,6 +315,7 @@
             document.getElementById('dishName').value = '';
             document.getElementById('dishCat').value = 'hot';
             document.getElementById('dishPrice').value = '';
+            document.getElementById('dishStock').value = 0;
             document.getElementById('dishEmoji').value = '🍲';
             document.getElementById('dishStatus').value = 'available';
         }
@@ -351,8 +354,8 @@
                 price,
                 emoji,
                 status,
-                stockQuantity: 100,
-                branchId: branchId || 1
+                stockQuantity: Number(document.getElementById('dishStock').value),
+                branchId
             };
 
             try {
@@ -360,7 +363,7 @@
                     if (window.API) {
                         await window.API.put(`/products/${editId}`, payload);
                     } else {
-                        await fetch(`http://localhost:8080/api/v1/products/${editId}`, {
+                        await window.API.fetch(`http://localhost:8080/api/v1/products/${editId}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
@@ -370,7 +373,7 @@
                     if (window.API) {
                         await window.API.post('/products', payload);
                     } else {
-                        await fetch('http://localhost:8080/api/v1/products', {
+                        await window.API.fetch('http://localhost:8080/api/v1/products', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)

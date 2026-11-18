@@ -1,6 +1,5 @@
 package blockchain.ChainPoint.service;
 
-import blockchain.ChainPoint.config.RabbitMQConfig;
 import blockchain.ChainPoint.dto.pos.CheckoutItemRequest;
 import blockchain.ChainPoint.dto.pos.CheckoutRequest;
 import blockchain.ChainPoint.dto.pos.CheckoutResponse;
@@ -22,10 +21,7 @@ import blockchain.ChainPoint.repository.ProductRepository;
 import blockchain.ChainPoint.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -43,9 +39,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CheckoutServiceImpl implements CheckoutService {
 
-    private static final BigDecimal VND_PER_REDEEMED_POINT = BigDecimal.valueOf(1000L);
-    private static final BigDecimal VND_PER_EARNED_POINT = BigDecimal.valueOf(10000L);
-    private static final long MINIMUM_POINTS_TO_REDEEM = 5L;
     private static final String BILL_STATUS_PAID = "paid";
     private static final String TABLE_STATUS_DISABLED = "disabled";
     private static final String PRODUCT_STATUS_OUT_OF_STOCK = "out_of_stock";
@@ -55,7 +48,6 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final ProductRepository productRepository;
     private final CustomerRepository customerRepository;
     private final BillRepository billRepository;
-    private final RabbitTemplate rabbitTemplate;
     private final blockchain.ChainPoint.security.BranchAccess branchAccess;
     private final LoyaltyService loyaltyService;
     private final blockchain.ChainPoint.repository.CheckoutOutboxRepository outboxRepository;
@@ -68,6 +60,12 @@ public class CheckoutServiceImpl implements CheckoutService {
         branchAccess.require(request.getBranchId());
         Branch branch = findBranch(request.getBranchId());
         DiningTable table = validateTable(request.getTableCode(), branch.getId());
+        String reference = StringUtils.hasText(request.getCheckoutReference())
+                ? branch.getId() + ":" + request.getCheckoutReference().trim() : null;
+        if (reference != null) {
+            var previous = billRepository.findByCheckoutReference(reference);
+            if (previous.isPresent()) return toResponse(previous.get());
+        }
         var config = loyaltyService.getConfig();
 
         Map<Long, Integer> quantitiesByProduct = aggregateQuantities(request.getItems());
@@ -170,6 +168,14 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .subtract(discountAmount)
                 .setScale(2, RoundingMode.HALF_UP);
 
+        if (request.getExpectedAmount() != null && request.getExpectedAmount().compareTo(finalAmount) != 0) {
+            throw new InvalidRedemptionException("Prices or loyalty settings changed; refresh the bill before payment");
+        }
+        if ("cash".equals(request.getPaymentMethod()) && request.getReceivedAmount() != null
+                && request.getReceivedAmount().compareTo(finalAmount) < 0) {
+            throw new InvalidRedemptionException("Cash received is less than the final amount");
+        }
+
         long pointsEarned = customer != null && Boolean.TRUE.equals(config.getAllowEarn())
                 ? finalAmount.divideToIntegralValue(BigDecimal.valueOf(config.getEarnRatioVnd())).longValue()
                 : 0L;
@@ -198,6 +204,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         );
 
         Bill bill = Bill.builder()
+                .checkoutReference(reference)
                 .billCode(billCode)
                 .tableCode(request.getTableCode())
                 .cashierUsername(branchAccess.principal().getUsername())

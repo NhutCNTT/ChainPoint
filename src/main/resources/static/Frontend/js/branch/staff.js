@@ -24,11 +24,11 @@
             if (window.API) {
                 data = await window.API.get(endpoint);
             } else {
-                const res = await fetch(`http://localhost:8080/api/v1${endpoint}`);
+                const res = await window.API.fetch(`http://localhost:8080/api/v1${endpoint}`);
                 data = await res.json();
             }
 
-            staffList = data.map(s => ({
+            staffList = data.filter(s => s.role !== 'ROLE_OWNER').map(s => ({
                 id: s.id,
                 name: s.fullName,
                 username: s.username,
@@ -98,7 +98,7 @@
                     <td><code>${s.username}</code></td>
                     <td>${roleBadge}</td>
                     <td>${s.phone}</td>
-                    <td><span class="badge badge-success">● Đang làm</span></td>
+                    <td><button type="button" class="btn-toggle-staff badge" data-id="${s.id}">${s.status === 'active' ? '● Đang làm — Khóa' : '○ Đã khóa — Mở'}</button></td>
                     <td>
                         <div style="display:flex; gap:6px;">
                             <button type="button" class="action-icon-btn btn-edit-staff" data-id="${s.id}" title="Sửa">
@@ -117,6 +117,12 @@
     }
 
     function bindEvents() {
+        document.querySelectorAll('.btn-toggle-staff').forEach(btn => {
+            btn.onclick = async () => {
+                try { await window.API.patch('/staff/' + btn.dataset.id + '/toggle-status'); await loadBranchStaff(); }
+                catch (error) { alert(error.message); }
+            };
+        });
         document.querySelectorAll('.btn-edit-staff').forEach(btn => {
             btn.onclick = () => openModal(btn.getAttribute('data-id'));
         });
@@ -129,7 +135,7 @@
                         if (window.API) {
                             await window.API.delete(`/staff/${id}`);
                         } else {
-                            await fetch(`http://localhost:8080/api/v1/staff/${id}`, { method: 'DELETE' });
+                            await window.API.fetch(`http://localhost:8080/api/v1/staff/${id}`, { method: 'DELETE' });
                         }
                         await loadBranchStaff();
                     } catch (e) {
@@ -141,6 +147,7 @@
     }
 
     function openModal(staffId) {
+        document.getElementById('staffPassword').value = '';
         if (staffId) {
             const staff = staffList.find(s => String(s.id) === String(staffId));
             if (!staff) return;
@@ -188,7 +195,7 @@
             const role = document.getElementById('staffRole').value;
             const phone = document.getElementById('staffPhone').value.trim();
             const email = document.getElementById('staffEmail').value.trim();
-            const password = document.getElementById('staffPassword') ? document.getElementById('staffPassword').value : '123456';
+            const password = document.getElementById('staffPassword') ? document.getElementById('staffPassword').value : '';
 
             const payload = {
                 username,
@@ -206,7 +213,7 @@
                     if (window.API) {
                         await window.API.put(`/staff/${editId}`, payload);
                     } else {
-                        await fetch(`http://localhost:8080/api/v1/staff/${editId}`, {
+                        await window.API.fetch(`http://localhost:8080/api/v1/staff/${editId}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
@@ -216,7 +223,7 @@
                     if (window.API) {
                         await window.API.post('/staff', payload);
                     } else {
-                        await fetch('http://localhost:8080/api/v1/staff', {
+                        await window.API.fetch('http://localhost:8080/api/v1/staff', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
@@ -249,5 +256,9 @@
         };
     }
 
+    if ((sessionStorage.getItem('cp_role') || localStorage.getItem('cp_role')) === 'manager') {
+        const managementOption = document.querySelector('#staffRole option[value="manager"]');
+        if (managementOption) managementOption.disabled = true;
+    }
     loadBranchStaff();
 })();

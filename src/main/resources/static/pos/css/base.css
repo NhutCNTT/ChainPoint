@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap');
 
-/* ============ Design tokens: Xanh #4f86ff & Trắng #ffffff ============ */
+/* ------------ Design tokens: Xanh #4f86ff & Trắng #ffffff ------------ */
 :root {
   --blue: #4f86ff;
   --blue-dark: #356be6;
@@ -40,7 +40,7 @@
   --font-display: 'Outfit', 'Inter', sans-serif;
 }
 
-/* ============ Reset ============ */
+/* ------------ Reset ------------ */
 *, *::before, *::after { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body {
@@ -71,7 +71,7 @@ img { max-width: 100%; display: block; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
-/* ============ Glass / White Card ============ */
+/* ------------ Glass / White Card ------------ */
 .glass {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -79,7 +79,7 @@ img { max-width: 100%; display: block; }
   box-shadow: var(--shadow);
 }
 
-/* ============ Buttons ============ */
+/* ------------ Buttons ------------ */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   padding: 12px 20px;
@@ -126,7 +126,7 @@ img { max-width: 100%; display: block; }
 .icon-btn:hover { background: var(--blue-light); border-color: var(--accent-1); transform: scale(1.06); }
 .icon-btn:active { transform: scale(.94); }
 
-/* ============ Badges ============ */
+/* ------------ Badges ------------ */
 .badge {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px; border-radius: 999px;
@@ -140,7 +140,7 @@ img { max-width: 100%; display: block; }
 .badge-cash { color: #059669; background: rgba(16, 185, 129, 0.12); }
 .badge-transfer { color: var(--accent-1); background: rgba(79, 134, 255, 0.12); }
 
-/* ============ Inputs ============ */
+/* ------------ Inputs ------------ */
 .input {
   width: 100%;
   padding: 12px 14px;
@@ -154,7 +154,7 @@ img { max-width: 100%; display: block; }
 .input:focus { border-color: var(--accent-1); box-shadow: 0 0 0 4px rgba(79, 134, 255, 0.18); }
 .input::placeholder { color: var(--faint); }
 
-/* ============ Drawer (hamburger menu) ============ */
+/* ------------ Drawer (hamburger menu) ------------ */
 .overlay {
   position: fixed; inset: 0; z-index: 90;
   background: rgba(15, 23, 42, 0.35); backdrop-filter: blur(4px);
@@ -190,7 +190,7 @@ img { max-width: 100%; display: block; }
 .drawer-user { display: flex; align-items: center; gap: 12px; padding: 12px; border-top: 1px solid var(--border); }
 .avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-grad); color: #fff; font-weight: 700; }
 
-/* ============ Modal ============ */
+/* ------------ Modal ------------ */
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 200;
   display: grid; place-items: center;
@@ -221,7 +221,7 @@ img { max-width: 100%; display: block; }
 .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
 .modal-actions .btn { flex: 1; }
 
-/* ============ Toast ============ */
+/* ------------ Toast ------------ */
 .toast-wrap { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 300; display: flex; flex-direction: column; gap: 10px; align-items: center; }
 .toast {
   padding: 12px 20px; border-radius: 999px; font-weight: 600;
@@ -235,7 +235,7 @@ img { max-width: 100%; display: block; }
 .toast.error { border-color: rgba(239, 68, 68, 0.6); }
 .toast.out { opacity: 0; transform: translateY(-10px); transition: .3s; }
 
-/* ============ Misc ============ */
+/* ------------ Misc ------------ */
 .brand-mark {
   width: 46px; height: 46px; border-radius: 14px;
   display: grid; place-items: center;

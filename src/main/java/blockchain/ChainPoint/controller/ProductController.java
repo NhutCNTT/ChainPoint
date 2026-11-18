@@ -25,6 +25,7 @@ import java.util.List;
 @RequestMapping("/api/v1/products")
 @CrossOrigin
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'CASHIER')")
 public class ProductController {
 
     private final ProductService productService;
@@ -43,12 +44,14 @@ public class ProductController {
     }
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(productService.createProduct(request));
     }
 
     @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Long id,
             @Valid @RequestBody ProductRequest request
@@ -57,12 +60,14 @@ public class ProductController {
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/toggle-status")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<ProductResponse> toggleStockStatus(@PathVariable Long id) {
         return ResponseEntity.ok(productService.toggleStockStatus(id));
     }

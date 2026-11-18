@@ -50,7 +50,7 @@ public class BlockchainWorker {
                     event.getFinalAmount(),
                     event.getBillHash()
             );
-            updateBillHashes(event.getBillCode(), invoiceTxHash, null);
+            updateBillHash(event.getBillCode(), invoiceTxHash, "invoice");
             }
 
             if (event.getPointsUsed() != null && event.getPointsUsed() > 0
@@ -61,12 +61,9 @@ public class BlockchainWorker {
                         event.getCustomerPhone(),
                         event.getPointsUsed(),
                         event.getBillCode(),
-                        event.getDiscountAmount()
+                        event.getDiscountAmount() != null ? event.getDiscountAmount() : existing.getDiscountAmount()
                 );
-                updateBillHashes(event.getBillCode(), null, redeemTxHash);
-                Bill updated = billRepository.findByBillCode(event.getBillCode()).orElseThrow();
-                updated.setRedeemTxHash(redeemTxHash);
-                billRepository.save(updated);
+                updateBillHash(event.getBillCode(), redeemTxHash, "redeem");
             }
 
             if (event.getPointsEarned() != null && event.getPointsEarned() > 0
@@ -79,12 +76,16 @@ public class BlockchainWorker {
                         event.getBillCode(),
                         event.getFinalAmount()
                 );
-                updateBillHashes(event.getBillCode(), null, loyaltyTxHash);
-                Bill updated = billRepository.findByBillCode(event.getBillCode()).orElseThrow();
-                updated.setEarnTxHash(loyaltyTxHash);
-                billRepository.save(updated);
+                updateBillHash(event.getBillCode(), loyaltyTxHash, "earn");
             }
 
+            Bill current = billRepository.findByBillCode(event.getBillCode()).orElseThrow();
+            if ("refunded".equals(current.getStatus()) && !StringUtils.hasText(current.getRefundTxHash())) {
+                String refundTx = blockchainService.refundOrder(current.getBillCode(), event.getWalletAddress(),
+                        current.getCustomerPhone(), current.getPointsUsed(), current.getPointsEarned(),
+                        current.getFinalAmount(), current.getRefundReason());
+                updateBillHash(current.getBillCode(), refundTx, "refund");
+            }
             log.info("Finished processing checkout Web3 event for billCode={}", event.getBillCode());
         } catch (Exception exception) {
             log.error(
@@ -99,31 +100,16 @@ public class BlockchainWorker {
         }
     }
 
-    private void updateBillHashes(String billCode, String invoiceTxHash, String loyaltyTxHash) {
-        if (invoiceTxHash == null && loyaltyTxHash == null) {
-            return;
+    private void updateBillHash(String billCode, String txHash, String stage) {
+        if (!StringUtils.hasText(txHash)) throw new IllegalStateException("Missing confirmed transaction hash");
+        Bill bill = billRepository.findByBillCode(billCode).orElseThrow();
+        switch (stage) {
+            case "invoice" -> bill.setBlockchainTxHash(txHash);
+            case "redeem" -> { bill.setRedeemTxHash(txHash); bill.setLoyaltyTxHash(txHash); }
+            case "earn" -> { bill.setEarnTxHash(txHash); bill.setLoyaltyTxHash(txHash); }
+            case "refund" -> bill.setRefundTxHash(txHash);
+            default -> throw new IllegalArgumentException("Unknown blockchain stage");
         }
-
-        Bill bill = billRepository.findByBillCode(billCode).orElse(null);
-        if (bill == null) {
-            log.warn("Bill not found for billCode={}; cannot persist blockchain transaction hashes", billCode);
-            return;
-        }
-
-        if (StringUtils.hasText(invoiceTxHash)) {
-            bill.setBlockchainTxHash(invoiceTxHash);
-        }
-
-        if (StringUtils.hasText(loyaltyTxHash)) {
-            bill.setLoyaltyTxHash(loyaltyTxHash);
-        }
-
         billRepository.save(bill);
-        log.info(
-                "Persisted blockchain hashes for billCode={} (invoice={}, loyalty={})",
-                billCode,
-                bill.getBlockchainTxHash(),
-                bill.getLoyaltyTxHash()
-        );
     }
 }

@@ -17,6 +17,12 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
 
     Optional<Bill> findByBillCode(String billCode);
 
+    Optional<Bill> findByCheckoutReference(String checkoutReference);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT b FROM Bill b WHERE b.billCode = :billCode")
+    Optional<Bill> findByBillCodeForUpdate(@Param("billCode") String billCode);
+
     @EntityGraph(attributePaths = {"details", "details.product", "branch"})
     Optional<Bill> findDetailedByBillCode(String billCode);
 

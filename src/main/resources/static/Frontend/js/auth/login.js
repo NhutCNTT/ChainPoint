@@ -88,7 +88,7 @@ if (form) {
             : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
 
         try {
-            const res = await fetch(`${API_BASE}/auth/login`, {
+            const res = await window.API.fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -99,25 +99,7 @@ if (form) {
                 let resolvedBranchId = data.branchId || '';
                 let resolvedBranchName = data.branchName || '';
 
-                if (!resolvedBranchId) {
-                    try {
-                        const bRes = await fetch(`${API_BASE}/branches`);
-                        if (bRes.ok) {
-                            const branches = await bRes.json();
-                            if (Array.isArray(branches) && branches.length > 0) {
-                                const found = branches.find(b =>
-                                    (data.branchCode && b.code === data.branchCode) ||
-                                    (data.branchName && b.name === data.branchName)
-                                ) || branches[0];
-                                resolvedBranchId = found.id || '';
-                                if (!resolvedBranchName && found.name) {
-                                    resolvedBranchName = found.name;
-                                }
-                            }
-                        }
-                    } catch (ignored) {}
-                }
-
+                window.API.clearToken();
                 const storage = remember ? localStorage : sessionStorage;
                 const userRole = data.role ? data.role.replace('ROLE_', '').toLowerCase() : role;
                 [sessionStorage, storage].forEach(s => {
@@ -129,7 +111,7 @@ if (form) {
                 });
 
                 if (userRole === 'cashier') {
-                    window.location.href = '../../pos/index.html';
+                    window.location.href = '/pos/index.html';
                 } else if (userRole === 'manager') {
                     window.location.href = '../branch/dashboard.html';
                 } else {

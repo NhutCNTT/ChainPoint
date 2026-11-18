@@ -30,6 +30,11 @@ public class StaffController {
 
     private final StaffService staffService;
 
+    @org.springframework.web.bind.annotation.PatchMapping("/{id}/toggle-status")
+    public ResponseEntity<StaffResponse> toggleStatus(@PathVariable Long id) {
+        return ResponseEntity.ok(staffService.toggleStatus(id));
+    }
+
     @GetMapping
     public ResponseEntity<List<StaffResponse>> getStaff(
             @RequestParam(required = false) Long branchId

@@ -26,6 +26,7 @@ import java.util.List;
 @RequestMapping({"/api/v1/orders", "/api/v1/bills"})
 @CrossOrigin
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'CASHIER')")
 public class OrderController {
 
     private final OrderService orderService;

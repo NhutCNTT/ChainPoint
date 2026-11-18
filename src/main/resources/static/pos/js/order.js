@@ -4,7 +4,7 @@
   }
 
   const tableId = UI.getParam('table');
-  const table = getTable(tableId) || (tableId ? { id: tableId, name: 'Bàn ' + tableId, area: (AREAS[0] && AREAS[0].id) || 'Tầng 1', seats: 4 } : null);
+  const table = getTable(tableId);
   if (!table) { location.replace('index.html'); return; }
 
   // Nạp giỏ: ưu tiên order đã lưu, nếu không thì lấy từ bill chờ thanh toán của bàn
@@ -147,23 +147,23 @@
       actions: [{ label: 'Ở lại', id: 'modal-stay' }, { label: 'Thoát', cls: 'btn-danger', id: 'modal-leave', onClick: goHome }] });
   });
 
-  $('btn-save').addEventListener('click', () => {
-    persist(); dirty = false;
+  $('btn-save').addEventListener('click', async () => {
+    try { await persist(); } catch (error) { UI.toast(error.message, 'error'); return; } dirty = false;
     UI.toast(cart.length ? `Đã lưu ${table.name}` : `Đã xóa order ${table.name}`);
     setTimeout(goHome, 600);
   });
 
-  $('btn-temp').addEventListener('click', () => {
+  $('btn-temp').addEventListener('click', async () => {
     if (!cart.length) return UI.toast('Chưa có món để tạm tính', 'error');
-    const order = persist();
-    Store.moveToPending(order.billId, 'temp'); dirty = false;
+    let order; try { order = await persist(); } catch (error) { UI.toast(error.message, 'error'); return; }
+    try { await Store.moveToPending(order.billId, 'temp'); } catch (error) { UI.toast(error.message, 'error'); return; } dirty = false;
     UI.toast('Đã chuyển sang Chờ thanh toán');
     setTimeout(goHome, 600);
   });
 
-  $('btn-pay').addEventListener('click', () => {
+  $('btn-pay').addEventListener('click', async () => {
     if (!cart.length) return UI.toast('Chưa có món để thanh toán', 'error');
-    const order = persist(); dirty = false;
+    let order; try { order = await persist(); } catch (error) { UI.toast(error.message, 'error'); return; } dirty = false;
     location.href = 'payment.html?bill=' + order.billId;
   });
 

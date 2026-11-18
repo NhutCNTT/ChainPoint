@@ -11,5 +11,4 @@ public interface PaymentService {
 
     PaymentStatusResponse getStatus(String billCode);
 
-    PaymentStatusResponse simulatePayment(String billCode);
 }

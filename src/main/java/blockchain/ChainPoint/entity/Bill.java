@@ -37,6 +37,9 @@ public class Bill {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(unique = true, length = 100)
+    private String checkoutReference;
+
     @Column(name = "bill_code", nullable = false, unique = true, length = 32)
     private String billCode;
 
@@ -88,6 +91,9 @@ public class Bill {
 
     @Column(length = 66)
     private String earnTxHash;
+
+    @Column(length = 66)
+    private String refundTxHash;
 
     @Column(name = "refund_reason", length = 255)
     private String refundReason;

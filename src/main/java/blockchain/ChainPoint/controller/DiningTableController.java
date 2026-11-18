@@ -24,9 +24,18 @@ import java.util.List;
 @RequestMapping("/api/v1/tables")
 @CrossOrigin
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'CASHIER')")
 public class DiningTableController {
 
     private final DiningTableService diningTableService;
+
+    public record TableStatusRequest(@jakarta.validation.constraints.NotBlank String status) {}
+
+    @org.springframework.web.bind.annotation.PatchMapping("/{id}/status")
+    public ResponseEntity<DiningTableResponse> changeStatus(@PathVariable Long id,
+            @Valid @RequestBody TableStatusRequest request) {
+        return ResponseEntity.ok(diningTableService.changeStatus(id, request.status()));
+    }
 
     @GetMapping
     public ResponseEntity<List<DiningTableResponse>> getTables(
@@ -43,6 +52,7 @@ public class DiningTableController {
     }
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<DiningTableResponse> createTable(
             @Valid @RequestBody DiningTableRequest request
     ) {
@@ -51,6 +61,7 @@ public class DiningTableController {
     }
 
     @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<DiningTableResponse> updateTable(
             @PathVariable Long id,
             @Valid @RequestBody DiningTableRequest request
@@ -59,6 +70,7 @@ public class DiningTableController {
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<Void> deleteTable(@PathVariable Long id) {
         diningTableService.deleteTable(id);
         return ResponseEntity.noContent().build();

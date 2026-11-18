@@ -79,10 +79,9 @@ const UI = (() => {
 
       <a id="menu-tables" class="drawer-link ${activeKey === 'tables' ? 'active' : ''}" href="index.html"><span class="ico">🍽️</span>Chọn bàn gọi món</a>
       <a id="menu-history" class="drawer-link ${activeKey === 'history' ? 'active' : ''}" href="history.html"><span class="ico">📜</span>Lịch sử hóa đơn</a>
-      <a id="menu-orders" class="drawer-link" href="../Frontend/pages/branch/orders.html"><span class="ico">🧾</span>Đơn hàng chi nhánh</a>
+      <a id="menu-orders" class="drawer-link" href="../Frontend/pages/employee/orders.html"><span class="ico">🧾</span>Đơn hàng chi nhánh</a>
 
       <div class="drawer-spacer"></div>
-      <button id="menu-reset" class="drawer-link" type="button"><span class="ico">♻️</span>Đặt lại dữ liệu demo</button>
       <button id="menu-logout" class="drawer-link" style="color:#e53e3e; margin-top:4px;" type="button"><span class="ico">🚪</span>Đăng xuất</button>
 
       <div class="drawer-user">
@@ -101,15 +100,11 @@ const UI = (() => {
     overlay.addEventListener('click', close);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 
-    drawer.querySelector('#menu-reset').addEventListener('click', () => {
-      showModal({ icon: '♻️', tone: 'warn', title: 'Đặt lại dữ liệu demo?', message: 'Toàn bộ bàn, bill chờ và lịch sử sẽ trở về dữ liệu mẫu ban đầu.',
-        actions: [{ label: 'Hủy' }, { label: 'Đặt lại', cls: 'btn-danger', onClick: () => Store.reset() }] });
-    });
-
     const logoutBtn = drawer.querySelector('#menu-logout');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', () => {
-        ['cp_role', 'cp_user', 'cp_branch'].forEach(k => {
+        window.API.clearToken();
+        ['cp_token', 'cp_role', 'cp_user', 'cp_branch', 'cp_branch_id'].forEach(k => {
           sessionStorage.removeItem(k);
           localStorage.removeItem(k);
         });

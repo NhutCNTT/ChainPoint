@@ -36,7 +36,7 @@
             if (window.API) {
                 data = await window.API.get(endpoint);
             } else {
-                const res = await fetch(`http://localhost:8080/api/v1${endpoint}`);
+                const res = await window.API.fetch(`http://localhost:8080/api/v1${endpoint}`);
                 data = await res.json();
             }
 
@@ -233,7 +233,7 @@
             if (window.API) {
                 result = await window.API.post(`/orders/${billId}/refund`, payload);
             } else {
-                const res = await fetch(`http://localhost:8080/api/v1/orders/${billId}/refund`, {
+                const res = await window.API.fetch(`http://localhost:8080/api/v1/orders/${billId}/refund`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)

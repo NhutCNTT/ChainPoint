@@ -25,6 +25,7 @@ import java.util.List;
 @RequestMapping("/api/v1/customers")
 @CrossOrigin
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'CASHIER')")
 public class CustomerController {
 
     private final CustomerService customerService;
@@ -56,6 +57,7 @@ public class CustomerController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")
     public ResponseEntity<CustomerResponse> updateCustomer(
             @PathVariable Long id,
             @Valid @RequestBody CustomerRequest request

@@ -10,14 +10,7 @@ const CATEGORY_META = {
 };
 
 let AREAS = [];
-let CATEGORIES = [
-  { id: 'all', name: 'Tất cả', icon: '✨' },
-  { id: 'hot', name: 'Món nóng', icon: '🔥' },
-  { id: 'cold', name: 'Món lạnh', icon: '🥗' },
-  { id: 'drink', name: 'Nước', icon: '🥤' },
-  { id: 'dessert', name: 'Tráng miệng', icon: '🍰' },
-  { id: 'other', name: 'Khác', icon: '🍚' }
-];
+let CATEGORIES = [{ id: 'all', name: 'Tất cả', icon: '✨' }];
 let MENU = [];
 let TABLES = [];
 
@@ -26,30 +19,13 @@ const POS_API_BASE = (typeof window !== 'undefined' && window.location.port && w
   : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
 
 async function resolveActiveBranchId() {
-  let branchId = sessionStorage.getItem('cp_branch_id') || localStorage.getItem('cp_branch_id') || '';
-  if (branchId) return branchId;
-  try {
-    const res = await fetch(`${POS_API_BASE}/branches`);
-    if (res.ok) {
-      const branches = await res.json();
-      if (Array.isArray(branches) && branches.length > 0) {
-        const branchName = sessionStorage.getItem('cp_branch') || localStorage.getItem('cp_branch') || '';
-        const matched = (branchName && branches.find(b => b.name === branchName)) || branches[0];
-        branchId = matched.id;
-        sessionStorage.setItem('cp_branch_id', branchId);
-        if (!branchName && matched.name) {
-          sessionStorage.setItem('cp_branch', matched.name);
-        }
-      }
-    }
-  } catch (ignored) {}
-  return branchId;
+  return sessionStorage.getItem('cp_branch_id') || localStorage.getItem('cp_branch_id') || '';
 }
 
 // Nạp danh mục thực đơn từ Backend MySQL (nếu có endpoint /categories)
 async function fetchCategoriesFromDatabase() {
   try {
-    const res = await fetch(`${POS_API_BASE}/categories`);
+    const res = await window.API.fetch(`${POS_API_BASE}/categories`);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -71,19 +47,12 @@ async function fetchMenuFromDatabase() {
   try {
     const branchId = await resolveActiveBranchId();
     const url = branchId ? `${POS_API_BASE}/products?branchId=${branchId}` : `${POS_API_BASE}/products`;
-    const res = await fetch(url);
+    const res = await window.API.fetch(url);
     if (res.ok) {
       let data = await res.json();
-      // Nếu chi nhánh hiện tại chưa có món riêng, tải toàn bộ sản phẩm trong DB
-      if (Array.isArray(data) && data.length === 0 && branchId) {
-        const fallbackRes = await fetch(`${POS_API_BASE}/products`);
-        if (fallbackRes.ok) {
-          data = await fallbackRes.json();
-        }
-      }
       if (Array.isArray(data)) {
         MENU = data
-          .filter(p => p.status !== 'out_of_stock')
+          .filter(p => p.status === 'available' && Number(p.stockQuantity) > 0)
           .map(p => ({
             id: p.code || ('m' + p.id),
             realId: p.id,
@@ -114,19 +83,14 @@ async function fetchTablesFromDatabase() {
   try {
     const branchId = await resolveActiveBranchId();
     const url = branchId ? `${POS_API_BASE}/tables?branchId=${branchId}` : `${POS_API_BASE}/tables`;
-    const res = await fetch(url);
+    const res = await window.API.fetch(url);
     if (res.ok) {
       let data = await res.json();
-      if (Array.isArray(data) && data.length === 0 && branchId) {
-        const fallbackRes = await fetch(`${POS_API_BASE}/tables`);
-        if (fallbackRes.ok) {
-          data = await fallbackRes.json();
-        }
-      }
       if (Array.isArray(data)) {
         TABLES = data.filter(t => t.status !== 'disabled').map(t => ({
           id: t.code,
           realId: t.id,
+          status: t.status,
           name: t.name || ('Bàn ' + t.code),
           area: t.area || 'Tầng 1',
           seats: parseInt(t.seats, 10) || 4

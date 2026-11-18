@@ -199,6 +199,7 @@
     if (cancelBtn) cancelBtn.onclick = closeCustomerModal;
     if (closeHistBtn) closeHistBtn.onclick = () => historyModal.classList.remove('active');
 
+    document.getElementById('custPoints').readOnly = true;
     if (form) {
         form.onsubmit = async (e) => {
             e.preventDefault();

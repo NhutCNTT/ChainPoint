@@ -90,6 +90,15 @@ public final class RestaurantLoyaltyFunctions {
         return FunctionEncoder.encode(function);
     }
 
+    public static Function refundOrder(String orderCode, String address, String phone, long restored,
+            long revoked, BigDecimal amount, String reason) {
+        return new Function("refundOrder", Arrays.asList(
+                new Utf8String(orderCode), new Address(normalizeAddress(address)),
+                new Utf8String(phone == null ? "" : phone), new Uint256(BigInteger.valueOf(restored)),
+                new Uint256(BigInteger.valueOf(revoked)), new Uint256(amount.toBigIntegerExact()),
+                new Utf8String(reason == null ? "" : reason)), Collections.emptyList());
+    }
+
     private static String normalizeAddress(String walletAddress) {
         if (walletAddress == null || walletAddress.isBlank()) {
             return ZERO_ADDRESS;

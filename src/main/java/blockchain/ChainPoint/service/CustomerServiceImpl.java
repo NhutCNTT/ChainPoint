@@ -26,6 +26,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final BranchRepository branchRepository;
+    private final blockchain.ChainPoint.security.BranchAccess branchAccess;
 
     @Override
     public List<CustomerResponse> getCustomers(Long branchId, String query) {
@@ -61,6 +62,9 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public CustomerResponse createCustomer(CustomerRequest request) {
+        if (request.getPoints() != null && request.getPoints() != 0) {
+            throw new IllegalArgumentException("New members start with zero points; points are earned at checkout");
+        }
         String phone = request.getPhone().trim();
 
         if (customerRepository.existsByPhone(phone)) {
@@ -97,7 +101,9 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setDateOfBirth(request.getDateOfBirth());
         customer.setTier(defaultTier(request.getTier()));
         if (request.getPoints() != null) {
-            customer.setPoints(request.getPoints());
+            if (!Objects.equals(customer.getPoints(), request.getPoints())) {
+                throw new IllegalArgumentException("Point balances can only change through checkout or refund");
+            }
         }
         customer.setWalletAddress(trimToNull(request.getWalletAddress()));
         customer.setBranch(resolveBranch(request.getBranchId()));
@@ -117,6 +123,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private Branch resolveBranch(Long branchId) {
+        branchAccess.require(branchId);
         if (branchId == null) {
             return null;
         }

@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="../../css/base.css" />
   <link rel="stylesheet" href="../../css/admin/admin.css" />
   <link rel="stylesheet" href="../../css/admin/tables.css" />
+  <script src="/Frontend/js/common/api.js"></script>
 </head>
 <body data-area="employee">
   <div class="app">
@@ -61,7 +62,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
           <input type="text" id="empOrderSearch" placeholder="Tìm mã đơn, bàn, SĐT khách..." />
         </div>
-        <a href="../../pos/index.html" class="btn-primary" style="text-decoration:none;">Mở máy POS →</a>
+        <a href="/pos/index.html" class="btn-primary" style="text-decoration:none;">Mở máy POS →</a>
       </section>
 
       <section class="panel" style="padding:0; overflow:hidden;">
@@ -85,7 +86,6 @@
     </main>
   </div>
 
-  <script src="../../js/common/api.js"></script>
   <script>
     (function () {
       const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';

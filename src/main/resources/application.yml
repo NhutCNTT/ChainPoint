@@ -1,6 +1,8 @@
 server:
   port: ${SERVER_PORT:8080}
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: ChainPoint
   datasource:
@@ -23,11 +25,14 @@ spring:
           time_zone: Asia/Ho_Chi_Minh
   data:
     redis:
+      repositories:
+        enabled: false
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       timeout: 3000ms
   rabbitmq:
+    virtual-host: ${RABBITMQ_VHOST:/}
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:guest}
