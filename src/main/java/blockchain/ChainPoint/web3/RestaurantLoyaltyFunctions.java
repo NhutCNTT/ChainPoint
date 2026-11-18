@@ -69,14 +69,18 @@ public final class RestaurantLoyaltyFunctions {
     }
 
     public static Function redeemPoints(
+            String customerAddress,
             String phoneNumber,
             long points,
-            String orderCode
+            String orderCode,
+            BigDecimal discountAmount
     ) {
         List<Type> inputParameters = Arrays.asList(
+                new Address(normalizeAddress(customerAddress)),
                 new Utf8String(phoneNumber),
                 new Uint256(BigInteger.valueOf(points)),
-                new Utf8String(orderCode)
+                new Utf8String(orderCode),
+                new Uint256(discountAmount.toBigIntegerExact())
         );
 
         return new Function("redeemPoints", inputParameters, Collections.emptyList());

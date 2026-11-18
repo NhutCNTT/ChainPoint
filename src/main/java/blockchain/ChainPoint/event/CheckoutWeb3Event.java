@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class CheckoutWeb3Event implements Serializable {
+    private BigDecimal discountAmount;
 
     private static final long serialVersionUID = 1L;
 

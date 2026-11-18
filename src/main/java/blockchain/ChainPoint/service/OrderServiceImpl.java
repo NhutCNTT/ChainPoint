@@ -36,6 +36,7 @@ public class OrderServiceImpl implements OrderService {
     private final BillRepository billRepository;
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
+    private final blockchain.ChainPoint.security.BranchAccess branchAccess;
 
     @Override
     public List<OrderResponse> getOrders(
@@ -44,6 +45,7 @@ public class OrderServiceImpl implements OrderService {
             LocalDateTime from,
             LocalDateTime to
     ) {
+        branchId = branchAccess.scope(branchId);
         String statusFilter = StringUtils.hasText(status) ? status.trim() : null;
 
         return billRepository.searchBills(branchId, statusFilter, from, to).stream()
@@ -56,14 +58,19 @@ public class OrderServiceImpl implements OrderService {
         Bill bill = billRepository.findDetailedByBillCode(billCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Bill not found: " + billCode));
 
+        branchAccess.require(bill.getBranch().getId());
+
         return toResponse(bill);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @org.springframework.cache.annotation.CacheEvict(value = "products", allEntries = true)
     public RefundResponse refundOrder(String billCode, RefundRequest request, String processedBy) {
         Bill bill = billRepository.findDetailedByBillCode(billCode)
                 .orElseThrow(() -> new ResourceNotFoundException("Bill not found: " + billCode));
+
+        branchAccess.require(bill.getBranch().getId());
 
         if (!STATUS_PAID.equalsIgnoreCase(bill.getStatus())) {
             throw new InvalidRedemptionException(

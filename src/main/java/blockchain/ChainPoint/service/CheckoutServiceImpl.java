@@ -56,13 +56,19 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final CustomerRepository customerRepository;
     private final BillRepository billRepository;
     private final RabbitTemplate rabbitTemplate;
+    private final blockchain.ChainPoint.security.BranchAccess branchAccess;
+    private final LoyaltyService loyaltyService;
+    private final blockchain.ChainPoint.repository.CheckoutOutboxRepository outboxRepository;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "products", allEntries = true)
     public CheckoutResponse processCheckout(CheckoutRequest request) {
+        branchAccess.require(request.getBranchId());
         Branch branch = findBranch(request.getBranchId());
-        validateTable(request.getTableCode(), branch.getId());
+        DiningTable table = validateTable(request.getTableCode(), branch.getId());
+        var config = loyaltyService.getConfig();
 
         Map<Long, Integer> quantitiesByProduct = aggregateQuantities(request.getItems());
         List<OrderLine> orderLines = new ArrayList<>();
@@ -81,6 +87,10 @@ public class CheckoutServiceImpl implements CheckoutService {
             int availableStock = product.getStockQuantity() != null
                     ? product.getStockQuantity()
                     : 0;
+
+            if (!"available".equalsIgnoreCase(product.getStatus())) {
+                throw new InsufficientStockException("Product is not available: " + product.getCode());
+            }
 
             if (availableStock < quantity) {
                 throw new InsufficientStockException(
@@ -110,7 +120,7 @@ public class CheckoutServiceImpl implements CheckoutService {
                 : null;
 
         Customer customer = customerPhone != null
-                ? customerRepository.findByPhone(customerPhone).orElse(null)
+                ? customerRepository.findByPhoneForUpdate(customerPhone).orElse(null)
                 : null;
 
         long pointsToUse = request.getPointsToUse() != null ? request.getPointsToUse() : 0L;
@@ -121,15 +131,18 @@ public class CheckoutServiceImpl implements CheckoutService {
         BigDecimal discountAmount = BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
 
         if (pointsToUse > 0) {
+            if (!Boolean.TRUE.equals(config.getAllowRedeem())) {
+                throw new InvalidRedemptionException("Loyalty redemption is disabled");
+            }
             if (customer == null) {
                 throw new InvalidRedemptionException(
                         "A registered customer is required to redeem loyalty points"
                 );
             }
 
-            if (pointsToUse < MINIMUM_POINTS_TO_REDEEM) {
+            if (pointsToUse < config.getMinPointsToRedeem()) {
                 throw new InvalidRedemptionException(
-                        "Minimum points to redeem is " + MINIMUM_POINTS_TO_REDEEM
+                        "Minimum points to redeem is " + config.getMinPointsToRedeem()
                 );
             }
 
@@ -142,12 +155,13 @@ public class CheckoutServiceImpl implements CheckoutService {
             }
 
             discountAmount = BigDecimal.valueOf(pointsToUse)
-                    .multiply(VND_PER_REDEEMED_POINT)
+                    .multiply(BigDecimal.valueOf(config.getPointValueVnd()))
                     .setScale(2, RoundingMode.HALF_UP);
 
-            if (discountAmount.multiply(BigDecimal.valueOf(2L)).compareTo(grossAmount) > 0) {
+            if (discountAmount.multiply(BigDecimal.valueOf(100)).compareTo(
+                    grossAmount.multiply(BigDecimal.valueOf(config.getMaxDiscountPercent()))) > 0) {
                 throw new InvalidRedemptionException(
-                        "Discount cannot exceed 50% of the gross amount"
+                        "Discount exceeds the configured maximum percentage"
                 );
             }
         }
@@ -156,8 +170,8 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .subtract(discountAmount)
                 .setScale(2, RoundingMode.HALF_UP);
 
-        long pointsEarned = customer != null
-                ? finalAmount.divideToIntegralValue(VND_PER_EARNED_POINT).longValue()
+        long pointsEarned = customer != null && Boolean.TRUE.equals(config.getAllowEarn())
+                ? finalAmount.divideToIntegralValue(BigDecimal.valueOf(config.getEarnRatioVnd())).longValue()
                 : 0L;
 
         if (customer != null) {
@@ -174,7 +188,7 @@ public class CheckoutServiceImpl implements CheckoutService {
             customerRepository.save(customer);
         }
 
-        String billCode = "HD" + System.currentTimeMillis();
+        String billCode = "HD" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 24);
         LocalDateTime checkoutTime = LocalDateTime.now();
         String preliminaryBillHash = HashUtil.generateBillHash(
                 billCode,
@@ -186,7 +200,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         Bill bill = Bill.builder()
                 .billCode(billCode)
                 .tableCode(request.getTableCode())
-                .cashierUsername(resolveCashier(request.getCashierUsername()))
+                .cashierUsername(branchAccess.principal().getUsername())
                 .customerPhone(customerPhone)
                 .grossAmount(grossAmount)
                 .discountAmount(discountAmount)
@@ -228,6 +242,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         }
 
         CheckoutWeb3Event event = CheckoutWeb3Event.builder()
+                .discountAmount(savedBill.getDiscountAmount())
                 .billCode(savedBill.getBillCode())
                 .branchId(branch.getId())
                 .customerPhone(customerPhone)
@@ -240,18 +255,12 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .build();
 
         try {
-            rabbitTemplate.convertAndSend(
-                    RabbitMQConfig.EXCHANGE_NAME,
-                    RabbitMQConfig.ROUTING_KEY,
-                    event
-            );
-        } catch (Exception exception) {
-            log.warn(
-                    "Could not publish checkout event for billCode={}; blockchain sync will be skipped",
-                    savedBill.getBillCode(),
-                    exception
-            );
+            outboxRepository.save(blockchain.ChainPoint.entity.CheckoutOutbox.builder()
+                    .payload(objectMapper.writeValueAsString(event)).build());
+        } catch (com.fasterxml.jackson.core.JsonProcessingException exception) {
+            throw new IllegalStateException("Cannot serialize checkout event", exception);
         }
+        table.setStatus("available");
 
         return toResponse(savedBill);
     }
@@ -263,7 +272,7 @@ public class CheckoutServiceImpl implements CheckoutService {
                 ));
     }
 
-    private void validateTable(String tableCode, Long branchId) {
+    private DiningTable validateTable(String tableCode, Long branchId) {
         DiningTable table = diningTableRepository.findByCodeAndBranchId(tableCode, branchId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Dining table not found with code " + tableCode
@@ -275,18 +284,7 @@ public class CheckoutServiceImpl implements CheckoutService {
                     "Dining table " + tableCode + " is currently disabled"
             );
         }
-    }
-
-    private String resolveCashier(String fallbackUsername) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null
-                && authentication.isAuthenticated()
-                && StringUtils.hasText(authentication.getName())
-                && !"anonymousUser".equals(authentication.getName())) {
-            return authentication.getName();
-        }
-
-        return StringUtils.hasText(fallbackUsername) ? fallbackUsername.trim() : "pos";
+        return table;
     }
 
     private Map<Long, Integer> aggregateQuantities(List<CheckoutItemRequest> items) {

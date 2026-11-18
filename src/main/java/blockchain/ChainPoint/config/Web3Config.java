@@ -20,6 +20,7 @@ import java.math.BigInteger;
 @Getter
 @Setter
 @Configuration
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "blockchain.enabled", havingValue = "true")
 @ConfigurationProperties(prefix = "blockchain")
 public class Web3Config {
 
@@ -47,18 +48,7 @@ public class Web3Config {
         String privateKey = normalizePrivateKey(masterWalletPrivateKey);
 
         if (privateKey == null) {
-            try {
-                ECKeyPair keyPair = Keys.createEcKeyPair();
-                Credentials credentials = Credentials.create(keyPair);
-                log.warn(
-                        "blockchain.master-wallet-private-key is not configured; "
-                                + "using ephemeral wallet {} for this application instance",
-                        credentials.getAddress()
-                );
-                return credentials;
-            } catch (Exception exception) {
-                throw new IllegalStateException("Unable to create ephemeral Web3 credentials", exception);
-            }
+            throw new IllegalStateException("BLOCKCHAIN_PRIVATE_KEY is required when blockchain sync is enabled");
         }
 
         return Credentials.create(privateKey);

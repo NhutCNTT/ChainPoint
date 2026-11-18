@@ -26,9 +26,11 @@ public class StaffServiceImpl implements StaffService {
     private final UserRepository userRepository;
     private final BranchRepository branchRepository;
     private final PasswordEncoder passwordEncoder;
+    private final blockchain.ChainPoint.security.BranchAccess branchAccess;
 
     @Override
     public List<StaffResponse> getStaff(Long branchId) {
+        branchId = branchAccess.scope(branchId);
         List<User> users = branchId != null
                 ? userRepository.findByBranchIdOrderByIdAsc(branchId)
                 : userRepository.findAllByOrderByIdAsc();
@@ -98,11 +100,17 @@ public class StaffServiceImpl implements StaffService {
     }
 
     private User findUser(Long id) {
-        return userRepository.findById(id)
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Staff account not found with id: " + id));
+        branchAccess.require(user.getBranch() != null ? user.getBranch().getId() : null);
+        if (!branchAccess.isOwner() && user.getRole() != RoleType.ROLE_CASHIER) {
+            throw new org.springframework.security.access.AccessDeniedException("Managers can manage cashier accounts only");
+        }
+        return user;
     }
 
     private Branch resolveBranch(Long branchId) {
+        branchId = branchAccess.scope(branchId);
         if (branchId == null) {
             return null;
         }
@@ -112,6 +120,9 @@ public class StaffServiceImpl implements StaffService {
     }
 
     private RoleType parseRole(String role) {
+        if (!branchAccess.isOwner() && !"ROLE_CASHIER".equals(role)) {
+            throw new org.springframework.security.access.AccessDeniedException("Only owners can assign management roles");
+        }
         try {
             return RoleType.valueOf(role.trim().toUpperCase());
         } catch (IllegalArgumentException exception) {

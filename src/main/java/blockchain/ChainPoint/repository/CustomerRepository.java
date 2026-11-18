@@ -15,6 +15,10 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     Optional<Customer> findByPhone(String phone);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Customer c WHERE c.phone = :phone")
+    Optional<Customer> findByPhoneForUpdate(@Param("phone") String phone);
+
     boolean existsByPhone(String phone);
 
     boolean existsByCode(String code);

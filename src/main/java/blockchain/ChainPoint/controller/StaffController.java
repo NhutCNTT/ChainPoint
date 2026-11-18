@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/staff")
+@RequestMapping({"/api/v1/staff", "/api/v1/users"})
 @CrossOrigin
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('OWNER', 'MANAGER')")

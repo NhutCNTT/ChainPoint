@@ -1,9 +1,0 @@
-org.springframework.boot.autoconfigure.AutoConfigurationImportSelector source=file:/D:/ChainPoint/target/classes/ loader=jdk.internal.loader.ClassLoaders$AppClassLoader@76ed5528
-  resource=file:/D:/ChainPoint/target/classes/org/springframework/boot/autoconfigure/AutoConfigurationImportSelector.class
-  resource=jar:file:/C:/Users/ngnhu/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.4.3/spring-boot-autoconfigure-3.4.3.jar!/org/springframework/boot/autoconfigure/AutoConfigurationImportSelector.class
-org.springframework.boot.autoconfigure.AutoConfigurationImportFilter source=file:/D:/ChainPoint/target/classes/ loader=jdk.internal.loader.ClassLoaders$AppClassLoader@76ed5528
-  resource=file:/D:/ChainPoint/target/classes/org/springframework/boot/autoconfigure/AutoConfigurationImportFilter.class
-  resource=jar:file:/C:/Users/ngnhu/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.4.3/spring-boot-autoconfigure-3.4.3.jar!/org/springframework/boot/autoconfigure/AutoConfigurationImportFilter.class
-org.springframework.boot.autoconfigure.condition.OnBeanCondition source=file:/C:/Users/ngnhu/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.4.3/spring-boot-autoconfigure-3.4.3.jar loader=jdk.internal.loader.ClassLoaders$AppClassLoader@76ed5528
-  resource=jar:file:/C:/Users/ngnhu/.m2/repository/org/springframework/boot/spring-boot-autoconfigure/3.4.3/spring-boot-autoconfigure-3.4.3.jar!/org/springframework/boot/autoconfigure/condition/OnBeanCondition.class
-assignable=true

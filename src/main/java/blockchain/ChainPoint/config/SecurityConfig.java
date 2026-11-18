@@ -117,7 +117,7 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(
                                 "/api/v1/auth/**",
-                                "/actuator/**",
+                                "/actuator/health",
                                 "/error",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
@@ -125,6 +125,7 @@ public class SecurityConfig {
                                 "/webjars/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/**").authenticated()
+                        .requestMatchers("/actuator/**").hasRole("OWNER")
                         .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())

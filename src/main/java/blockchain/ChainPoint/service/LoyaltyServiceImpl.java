@@ -31,6 +31,7 @@ public class LoyaltyServiceImpl implements LoyaltyService {
     private final LoyaltyConfigRepository loyaltyConfigRepository;
     private final BillRepository billRepository;
     private final CustomerRepository customerRepository;
+    private final blockchain.ChainPoint.security.BranchAccess branchAccess;
 
     @Override
     @Transactional
@@ -71,6 +72,7 @@ public class LoyaltyServiceImpl implements LoyaltyService {
 
     @Override
     public List<LoyaltyTransactionResponse> getTransactions(Long branchId) {
+        branchId = branchAccess.scope(branchId);
         List<Bill> bills = billRepository.searchBills(branchId, null, null, null);
         List<LoyaltyTransactionResponse> transactions = new ArrayList<>();
 

@@ -83,6 +83,12 @@ public class Bill {
     @Column(name = "loyalty_tx_hash", length = 66)
     private String loyaltyTxHash;
 
+    @Column(length = 66)
+    private String redeemTxHash;
+
+    @Column(length = 66)
+    private String earnTxHash;
+
     @Column(name = "refund_reason", length = 255)
     private String refundReason;
 

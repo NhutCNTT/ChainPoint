@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 
 @Slf4j
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "blockchain.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class BlockchainWorker {
 
@@ -40,26 +41,37 @@ public class BlockchainWorker {
                     event.getPointsUsed()
             );
 
-            String invoiceTxHash = blockchainService.recordInvoice(
+            Bill existing = billRepository.findByBillCode(event.getBillCode())
+                    .orElseThrow(() -> new IllegalStateException("Bill is not committed yet"));
+            if (!StringUtils.hasText(existing.getBlockchainTxHash())) {
+                String invoiceTxHash = blockchainService.recordInvoice(
                     event.getBillCode(),
                     event.getBranchId(),
                     event.getFinalAmount(),
                     event.getBillHash()
             );
             updateBillHashes(event.getBillCode(), invoiceTxHash, null);
+            }
 
             if (event.getPointsUsed() != null && event.getPointsUsed() > 0
-                    && StringUtils.hasText(event.getCustomerPhone())) {
+                    && StringUtils.hasText(event.getCustomerPhone())
+                    && !StringUtils.hasText(existing.getRedeemTxHash())) {
                 String redeemTxHash = blockchainService.redeemPoints(
+                        event.getWalletAddress(),
                         event.getCustomerPhone(),
                         event.getPointsUsed(),
-                        event.getBillCode()
+                        event.getBillCode(),
+                        event.getDiscountAmount()
                 );
                 updateBillHashes(event.getBillCode(), null, redeemTxHash);
+                Bill updated = billRepository.findByBillCode(event.getBillCode()).orElseThrow();
+                updated.setRedeemTxHash(redeemTxHash);
+                billRepository.save(updated);
             }
 
             if (event.getPointsEarned() != null && event.getPointsEarned() > 0
-                    && StringUtils.hasText(event.getCustomerPhone())) {
+                    && StringUtils.hasText(event.getCustomerPhone())
+                    && !StringUtils.hasText(existing.getEarnTxHash())) {
                 String loyaltyTxHash = blockchainService.earnPoints(
                         event.getWalletAddress(),
                         event.getCustomerPhone(),
@@ -68,6 +80,9 @@ public class BlockchainWorker {
                         event.getFinalAmount()
                 );
                 updateBillHashes(event.getBillCode(), null, loyaltyTxHash);
+                Bill updated = billRepository.findByBillCode(event.getBillCode()).orElseThrow();
+                updated.setEarnTxHash(loyaltyTxHash);
+                billRepository.save(updated);
             }
 
             log.info("Finished processing checkout Web3 event for billCode={}", event.getBillCode());

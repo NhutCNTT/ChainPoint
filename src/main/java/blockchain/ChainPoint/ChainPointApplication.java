@@ -8,6 +8,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication
 @EnableAsync
 @EnableCaching
+@org.springframework.scheduling.annotation.EnableScheduling
 public class ChainPointApplication {
 
 	public static void main(String[] args) {

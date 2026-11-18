@@ -58,9 +58,11 @@ public class DashboardServiceImpl implements DashboardService {
     private final DiningTableRepository diningTableRepository;
     private final CustomerRepository customerRepository;
     private final BillDetailRepository billDetailRepository;
+    private final blockchain.ChainPoint.security.BranchAccess branchAccess;
 
     @Override
     public DashboardMetricsResponse getMetrics(Long branchId, String range) {
+        branchId = branchAccess.scope(branchId);
         LocalDate today = LocalDate.now(ZONE_ID);
         MetricsWindow window = resolveMetricsWindow(range, today);
 
@@ -110,6 +112,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public RevenueChartResponse getWeeklyRevenueChart(Long branchId) {
+        branchId = branchAccess.scope(branchId);
         LocalDate today = LocalDate.now(ZONE_ID);
         LocalDate currentMonday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate lastMonday = currentMonday.minusWeeks(1);
@@ -149,6 +152,7 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public List<TopDishResponse> getTopDishes(Long branchId, int limit) {
+        branchId = branchAccess.scope(branchId);
         int pageSize = limit > 0 ? limit : DEFAULT_TOP_DISHES_LIMIT;
 
         return billDetailRepository.findTopSellingDishes(branchId, PageRequest.of(0, pageSize))

@@ -24,9 +24,11 @@ public class DiningTableServiceImpl implements DiningTableService {
 
     private final DiningTableRepository diningTableRepository;
     private final BranchRepository branchRepository;
+    private final blockchain.ChainPoint.security.BranchAccess branchAccess;
 
     @Override
     public List<DiningTableResponse> getTables(Long branchId, String area, String status) {
+        branchId = branchAccess.scope(branchId);
         List<DiningTable> tables;
 
         if (branchId != null && StringUtils.hasText(area)) {
@@ -117,11 +119,14 @@ public class DiningTableServiceImpl implements DiningTableService {
     }
 
     private DiningTable findTable(Long id) {
-        return diningTableRepository.findById(id)
+        DiningTable table = diningTableRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dining table not found with id: " + id));
+        branchAccess.require(table.getBranch().getId());
+        return table;
     }
 
     private Branch findBranch(Long branchId) {
+        branchAccess.require(branchId);
         return branchRepository.findById(branchId)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with id: " + branchId));
     }

@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/orders")
+@RequestMapping({"/api/v1/orders", "/api/v1/bills"})
 @CrossOrigin
 @RequiredArgsConstructor
 public class OrderController {

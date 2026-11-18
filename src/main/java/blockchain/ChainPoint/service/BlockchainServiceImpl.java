@@ -27,6 +27,7 @@ import java.math.BigInteger;
 import java.util.List;
 
 @Service
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "blockchain.enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class BlockchainServiceImpl implements BlockchainService {
 
@@ -75,11 +76,13 @@ public class BlockchainServiceImpl implements BlockchainService {
     }
 
     @Override
-    public String redeemPoints(String phoneNumber, long points, String orderCode) {
+    public String redeemPoints(String customerAddress, String phoneNumber, long points, String orderCode, BigDecimal discountAmount) {
         Function function = RestaurantLoyaltyFunctions.redeemPoints(
+                customerAddress,
                 phoneNumber,
                 points,
-                orderCode
+                orderCode,
+                discountAmount
         );
 
         return execute(function);
@@ -126,6 +129,11 @@ public class BlockchainServiceImpl implements BlockchainService {
     }
 
     private String execute(Function function) {
+        if (web3Config.getMasterWalletPrivateKey() == null || web3Config.getMasterWalletPrivateKey().isBlank()
+                || web3Config.getContractAddress() == null
+                || web3Config.getContractAddress().matches("(?i)0x0{40}")) {
+            throw new BlockchainTransactionException("Configure a funded signing key and deployed loyalty contract before syncing");
+        }
         String encodedFunction = RestaurantLoyaltyFunctions.encode(function);
 
         try {

@@ -33,6 +33,7 @@ public class BranchServiceImpl implements BranchService {
     private static final ZoneId ZONE_ID = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final BranchRepository branchRepository;
+    private final blockchain.ChainPoint.security.BranchAccess branchAccess;
     private final DiningTableRepository diningTableRepository;
     private final UserRepository userRepository;
     private final BillRepository billRepository;
@@ -40,6 +41,7 @@ public class BranchServiceImpl implements BranchService {
     @Override
     public List<BranchResponse> getAllBranches() {
         return branchRepository.findAll().stream()
+                .filter(branch -> branchAccess.isOwner() || branch.getId().equals(branchAccess.scope(null)))
                 .sorted(Comparator.comparing(Branch::getId))
                 .map(this::toResponse)
                 .toList();
@@ -104,6 +106,7 @@ public class BranchServiceImpl implements BranchService {
     }
 
     private Branch findBranch(Long id) {
+        branchAccess.require(id);
         return branchRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with id: " + id));
     }

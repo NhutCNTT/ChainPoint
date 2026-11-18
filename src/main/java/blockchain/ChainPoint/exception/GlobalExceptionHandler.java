@@ -20,6 +20,11 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthentication(Exception exception) {
+        return build(HttpStatus.UNAUTHORIZED, "Invalid credentials or inactive account");
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException exception) {
         return build(HttpStatus.NOT_FOUND, exception.getMessage());
