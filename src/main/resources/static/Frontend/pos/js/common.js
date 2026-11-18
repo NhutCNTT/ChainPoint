@@ -19,11 +19,17 @@ const UI = (() => {
   const formatVND = (n) => (Number(n) || 0).toLocaleString('vi-VN') + 'đ';
   const pad = (n) => String(n).padStart(2, '0');
   const formatTime = (iso) => { const d = new Date(iso); return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+  const formatClock = (value = new Date()) => { const d = new Date(value); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); };
   const formatDate = (iso) => { const d = new Date(iso); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(); };
   const toDateKey = (iso) => { const d = new Date(iso); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
   const getParam = (name) => new URLSearchParams(location.search).get(name);
   const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const minutesAgo = (iso) => { const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000)); return m < 60 ? m + ' phút' : Math.floor(m / 60) + 'g ' + (m % 60) + 'p'; };
+  const minutesAgo = (iso) => {
+    const ts = new Date(iso).getTime();
+    if (!Number.isFinite(ts)) return 'Vừa xong';
+    const m = Math.max(0, Math.round((Date.now() - ts) / 60000));
+    return m < 60 ? m + ' phút' : Math.floor(m / 60) + 'g ' + (m % 60) + 'p';
+  };
 
   /* ---------- Toast ---------- */
   function toast(message, type = 'success') {
@@ -64,7 +70,12 @@ const UI = (() => {
   /* ---------- Drawer (hamburger) ---------- */
   function initDrawer(activeKey) {
     const get = (k) => sessionStorage.getItem(k) || localStorage.getItem(k);
-    const role = get('cp_role') || 'cashier';
+    const storedRole = get('cp_role') || 'cashier';
+    const normalizedRole = String(storedRole).trim().toLowerCase().replace(/^role_/, '');
+    const roleAliases = { employee: 'cashier', pos: 'cashier', branch: 'manager' };
+    const role = ['owner', 'manager', 'cashier'].includes(roleAliases[normalizedRole] || normalizedRole)
+      ? (roleAliases[normalizedRole] || normalizedRole)
+      : 'cashier';
     const user = get('cp_user') || 'Thu ngân';
     const branch = get('cp_branch') || 'Cửa hàng';
 
@@ -80,40 +91,74 @@ const UI = (() => {
     const isManager = role === 'manager';
     const canAccessAdmin = isOwner || isManager;
     const returnDashboardUrl = '../pages/admin/dashboard.html';
+    const pendingCount = typeof Store !== 'undefined' && Store.getPending ? Store.getPending().length : 0;
 
     drawer.innerHTML = `
       <div class="drawer-head">
         <div class="brand-mark">CP</div>
-        <div><div class="drawer-title">ChainPoint POS</div><div class="drawer-sub">${escapeHtml(branch)}</div></div>
+        <div class="drawer-brand">
+          <div class="drawer-title">ChainPoint POS</div>
+          <div class="drawer-sub">${escapeHtml(branch)}</div>
+        </div>
+        <button id="drawer-close" class="drawer-close" type="button" aria-label="Đóng menu">×</button>
       </div>
 
-      ${canAccessAdmin ? `
-        <a id="menu-admin-back" class="drawer-link" style="background:#eef4ff; color:#2f6bff; font-weight:700;" href="${returnDashboardUrl}"><span class="ico">📊</span>Về Dashboard tổng quan</a>
-        <a id="menu-admin-tables" class="drawer-link" href="../pages/branch/tables.html"><span class="ico">📐</span>Cấu hình vị trí bàn</a>
-        <hr style="border:0; border-top:1px solid #e2e8f0; margin:8px 0;" />
-      ` : ''}
-
-      <a id="menu-tables" class="drawer-link ${activeKey === 'tables' ? 'active' : ''}" href="index.html"><span class="ico">🍽️</span>Chọn bàn gọi món</a>
-      <a id="menu-history" class="drawer-link ${activeKey === 'history' ? 'active' : ''}" href="history.html"><span class="ico">📜</span>Lịch sử hóa đơn</a>
-      <a id="menu-orders" class="drawer-link" href="../pages/branch/orders.html"><span class="ico">🧾</span>Đơn hàng chi nhánh</a>
-
-      <div class="drawer-spacer"></div>
-      <button id="menu-reset" class="drawer-link" type="button"><span class="ico">♻️</span>Đặt lại dữ liệu demo</button>
-      <button id="menu-logout" class="drawer-link" style="color:#e53e3e; margin-top:4px;" type="button"><span class="ico">🚪</span>Đăng xuất</button>
-
-      <div class="drawer-user">
-        <div class="avatar">${escapeHtml(user.charAt(0).toUpperCase())}</div>
-        <div>
-          <div style="font-weight:700">${escapeHtml(user)}</div>
-          <div class="drawer-sub">${escapeHtml(roleName)} — ${escapeHtml(branch)}</div>
+      <div class="drawer-session">
+        <span class="live-dot"></span>
+        <div class="drawer-session-copy">
+          <strong>${escapeHtml(roleName)}</strong>
+          <small>${escapeHtml(user)} · ${escapeHtml(branch)}</small>
         </div>
+      </div>
+
+      <div class="drawer-scroll">
+        ${canAccessAdmin ? `
+          <div class="drawer-section-label">Quản trị</div>
+          <a id="menu-admin-back" class="drawer-link" style="background:var(--pending-soft); color:var(--accent-1); font-weight:700;" href="${returnDashboardUrl}"><span class="ico">📊</span><span class="drawer-label">Dashboard tổng quan</span></a>
+          <a id="menu-admin-tables" class="drawer-link" href="../pages/branch/tables.html"><span class="ico">📐</span><span class="drawer-label">Cấu hình vị trí bàn</span></a>
+        ` : ''}
+
+        <div class="drawer-section-label">Bán hàng</div>
+        <a id="menu-tables" class="drawer-link ${activeKey === 'tables' ? 'active' : ''}" href="index.html"><span class="ico">🍽️</span><span class="drawer-label">Chọn bàn / Gọi món</span></a>
+        <a id="menu-pending" class="drawer-link ${activeKey === 'pending' ? 'active' : ''}" href="pending.html"><span class="ico">💳</span><span class="drawer-label">Chờ thanh toán</span><b id="drawer-pending-count" class="drawer-badge" data-zero="${pendingCount === 0}">${pendingCount}</b></a>
+        <a id="menu-history" class="drawer-link ${activeKey === 'history' ? 'active' : ''}" href="history.html"><span class="ico">🧾</span><span class="drawer-label">Lịch sử hóa đơn</span></a>
+        <a id="menu-orders" class="drawer-link" href="../pages/branch/orders.html"><span class="ico">🏬</span><span class="drawer-label">Đơn hàng chi nhánh</span></a>
+
+        <div class="drawer-section-label">Tiện ích</div>
+        <button id="menu-reset" class="drawer-link" type="button"><span class="ico">♻️</span><span class="drawer-label">Đặt lại dữ liệu demo</span></button>
+      </div>
+
+      <div class="drawer-footer">
+        <div class="drawer-user">
+          <div class="avatar">${escapeHtml(user.charAt(0).toUpperCase())}</div>
+          <div class="drawer-user-copy">
+            <strong>${escapeHtml(user)}</strong>
+            <small>${escapeHtml(roleName)} · ${escapeHtml(branch)}</small>
+          </div>
+        </div>
+        <button id="menu-logout" class="drawer-logout" type="button">🚪 Đăng xuất</button>
       </div>`;
     document.body.append(overlay, drawer);
 
-    const open = () => { overlay.classList.add('open'); drawer.classList.add('open'); };
-    const close = () => { overlay.classList.remove('open'); drawer.classList.remove('open'); };
+    const open = () => {
+      overlay.classList.add('open');
+      drawer.classList.add('open');
+      const trigger = document.getElementById('btn-hamburger');
+      if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    };
+    const close = () => {
+      overlay.classList.remove('open');
+      drawer.classList.remove('open');
+      const trigger = document.getElementById('btn-hamburger');
+      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    };
     const btn = document.getElementById('btn-hamburger');
-    if (btn) btn.addEventListener('click', open);
+    if (btn) {
+      btn.setAttribute('aria-expanded', 'false');
+      btn.addEventListener('click', open);
+    }
+    const closeBtn = drawer.querySelector('#drawer-close');
+    if (closeBtn) closeBtn.addEventListener('click', close);
     overlay.addEventListener('click', close);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 
@@ -135,18 +180,27 @@ const UI = (() => {
   }
 
   function refreshPendingBadge() {
-    const el = document.getElementById('pending-count');
-    if (!el) return;
     const n = Store.getPending().length;
-    el.textContent = n; el.dataset.zero = n === 0;
+    ['pending-count', 'drawer-pending-count'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = n;
+      el.dataset.zero = String(n === 0);
+    });
   }
 
   function initClock(timeId = 'clock-time', dateId = 'clock-date') {
     const t = document.getElementById(timeId), d = document.getElementById(dateId);
     if (!t) return;
-    const tick = () => { const now = new Date().toISOString(); t.textContent = formatTime(now); if (d) d.textContent = formatDate(now); };
-    tick(); setInterval(tick, 15000);
+    const tick = () => {
+      const now = new Date();
+      t.textContent = formatClock(now);
+      if (d) d.textContent = formatDate(now);
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    window.addEventListener('pagehide', () => clearInterval(timer), { once: true });
   }
 
-  return { formatVND, formatTime, formatDate, toDateKey, getParam, escapeHtml, minutesAgo, toast, showModal, closeModal, initDrawer, refreshPendingBadge, initClock };
+  return { formatVND, formatTime, formatClock, formatDate, toDateKey, getParam, escapeHtml, minutesAgo, toast, showModal, closeModal, initDrawer, refreshPendingBadge, initClock };
 })();

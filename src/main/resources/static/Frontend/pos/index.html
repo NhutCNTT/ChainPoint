@@ -12,48 +12,172 @@
     <link rel="stylesheet" href="css/tables.css">
 </head>
 
-<body>
-    <div class="app-shell">
-        <!-- Trái: hamburger menu -->
-        <aside class="rail rail-left">
-            <button id="btn-hamburger" class="icon-btn" type="button" aria-label="Mở menu">
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                    stroke-linecap="round">
-                    <path d="M4 7h16M4 12h16M4 17h16" />
-                </svg>
-            </button>
-            <div class="brand-mark" title="ChainPoint">CP</div>
-        </aside>
+<body class="pos-screen">
+    <div class="pos-app">
+        <header class="pos-topbar" aria-label="Thanh điều hướng POS">
+            <div class="pos-topbar-left">
+                <button id="btn-hamburger" class="menu-trigger" type="button" aria-label="Mở menu điều hướng">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <path d="M4 7h16M4 12h16M4 17h16" />
+                    </svg>
+                </button>
 
-        <!-- Giữa: chọn bàn -->
-        <main class="main">
-            <header class="page-head">
-                <div>
-                    <h1>Chọn bàn</h1>
-                    <p class="sub">Chạm vào bàn để gọi món hoặc xem lại order</p>
-                </div>
-                <div class="clock"><span id="clock-time">--:--</span><small id="clock-date"></small></div>
-            </header>
+                <a class="pos-brand" href="index.html" aria-label="ChainPoint POS">
+                    <span class="brand-mark">CP</span>
+                    <span class="pos-brand-copy">
+                        <strong>ChainPoint</strong>
+                        <small>POS Thu ngân</small>
+                    </span>
+                </a>
 
-            <section class="glass main-panel" aria-label="Danh sách bàn">
-                <div class="table-toolbar">
-                    <div class="area-tabs" id="area-tabs" role="tablist"></div>
-                    <ul class="legend" aria-label="Chú thích">
-                        <li><i class="dot free"></i>Trống <b id="count-free">0</b></li>
-                        <li><i class="dot busy"></i>Đang dùng <b id="count-busy">0</b></li>
-                        <li><i class="dot pending"></i>Chờ thanh toán <b id="count-pending">0</b></li>
-                    </ul>
+                <span class="topbar-divider" aria-hidden="true"></span>
+
+                <div class="branch-context">
+                    <span class="branch-context-label">Chi nhánh</span>
+                    <strong id="current-branch">Đang tải chi nhánh...</strong>
                 </div>
-                <div class="table-grid" id="table-grid"></div>
+            </div>
+
+            <div class="pos-topbar-right">
+                <a class="topbar-pending" href="pending.html" aria-label="Mở danh sách chờ thanh toán">
+                    <span class="topbar-pending-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" />
+                            <path d="M9 8h6M9 12h6" />
+                        </svg>
+                    </span>
+                    <span class="topbar-pending-copy">
+                        <small>Chờ thanh toán</small>
+                        <strong id="pending-count" data-zero="true">0</strong>
+                    </span>
+                </a>
+
+                <div class="clock-pill" aria-label="Đồng hồ hiện tại">
+                    <span id="clock-time">--:--:--</span>
+                    <small id="clock-date"></small>
+                </div>
+
+                <button id="cashier-profile" class="cashier-chip" type="button" aria-label="Mở hồ sơ thu ngân">
+                    <span id="current-cashier-avatar" class="avatar">T</span>
+                    <span class="cashier-copy">
+                        <strong id="current-cashier">Thu ngân</strong>
+                        <small id="current-cashier-role">Thu ngân POS</small>
+                    </span>
+                </button>
+            </div>
+        </header>
+
+        <main class="pos-main">
+            <section class="pos-hero" aria-labelledby="pos-page-title">
+                <div class="pos-hero-copy">
+                    <span class="eyebrow">Không gian bán hàng</span>
+                    <h1 id="pos-page-title">Chọn bàn</h1>
+                    <p>Chạm vào bàn để gọi món, theo dõi thời gian phục vụ và xử lý thanh toán nhanh.</p>
+                </div>
+                <div class="pos-hero-status">
+                    <span class="live-pill"><i></i>Ca đang hoạt động</span>
+                    <span class="hero-note">Dữ liệu bàn đồng bộ từ MySQL</span>
+                </div>
+            </section>
+
+            <section class="metric-grid" id="status-metrics" aria-label="Thống kê trạng thái bàn">
+                <button class="metric-chip is-active" type="button" data-status-filter="all" aria-pressed="true">
+                    <span class="metric-icon metric-icon-all" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                            <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                            <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                            <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                        </svg>
+                    </span>
+                    <span class="metric-copy"><small>Tất cả</small><strong id="count-all">0</strong></span>
+                </button>
+
+                <button class="metric-chip metric-free" type="button" data-status-filter="free"
+                    aria-pressed="false">
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 7 9 18l-5-5" />
+                        </svg>
+                    </span>
+                    <span class="metric-copy"><small>Trống</small><strong id="count-free">0</strong></span>
+                </button>
+
+                <button class="metric-chip metric-busy" type="button" data-status-filter="busy"
+                    aria-pressed="false">
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="9" cy="8" r="3.5" />
+                            <path d="M2.5 20c1.2-3.2 3.7-4.8 6.5-4.8s5.3 1.6 6.5 4.8" />
+                            <path d="M16 4.5a3.5 3.5 0 0 1 0 7" />
+                            <path d="M18 15.5c1.6.6 2.8 2 3.5 4.5" />
+                        </svg>
+                    </span>
+                    <span class="metric-copy"><small>Đang dùng</small><strong id="count-busy">0</strong></span>
+                </button>
+
+                <button class="metric-chip metric-pending" type="button" data-status-filter="pending"
+                    aria-pressed="false">
+                    <span class="metric-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 3h12v18l-3-2-3 2-3-2-3 2z" />
+                            <path d="M9 8h6M9 12h6" />
+                        </svg>
+                    </span>
+                    <span class="metric-copy"><small>Chờ thanh toán</small><strong id="count-pending">0</strong></span>
+                </button>
+            </section>
+
+            <section class="workspace" aria-label="Danh sách bàn">
+                <div class="workspace-head">
+                    <div>
+                        <h2>Danh sách bàn</h2>
+                        <p id="table-summary">Đang tải dữ liệu bàn...</p>
+                    </div>
+                    <div class="workspace-actions">
+                        <button id="refresh-tables" class="btn btn-quiet" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12a9 9 0 0 1-15.5 6.2L3 16" />
+                                <path d="M3 21v-5h5" />
+                                <path d="M3 12a9 9 0 0 1 15.5-6.2L21 8" />
+                                <path d="M21 3v5h-5" />
+                            </svg>
+                            Làm mới
+                        </button>
+                    </div>
+                </div>
+
+                <div class="workspace-toolbar">
+                    <label class="table-search" for="table-search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="m20 20-3.5-3.5" />
+                        </svg>
+                        <input id="table-search" type="search" placeholder="Tìm số bàn, tên bàn, khu vực..."
+                            autocomplete="off" spellcheck="false">
+                        <kbd>Ctrl /</kbd>
+                        <button id="clear-table-search" class="search-clear" type="button" aria-label="Xóa tìm kiếm"
+                            hidden>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round">
+                                <path d="m6 6 12 12M18 6 6 18" />
+                            </svg>
+                        </button>
+                    </label>
+
+                    <div class="area-tabs" id="area-tabs" role="tablist" aria-label="Chọn khu vực"></div>
+                </div>
+
+                <div class="table-grid" id="table-grid" aria-live="polite"></div>
             </section>
         </main>
-
-        <!-- Phải: điều hướng -->
-        <nav class="rail rail-right" aria-label="Điều hướng chính">
-            <a id="nav-tables" class="nav-btn active" href="index.html"><span class="ico">🍽️</span>Chọn bàn</a>
-            <a id="nav-pending" class="nav-btn" href="pending.html"><span class="ico">🧾</span>Chờ thanh toán<b
-                    id="pending-count" class="nav-badge" data-zero="true">0</b></a>
-        </nav>
     </div>
 
     <script src="js/data.js"></script>
