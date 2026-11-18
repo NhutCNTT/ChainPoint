@@ -28,9 +28,17 @@ public class CheckoutResponse {
 
     private Long pointsEarned;
 
+    private Long pointsBalance;
+
+    private String customerTier;
+
+    private String customerPhone;
+
     private BigDecimal finalAmount;
 
     private String billHash;
+
+    private String blockchainTxHash;
 
     private String status;
 

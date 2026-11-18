@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,6 +41,9 @@ public class CheckoutRequest {
     @NotBlank(message = "Payment method is required")
     @Pattern(regexp = "cash|transfer", message = "Payment method must be cash or transfer")
     private String paymentMethod;
+
+    @Size(max = 64, message = "Idempotency key must not exceed 64 characters")
+    private String idempotencyKey;
 
     @NotEmpty(message = "Checkout must contain at least one item")
     @Valid

@@ -6,6 +6,7 @@ import blockchain.ChainPoint.service.CheckoutService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +22,7 @@ public class PosController {
     private final CheckoutService checkoutService;
 
     @PostMapping("/checkout")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER','ADMIN','STORE_OWNER','BRANCH_MANAGER')")
     public ResponseEntity<CheckoutResponse> checkout(
             @Valid @RequestBody CheckoutRequest request
     ) {

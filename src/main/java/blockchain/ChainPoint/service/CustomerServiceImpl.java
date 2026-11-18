@@ -9,6 +9,8 @@ import blockchain.ChainPoint.exception.ResourceNotFoundException;
 import blockchain.ChainPoint.repository.BranchRepository;
 import blockchain.ChainPoint.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -73,7 +75,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .phone(phone)
                 .dateOfBirth(request.getDateOfBirth())
                 .tier(defaultTier(request.getTier()))
-                .points(defaultPoints(request.getPoints()))
+                .points(canAdjustLoyaltyPoints() ? defaultPoints(request.getPoints()) : 0L)
                 .walletAddress(trimToNull(request.getWalletAddress()))
                 .branch(resolveBranch(request.getBranchId()))
                 .build();
@@ -96,8 +98,8 @@ public class CustomerServiceImpl implements CustomerService {
         customer.setPhone(phone);
         customer.setDateOfBirth(request.getDateOfBirth());
         customer.setTier(defaultTier(request.getTier()));
-        if (request.getPoints() != null) {
-            customer.setPoints(request.getPoints());
+        if (request.getPoints() != null && canAdjustLoyaltyPoints()) {
+            customer.setPoints(Math.max(0L, request.getPoints()));
         }
         customer.setWalletAddress(trimToNull(request.getWalletAddress()));
         customer.setBranch(resolveBranch(request.getBranchId()));
@@ -135,6 +137,16 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return code;
+    }
+
+    private boolean canAdjustLoyaltyPoints() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_OWNER".equals(authority.getAuthority())
+                        || "ROLE_MANAGER".equals(authority.getAuthority()));
     }
 
     private String defaultTier(String tier) {

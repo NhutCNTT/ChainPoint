@@ -65,11 +65,13 @@
         const usedPts = record ? Number(record.pointsUsed || 0) : Number(ptsUsed || 0);
         const discAmount = record ? Number(record.discountVND || 0) : Number(disc || 0);
         const earnedPts = record ? Number(record.pointsEarned || 0) : 0;
-        const finalBalance = Math.max(0, Number(cust.points || 0) - usedPts + earnedPts);
+        const finalBalance = record && record.pointsBalance != null
+          ? Number(record.pointsBalance)
+          : Math.max(0, Number(cust.points || 0) - usedPts + earnedPts);
 
         msg += `
           <div style="margin-top:14px; padding:12px; background:#f0fdf4; border-radius:10px; font-size:13.5px; border:1px solid #bbf7d0; text-align:left; line-height:1.6;">
-            <div style="font-weight:700; color:#166534;">🎁 Tích điểm Bách Hóa Xanh (Database):</div>
+            <div style="font-weight:700; color:#166534;">🎁 Tích điểm ChainPoint (Database):</div>
             <div>• Hội viên: <b>${UI.escapeHtml(cust.name)}</b> (${UI.escapeHtml(cust.phone)})</div>
             ${usedPts > 0 ? `<div>• Điểm đã đổi trừ: <b style="color:#e11d48;">-${usedPts} pts</b> (-${UI.formatVND(discAmount)})</div>` : ''}
             <div>• Điểm mới tích lũy: <b style="color:#16a34a;">+${earnedPts} pts</b></div>

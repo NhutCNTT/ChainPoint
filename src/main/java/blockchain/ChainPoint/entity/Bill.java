@@ -40,6 +40,9 @@ public class Bill {
     @Column(name = "bill_code", nullable = false, unique = true, length = 32)
     private String billCode;
 
+    @Column(name = "idempotency_key", unique = true, length = 64)
+    private String idempotencyKey;
+
     @Column(name = "table_code", nullable = false, length = 20)
     private String tableCode;
 

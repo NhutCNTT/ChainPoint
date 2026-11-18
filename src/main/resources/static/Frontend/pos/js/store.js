@@ -102,8 +102,25 @@ const Store = (() => {
     return null;
   }
 
-  /* ---------- Thanh toán & Đẩy dữ liệu vào MySQL Database ---------- */
+  let inFlightPayment = null;
+
   async function payBill(billId, method, extra = {}) {
+    if (inFlightPayment && inFlightPayment.billId === billId) {
+      return inFlightPayment.promise;
+    }
+
+    const promise = submitBill(billId, method, extra);
+    inFlightPayment = { billId, promise };
+    try {
+      return await promise;
+    } finally {
+      if (inFlightPayment && inFlightPayment.promise === promise) {
+        inFlightPayment = null;
+      }
+    }
+  }
+
+  async function submitBill(billId, method, extra = {}) {
     const bill = getBill(billId);
     if (!bill) return null;
 
@@ -162,6 +179,7 @@ const Store = (() => {
       customerPhone: customerPhone,
       paymentMethod: method === 'transfer' ? 'transfer' : 'cash',
       pointsToUse: extra.pointsUsed ? Number(extra.pointsUsed) : 0,
+      idempotencyKey: billId,
       items: checkoutItems
     };
 
@@ -182,6 +200,8 @@ const Store = (() => {
     record.discountVND = Number(backendBill.discountAmount ?? record.discountVND);
     record.pointsUsed = Number(backendBill.pointsUsed ?? record.pointsUsed);
     record.pointsEarned = Number(backendBill.pointsEarned ?? 0);
+    record.pointsBalance = backendBill.pointsBalance != null ? Number(backendBill.pointsBalance) : null;
+    record.customerTier = backendBill.customerTier || null;
     record.total = Number(backendBill.finalAmount ?? record.total);
     record.billHash = backendBill.billHash;
     record.blockchainTxHash = backendBill.blockchainTxHash;

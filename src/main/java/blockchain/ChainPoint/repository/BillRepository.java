@@ -17,6 +17,8 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
 
     Optional<Bill> findByBillCode(String billCode);
 
+    Optional<Bill> findByIdempotencyKey(String idempotencyKey);
+
     @EntityGraph(attributePaths = {"details", "details.product", "branch"})
     Optional<Bill> findDetailedByBillCode(String billCode);
 

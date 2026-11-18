@@ -5,10 +5,13 @@ import blockchain.ChainPoint.dto.loyalty.LoyaltyTransactionResponse;
 import blockchain.ChainPoint.entity.Bill;
 import blockchain.ChainPoint.entity.Customer;
 import blockchain.ChainPoint.entity.LoyaltyConfig;
+import blockchain.ChainPoint.entity.LoyaltyTransaction;
 import blockchain.ChainPoint.repository.BillRepository;
 import blockchain.ChainPoint.repository.CustomerRepository;
 import blockchain.ChainPoint.repository.LoyaltyConfigRepository;
+import blockchain.ChainPoint.repository.LoyaltyTransactionRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -16,7 +19,9 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +34,7 @@ public class LoyaltyServiceImpl implements LoyaltyService {
     private static final String TYPE_REFUND = "REFUND";
 
     private final LoyaltyConfigRepository loyaltyConfigRepository;
+    private final LoyaltyTransactionRepository loyaltyTransactionRepository;
     private final BillRepository billRepository;
     private final CustomerRepository customerRepository;
 
@@ -73,8 +79,39 @@ public class LoyaltyServiceImpl implements LoyaltyService {
     public List<LoyaltyTransactionResponse> getTransactions(Long branchId) {
         List<Bill> bills = billRepository.searchBills(branchId, null, null, null);
         List<LoyaltyTransactionResponse> transactions = new ArrayList<>();
+        Set<String> ledgerBillCodes = new HashSet<>();
+
+        List<LoyaltyTransaction> ledger = loyaltyTransactionRepository.findAll(
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        for (LoyaltyTransaction entry : ledger) {
+            if (branchId != null
+                    && (entry.getBranch() == null || !branchId.equals(entry.getBranch().getId()))) {
+                continue;
+            }
+
+            ledgerBillCodes.add(entry.getBillCode());
+            transactions.add(LoyaltyTransactionResponse.builder()
+                    .txCode(entry.getTxCode())
+                    .customerId(entry.getCustomerId())
+                    .customerCode(resolveCustomerCode(entry.getCustomerId(), entry.getCustomerPhone()))
+                    .customerName(resolveCustomerName(entry.getCustomerId(), entry.getCustomerPhone()))
+                    .customerPhone(entry.getCustomerPhone())
+                    .type(entry.getType())
+                    .pointsDelta(entry.getPointsDelta())
+                    .balanceAfter(entry.getBalanceAfter())
+                    .billCode(entry.getBillCode())
+                    .cashierUsername(entry.getCashierUsername())
+                    .note(entry.getNote())
+                    .createdAt(entry.getCreatedAt())
+                    .build());
+        }
 
         for (Bill bill : bills) {
+            if (ledgerBillCodes.contains(bill.getBillCode())) {
+                continue;
+            }
+
             Customer customer = StringUtils.hasText(bill.getCustomerPhone())
                     ? customerRepository.findByPhone(bill.getCustomerPhone()).orElse(null)
                     : null;
@@ -159,6 +196,24 @@ public class LoyaltyServiceImpl implements LoyaltyService {
                 .note(note)
                 .createdAt(bill.getCreatedAt())
                 .build();
+    }
+
+    private String resolveCustomerCode(Long customerId, String phone) {
+        if (customerId == null) {
+            return null;
+        }
+        return customerRepository.findById(customerId)
+                .map(Customer::getCode)
+                .orElse(phone);
+    }
+
+    private String resolveCustomerName(Long customerId, String phone) {
+        if (customerId == null) {
+            return StringUtils.hasText(phone) ? phone : "Khách vãng lai";
+        }
+        return customerRepository.findById(customerId)
+                .map(Customer::getName)
+                .orElse(StringUtils.hasText(phone) ? phone : "Khách vãng lai");
     }
 
     private String formatVnd(BigDecimal amount) {

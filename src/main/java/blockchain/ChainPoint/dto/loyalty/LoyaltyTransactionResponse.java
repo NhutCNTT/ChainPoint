@@ -29,6 +29,8 @@ public class LoyaltyTransactionResponse {
 
     private Long pointsDelta;
 
+    private Long balanceAfter;
+
     private String billCode;
 
     private String cashierUsername;

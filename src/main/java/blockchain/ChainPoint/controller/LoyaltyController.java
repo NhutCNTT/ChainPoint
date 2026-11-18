@@ -25,6 +25,7 @@ public class LoyaltyController {
     private final LoyaltyService loyaltyService;
 
     @GetMapping("/config")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER','ADMIN','STORE_OWNER','BRANCH_MANAGER')")
     public ResponseEntity<LoyaltyConfigDto> getConfig() {
         return ResponseEntity.ok(loyaltyService.getConfig());
     }
@@ -38,6 +39,7 @@ public class LoyaltyController {
     }
 
     @GetMapping("/transactions")
+    @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER','ADMIN','STORE_OWNER','BRANCH_MANAGER')")
     public ResponseEntity<List<LoyaltyTransactionResponse>> getTransactions(
             @RequestParam(required = false) Long branchId
     ) {

@@ -10,6 +10,7 @@ import blockchain.ChainPoint.entity.BillDetail;
 import blockchain.ChainPoint.entity.Customer;
 import blockchain.ChainPoint.entity.DiningTable;
 import blockchain.ChainPoint.entity.LoyaltyConfig;
+import blockchain.ChainPoint.entity.LoyaltyTransaction;
 import blockchain.ChainPoint.entity.Product;
 import blockchain.ChainPoint.event.CheckoutWeb3Event;
 import blockchain.ChainPoint.exception.InsufficientStockException;
@@ -20,7 +21,9 @@ import blockchain.ChainPoint.repository.BranchRepository;
 import blockchain.ChainPoint.repository.CustomerRepository;
 import blockchain.ChainPoint.repository.DiningTableRepository;
 import blockchain.ChainPoint.repository.LoyaltyConfigRepository;
+import blockchain.ChainPoint.repository.LoyaltyTransactionRepository;
 import blockchain.ChainPoint.repository.ProductRepository;
+import blockchain.ChainPoint.security.CustomUserDetails;
 import blockchain.ChainPoint.util.HashUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +54,10 @@ public class CheckoutServiceImpl implements CheckoutService {
     private static final int DEFAULT_MAX_DISCOUNT_PERCENT = 50;
     private static final long LOYALTY_CONFIG_ID = 1L;
     private static final String BILL_STATUS_PAID = "paid";
+    private static final String TX_TYPE_REDEEM = "REDEEM";
+    private static final String TX_TYPE_EARN = "EARN";
+    private static final String ROLE_MANAGER = "ROLE_MANAGER";
+    private static final String ROLE_CASHIER = "ROLE_CASHIER";
     private static final String TABLE_STATUS_DISABLED = "disabled";
     private static final String PRODUCT_STATUS_OUT_OF_STOCK = "out_of_stock";
     private static final String TIER_SILVER = "Bạc";
@@ -65,13 +72,28 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final CustomerRepository customerRepository;
     private final BillRepository billRepository;
     private final LoyaltyConfigRepository loyaltyConfigRepository;
+    private final LoyaltyTransactionRepository loyaltyTransactionRepository;
     private final RabbitTemplate rabbitTemplate;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = "products", allEntries = true)
     public CheckoutResponse processCheckout(CheckoutRequest request) {
-        Branch branch = findBranch(request.getBranchId());
+        String idempotencyKey = StringUtils.hasText(request.getIdempotencyKey())
+                ? request.getIdempotencyKey().trim()
+                : null;
+
+        if (idempotencyKey != null) {
+            Bill existingBill = billRepository.findByIdempotencyKey(idempotencyKey).orElse(null);
+            if (existingBill != null) {
+                Customer existingCustomer = StringUtils.hasText(existingBill.getCustomerPhone())
+                        ? customerRepository.findByPhone(existingBill.getCustomerPhone()).orElse(null)
+                        : null;
+                return toResponse(existingBill, existingCustomer);
+            }
+        }
+
+        Branch branch = resolveBranch(request.getBranchId());
         validateTable(request.getTableCode(), branch.getId());
 
         Map<Long, Integer> quantitiesByProduct = aggregateQuantities(request.getItems());
@@ -122,6 +144,12 @@ public class CheckoutServiceImpl implements CheckoutService {
         Customer customer = customerPhone != null
                 ? customerRepository.findByPhone(customerPhone).orElse(null)
                 : null;
+        if (customer != null) {
+            customer = customerRepository.findByIdForUpdate(customer.getId()).orElse(customer);
+        }
+
+        String billCode = "HD" + System.currentTimeMillis();
+        LocalDateTime checkoutTime = LocalDateTime.now();
 
         LoyaltyConfig loyaltyConfig = loadLoyaltyConfig();
         long pointValueVnd = positiveOrDefault(
@@ -201,7 +229,9 @@ public class CheckoutServiceImpl implements CheckoutService {
 
         if (customer != null) {
             long currentPoints = customer.getPoints() != null ? customer.getPoints() : 0L;
-            customer.setPoints(Math.max(0L, currentPoints - pointsToUse + pointsEarned));
+            long balanceAfterRedeem = Math.max(0L, currentPoints - pointsToUse);
+            long balanceAfterEarn = Math.max(0L, balanceAfterRedeem + pointsEarned);
+            customer.setPoints(balanceAfterEarn);
 
             BigDecimal currentTotalSpent = customer.getTotalSpent() != null
                     ? customer.getTotalSpent()
@@ -213,10 +243,18 @@ public class CheckoutServiceImpl implements CheckoutService {
             customer.setTier(resolveTier(newTotalSpent));
 
             customerRepository.save(customer);
+            recordLoyaltyTransactions(
+                    customer,
+                    branch,
+                    billCode,
+                    resolveCashier(request.getCashierUsername()),
+                    pointsToUse,
+                    pointsEarned,
+                    balanceAfterRedeem,
+                    balanceAfterEarn
+            );
         }
 
-        String billCode = "HD" + System.currentTimeMillis();
-        LocalDateTime checkoutTime = LocalDateTime.now();
         String preliminaryBillHash = HashUtil.generateBillHash(
                 billCode,
                 branch.getId(),
@@ -226,6 +264,7 @@ public class CheckoutServiceImpl implements CheckoutService {
 
         Bill bill = Bill.builder()
                 .billCode(billCode)
+                .idempotencyKey(idempotencyKey)
                 .tableCode(request.getTableCode())
                 .cashierUsername(resolveCashier(request.getCashierUsername()))
                 .customerPhone(customerPhone)
@@ -295,7 +334,75 @@ public class CheckoutServiceImpl implements CheckoutService {
             );
         }
 
-        return toResponse(savedBill);
+        return toResponse(savedBill, customer);
+    }
+
+    private void recordLoyaltyTransactions(
+            Customer customer,
+            Branch branch,
+            String billCode,
+            String cashierUsername,
+            long pointsToUse,
+            long pointsEarned,
+            long balanceAfterRedeem,
+            long balanceAfterEarn
+    ) {
+        List<LoyaltyTransaction> transactions = new ArrayList<>();
+
+        if (pointsToUse > 0) {
+            transactions.add(LoyaltyTransaction.builder()
+                    .txCode("LT-" + billCode + "-REDEEM")
+                    .customerId(customer.getId())
+                    .customerPhone(customer.getPhone())
+                    .type(TX_TYPE_REDEEM)
+                    .pointsDelta(-pointsToUse)
+                    .balanceAfter(balanceAfterRedeem)
+                    .billCode(billCode)
+                    .cashierUsername(cashierUsername)
+                    .note("Đổi điểm giảm giá hóa đơn " + billCode)
+                    .branch(branch)
+                    .build());
+        }
+
+        if (pointsEarned > 0) {
+            transactions.add(LoyaltyTransaction.builder()
+                    .txCode("LT-" + billCode + "-EARN")
+                    .customerId(customer.getId())
+                    .customerPhone(customer.getPhone())
+                    .type(TX_TYPE_EARN)
+                    .pointsDelta(pointsEarned)
+                    .balanceAfter(balanceAfterEarn)
+                    .billCode(billCode)
+                    .cashierUsername(cashierUsername)
+                    .note("Tích điểm từ hóa đơn " + billCode)
+                    .branch(branch)
+                    .build());
+        }
+
+        if (!transactions.isEmpty()) {
+            loyaltyTransactionRepository.saveAll(transactions);
+        }
+    }
+
+    private Branch resolveBranch(Long requestedBranchId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null
+                && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+            boolean branchBound = authentication.getAuthorities().stream()
+                    .anyMatch(authority -> ROLE_MANAGER.equals(authority.getAuthority())
+                            || ROLE_CASHIER.equals(authority.getAuthority()));
+            Long assignedBranchId = userDetails.getBranchId();
+
+            if (branchBound && assignedBranchId != null) {
+                return branchRepository.findById(assignedBranchId)
+                        .orElseThrow(() -> new ResourceNotFoundException(
+                                "Branch not found for current user: " + assignedBranchId
+                        ));
+            }
+        }
+
+        return findBranch(requestedBranchId);
     }
 
     private LoyaltyConfig loadLoyaltyConfig() {
@@ -375,6 +482,13 @@ public class CheckoutServiceImpl implements CheckoutService {
     }
 
     private CheckoutResponse toResponse(Bill bill) {
+        Customer customer = StringUtils.hasText(bill.getCustomerPhone())
+                ? customerRepository.findByPhone(bill.getCustomerPhone()).orElse(null)
+                : null;
+        return toResponse(bill, customer);
+    }
+
+    private CheckoutResponse toResponse(Bill bill, Customer customer) {
         return CheckoutResponse.builder()
                 .billCode(bill.getBillCode())
                 .tableCode(bill.getTableCode())
@@ -382,8 +496,12 @@ public class CheckoutServiceImpl implements CheckoutService {
                 .discountAmount(bill.getDiscountAmount())
                 .pointsUsed(bill.getPointsUsed())
                 .pointsEarned(bill.getPointsEarned())
+                .pointsBalance(customer != null && customer.getPoints() != null ? customer.getPoints() : 0L)
+                .customerTier(customer != null ? customer.getTier() : null)
+                .customerPhone(bill.getCustomerPhone())
                 .finalAmount(bill.getFinalAmount())
                 .billHash(bill.getBillHash())
+                .blockchainTxHash(bill.getBlockchainTxHash())
                 .status(bill.getStatus())
                 .createdAt(bill.getCreatedAt())
                 .build();
