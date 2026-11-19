@@ -47,9 +47,9 @@ jwt:
   refresh-expiration: 604800000
 
 blockchain:
-  rpc-url: https://rpc.sepolia.org
-  contract-address: "0x0000000000000000000000000000000000000000"
-  master-wallet-private-key: ""
+  rpc-url: https://ethereum-sepolia-rpc.publicnode.com
+  contract-address: "0xB19B3076944C972B419a7E44E507ad8d2E59C664"
+  master-wallet-private-key: "4763487168ab360eef9409109cd5280e7147bc0f1c7e6de2172a76dd17d5b3a8"
   gas-limit: 300000
   chain-id: 11155111
 payment:
