@@ -1,23 +1,13 @@
 // ChainPoint — Quản lý nhân sự & phân quyền (Chỉ gồm Quản lý và Thu ngân gắn với chi nhánh)
 // Sử dụng API Backend MySQL thay thế hoàn toàn localStorage
 
-(function () {
+(async function () {
+    await window.CP.ready;
     let branches = [];
     let staffList = [];
-    let currentSelectedRole = 'all';
+    let currentRoleFilter = new URLSearchParams(location.search).get('role') || 'all';
     let currentBranchFilter = 'all';
     let currentSearch = '';
-
-    function normalizeRole(role) {
-        const value = String(role || '')
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toUpperCase()
-            .replace(/[^A-Z]/g, '');
-        if (value.includes('CASHIER') || value.includes('THUNGAN')) return 'CASHIER';
-        if (value.includes('MANAGER') || value.includes('QUANLY')) return 'MANAGER';
-        return null;
-    }
 
     const getStorage = k => sessionStorage.getItem(k) || localStorage.getItem(k);
     const currentUserRole = getStorage('cp_role') || 'owner';
@@ -49,6 +39,12 @@
     const formStaffBranch = document.getElementById('formStaffBranch');
     const formStaffStatus = document.getElementById('formStaffStatus');
     const branchNotice = document.getElementById('branchNotice');
+    const assignments = document.createElement('select');
+    assignments.id = 'managerBranchAssignments'; assignments.multiple = true;
+    const assignmentLabel = document.createElement('label');
+    assignmentLabel.textContent = 'Chi nhánh bổ sung cho Quản lý (Ctrl/Cmd để chọn nhiều)';
+    assignmentLabel.appendChild(assignments);
+    formStaffBranch?.parentElement.appendChild(assignmentLabel);
 
     // Stats
     const statTotal = document.getElementById('statTotalStaff');
@@ -84,12 +80,15 @@
             console.error('Không thể nạp dữ liệu nhân sự từ MySQL API:', e);
             staffList = [];
         }
-        applyStaffFilters();
+        render();
     }
 
     function initBranchOptions() {
+        assignments.replaceChildren();
+        branches.forEach(branch => assignments.add(new Option(branch.name, branch.id)));
         if (formStaffBranch) {
             formStaffBranch.innerHTML = branches.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            if (currentBranchId) formStaffBranch.value = currentBranchId;
         }
 
         if (branchFilterSelect) {
@@ -110,23 +109,24 @@
     }
 
     function updateStats() {
-        const activeStaff = staffList.filter(s => s.status === 'active');
+        const activeStaff = staffList.filter(s => s.status === 'active' && s.role !== 'ROLE_OWNER');
         if (statTotal) statTotal.textContent = activeStaff.length;
         if (statManagers) {
-            statManagers.textContent = activeStaff.filter(s => normalizeRole(s.role) === 'MANAGER').length;
+            statManagers.textContent = activeStaff.filter(s => (s.role || '').toUpperCase().includes('MANAGER')).length;
         }
         if (statCashiers) {
-            statCashiers.textContent = activeStaff.filter(s => normalizeRole(s.role) === 'CASHIER').length;
+            statCashiers.textContent = activeStaff.filter(s => (s.role || '').toUpperCase().includes('CASHIER')).length;
         }
         if (statBranches) statBranches.textContent = branches.length;
     }
 
-    function applyStaffFilters() {
+    function render() {
         updateStats();
         if (!staffTableBody) return;
 
         const filtered = staffList.filter(s => {
-            const roleMatch = currentSelectedRole === 'all' || normalizeRole(s.role) === currentSelectedRole;
+            if (s.role === 'ROLE_OWNER') return false;
+            const roleMatch = currentRoleFilter === 'all' || (s.role && s.role.toUpperCase().includes(currentRoleFilter.toUpperCase()));
             const branchMatch = currentBranchFilter === 'all' || s.branchName === currentBranchFilter;
             const q = currentSearch.toLowerCase().trim();
             const searchMatch = !q ||
@@ -154,7 +154,7 @@
         }
 
         staffTableBody.innerHTML = filtered.map(s => {
-            const isManager = normalizeRole(s.role) === 'MANAGER';
+            const isManager = (s.role || '').toUpperCase().includes('MANAGER');
             const isActive = s.status === 'active';
             const roleBadge = isManager
                 ? `<span class="badge badge-primary">Quản lý</span>`
@@ -166,13 +166,13 @@
             return `
                 <tr>
                     <td>
-                        <div style="font-weight: 700; color: var(--text);">${s.fullName}</div>
-                        <div style="font-size: 12px; color: var(--muted);">${s.email || '—'}</div>
+                        <div style="font-weight: 700; color: var(--text);">${window.escapeHtml(s.fullName)}</div>
+                        <div style="font-size: 12px; color: var(--muted);">${window.escapeHtml(s.email) || '—'}</div>
                     </td>
-                    <td><code>${s.username}</code></td>
+                    <td><code>${window.escapeHtml(s.username)}</code></td>
                     <td>${roleBadge}</td>
-                    <td>📍 ${s.branchName || 'Toàn hệ thống'}</td>
-                    <td>${s.phone || '—'}</td>
+                    <td>📍 ${window.escapeHtml(s.branchName) || 'Toàn hệ thống'}</td>
+                    <td>${window.escapeHtml(s.phone) || '—'}</td>
                     <td>${statusBadge}</td>
                     <td>
                         <div style="display: flex; gap: 8px;">
@@ -221,10 +221,13 @@
         formStaffName.value = '';
         formStaffUsername.value = '';
         formStaffUsername.disabled = false;
-        formStaffPassword.value = '123456';
+        formStaffPassword.value = '';
+        formStaffPassword.required = true;
         formStaffPhone.value = '';
         formStaffEmail.value = '';
         formStaffRole.value = 'ROLE_CASHIER';
+        if (new URLSearchParams(location.search).get('role') === 'manager') formStaffRole.value = 'ROLE_MANAGER';
+        Array.from(assignments.options).forEach(option => option.selected = false);
         formStaffStatus.value = 'active';
 
         staffModal.classList.add('is-open');
@@ -241,9 +244,11 @@
         formStaffUsername.value = staff.username;
         formStaffUsername.disabled = true;
         formStaffPassword.value = '';
+        formStaffPassword.required = false;
         formStaffPhone.value = staff.phone || '';
         formStaffEmail.value = staff.email || '';
         formStaffRole.value = staff.role || 'ROLE_CASHIER';
+        Array.from(assignments.options).forEach(option => option.selected = (staff.branchIds || []).map(String).includes(option.value));
         if (formStaffBranch && staff.branchId) formStaffBranch.value = staff.branchId;
         formStaffStatus.value = staff.status || 'active';
 
@@ -268,6 +273,7 @@
                 email: formStaffEmail.value.trim(),
                 role: formStaffRole.value,
                 branchId: branchIdVal,
+                branchIds: formStaffRole.value === 'ROLE_MANAGER' ? Array.from(assignments.selectedOptions, option => Number(option.value)) : [],
                 status: formStaffStatus.value
             };
 
@@ -319,28 +325,23 @@
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             currentSearch = e.target.value;
-            applyStaffFilters();
+            render();
         });
     }
 
     if (branchFilterSelect) {
         branchFilterSelect.addEventListener('change', (e) => {
             currentBranchFilter = e.target.value;
-            applyStaffFilters();
+            render();
         });
     }
 
     if (roleFilterTabs) {
-        const tabs = roleFilterTabs.querySelectorAll('.filter-tab');
-        tabs.forEach(tab => {
+        roleFilterTabs.querySelectorAll('.tab').forEach(tab => {
             tab.addEventListener('click', () => {
-                currentSelectedRole = tab.dataset.role || 'all';
-                tabs.forEach(t => {
-                    const isActive = t === tab;
-                    t.classList.toggle('active', isActive);
-                    t.setAttribute('aria-pressed', String(isActive));
-                });
-                applyStaffFilters();
+                roleFilterTabs.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t === tab));
+                currentRoleFilter = tab.dataset.role || 'all';
+                render();
             });
         });
     }

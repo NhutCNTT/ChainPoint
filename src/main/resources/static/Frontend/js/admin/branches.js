@@ -1,7 +1,8 @@
 // ChainPoint — Quản lý chuỗi chi nhánh (Dành cho Owner)
 // Sử dụng API Backend MySQL thay thế hoàn toàn localStorage
 
-(function () {
+(async function () {
+    await window.CP.ready;
     let branches = [];
     let currentSearch = '';
 
@@ -18,6 +19,10 @@
     const formBranchAddress = document.getElementById('formBranchAddress');
     const formBranchPhone = document.getElementById('formBranchPhone');
     const formBranchManager = document.getElementById('formBranchManager');
+    formBranchManager.readOnly = true;
+    const managerSelect = document.createElement('select'); managerSelect.id = 'assignBranchManager';
+    const managerLabel = document.createElement('label'); managerLabel.textContent = 'Phân công thêm Quản lý hiện có';
+    managerLabel.appendChild(managerSelect); formBranchManager.parentElement.appendChild(managerLabel);
     const formBranchHours = document.getElementById('formBranchHours');
     const formBranchStatus = document.getElementById('formBranchStatus');
 
@@ -29,6 +34,9 @@
 
     async function loadBranches() {
         try {
+            const managers = (await API.get('/staff')).filter(user => user.role === 'ROLE_MANAGER' && user.status === 'active');
+            managerSelect.replaceChildren(new Option('Giữ phân công hiện tại', ''));
+            managers.forEach(manager => managerSelect.add(new Option(manager.fullName + ' · ' + manager.username, manager.id)));
             if (window.API) {
                 branches = await window.API.get('/branches');
             } else {
@@ -89,9 +97,9 @@
                 <div class="table-card" style="padding: 24px;">
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
                         <div>
-                            <span class="badge badge-primary" style="font-size: 11px; margin-bottom: 6px;">${b.code || ''}</span>
-                            <h3 style="font-size: 18px; font-weight: 800; color: var(--text);">${b.name || ''}</h3>
-                            <p style="font-size: 13px; color: var(--muted); margin-top: 4px;">📍 ${b.address || ''}</p>
+                            <span class="badge badge-primary" style="font-size: 11px; margin-bottom: 6px;">${window.escapeHtml(b.code) || ''}</span>
+                            <h3 style="font-size: 18px; font-weight: 800; color: var(--text);">${window.escapeHtml(b.name) || ''}</h3>
+                            <p style="font-size: 13px; color: var(--muted); margin-top: 4px;">📍 ${window.escapeHtml(b.address) || ''}</p>
                         </div>
                         <span class="badge ${isOpen ? 'badge-success' : 'badge-neutral'}">
                             ${isOpen ? '● Đang mở cửa' : '⏸ Tạm đóng'}
@@ -101,11 +109,11 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8fafc; border-radius: 12px; padding: 14px; margin: 8px 0 16px;">
                         <div>
                             <small style="color: var(--muted); font-size: 12px;">Quản lý cơ sở</small>
-                            <div style="font-weight: 700; font-size: 13.5px; color: var(--text); margin-top: 2px;">👤 ${b.managerName || 'Chưa chỉ định'}</div>
+                            <div style="font-weight: 700; font-size: 13.5px; color: var(--text); margin-top: 2px;">👤 ${window.escapeHtml(b.managerName || 'Chưa chỉ định')}</div>
                         </div>
                         <div>
                             <small style="color: var(--muted); font-size: 12px;">Hotline</small>
-                            <div style="font-weight: 700; font-size: 13.5px; color: var(--text); margin-top: 2px;">📞 ${b.phone || '—'}</div>
+                            <div style="font-weight: 700; font-size: 13.5px; color: var(--text); margin-top: 2px;">📞 ${window.escapeHtml(b.phone || '—')}</div>
                         </div>
                         <div>
                             <small style="color: var(--muted); font-size: 12px;">Quy mô</small>
@@ -118,12 +126,12 @@
                     </div>
 
                     <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 16px;">
-                        <span>⏰ Giờ mở cửa: <strong>${b.openHours || '08:00 - 22:00'}</strong></span>
+                        <span>⏰ Giờ mở cửa: <strong>${window.escapeHtml(b.openHours || '08:00 - 22:00')}</strong></span>
                         <a href="dashboard.html?branchId=${b.id}&branch=${encodeURIComponent(b.name)}" style="color: var(--primary); font-weight: 700; text-decoration: none;">Xem Dashboard →</a>
                     </div>
 
                     <div class="table-card-actions">
-                        <button class="btn-primary btn-switch-branch" data-id="${b.id}" data-name="${b.name}" style="padding: 7px 14px; font-size: 12.5px;" type="button">
+                        <button class="btn-primary btn-switch-branch" data-id="${b.id}" data-name="${window.escapeHtml(b.name)}" style="padding: 7px 14px; font-size: 12.5px;" type="button">
                             Vào quản trị
                         </button>
                         <button class="action-icon-btn btn-edit-branch" data-id="${b.id}" title="Chỉnh sửa thông tin" type="button">
@@ -160,6 +168,7 @@
     }
 
     function openAddModal() {
+        managerSelect.value = '';
         editingBranchId.value = '';
         branchModalTitle.textContent = 'Tạo chi nhánh mới';
         formBranchCode.value = 'CN-' + (branches.length + 1);
@@ -175,11 +184,12 @@
     }
 
     function openEditModal(id) {
+        managerSelect.value = '';
         const b = branches.find(x => String(x.id) === String(id));
         if (!b) return;
 
         editingBranchId.value = b.id;
-        branchModalTitle.textContent = `Chỉnh sửa: ${b.name}`;
+        branchModalTitle.textContent = `Chỉnh sửa: ${window.escapeHtml(b.name)}`;
         formBranchCode.value = b.code || '';
         formBranchName.value = b.name || '';
         formBranchAddress.value = b.address || '';
@@ -205,6 +215,7 @@
                 address: formBranchAddress.value.trim(),
                 phone: formBranchPhone.value.trim(),
                 managerName: formBranchManager.value.trim(),
+                managerId: managerSelect.value ? Number(managerSelect.value) : null,
                 openHours: formBranchHours.value.trim(),
                 status: formBranchStatus.value,
                 vatPercent: 8.0

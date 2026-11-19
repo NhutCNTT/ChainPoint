@@ -28,18 +28,40 @@ public class AuthController {
     private final AuthService authService;
     private final BranchService branchService;
 
-    @GetMapping("/branches")
-    public ResponseEntity<List<BranchResponse>> getLoginBranches() {
-        return ResponseEntity.ok(branchService.getAllBranches());
+    @org.springframework.beans.factory.annotation.Value("${jwt.expiration}")
+    private long pageCookieExpiration;
+
+    @GetMapping("/me")
+    public ResponseEntity<LoginResponse> me(org.springframework.security.core.Authentication authentication) {
+        var user = ((blockchain.ChainPoint.security.CustomUserDetails) authentication.getPrincipal()).getUser();
+        return ResponseEntity.ok(authService.toLoginResponse(user));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request, jakarta.servlet.http.HttpServletRequest servletRequest,
+                                              jakarta.servlet.http.HttpServletResponse response) {
+        LoginResponse result = authService.login(request);
+        setPageCookie(result.getAccessToken(), servletRequest.isSecure(), response);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(jakarta.servlet.http.HttpServletRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        response.addHeader("Set-Cookie", org.springframework.http.ResponseCookie.from("cp_page", "")
+                .httpOnly(true).secure(request.isSecure()).sameSite("Strict").path("/").maxAge(0).build().toString());
+        return ResponseEntity.noContent().build();
+    }
+
+    private void setPageCookie(String token, boolean secure, jakarta.servlet.http.HttpServletResponse response) {
+        response.addHeader("Set-Cookie", org.springframework.http.ResponseCookie.from("cp_page", token)
+                .httpOnly(true).secure(secure).sameSite("Strict").path("/").maxAge(pageCookieExpiration / 1000).build().toString());
     }
 
     @PostMapping("/register")
-    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request, jakarta.servlet.http.HttpServletRequest servletRequest,
+                                                 jakarta.servlet.http.HttpServletResponse response) {
+        LoginResponse result = authService.register(request);
+        setPageCookie(result.getAccessToken(), servletRequest.isSecure(), response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 }

@@ -53,6 +53,10 @@ public class Branch {
     private String openHours;
 
     @Builder.Default
+    @Column(name = "auto_print", nullable = false)
+    private Boolean autoPrint = false;
+
+    @Builder.Default
     @Column(name = "vat_percent", precision = 5, scale = 2)
     private BigDecimal vatPercent = BigDecimal.valueOf(8);
 

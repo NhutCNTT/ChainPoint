@@ -72,6 +72,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return authorization.substring(BEARER_PREFIX.length());
         }
 
+        // Cookie authentication is limited to safe page navigation. APIs always require Bearer auth.
+        if ("GET".equals(request.getMethod()) && request.getRequestURI().endsWith(".html") && request.getCookies() != null) {
+            for (var cookie : request.getCookies()) if ("cp_page".equals(cookie.getName())) return cookie.getValue();
+        }
+
         return null;
     }
 }

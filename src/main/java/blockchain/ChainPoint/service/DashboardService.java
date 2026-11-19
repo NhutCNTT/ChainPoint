@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface DashboardService {
 
-    DashboardMetricsResponse getMetrics(Long branchId, String range);
+    DashboardMetricsResponse getMetrics(Long branchId, String range, java.time.LocalDate from, java.time.LocalDate to);
 
     RevenueChartResponse getWeeklyRevenueChart(Long branchId);
 

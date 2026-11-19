@@ -1,15 +1,17 @@
 // ChainPoint — Quản lý Khách hàng Chi nhánh (Tích hợp LoyaltyStore)
 // Used by: pages/branch/customers.html
 
-(function () {
+(async function () {
+    await window.CP.ready;
     const currentBranch = sessionStorage.getItem('cp_branch') || localStorage.getItem('cp_branch') || '';
-    let searchQuery = '';
+    let searchQuery = new URLSearchParams(location.search).get('q') || '';
 
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
     const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
     const tbody = document.getElementById('customersTableBody');
     const searchInput = document.getElementById('customerSearchInput');
+    if (searchInput) searchInput.value = searchQuery;
     const modal = document.getElementById('customerModal');
     const form = document.getElementById('customerForm');
     const modalTitle = document.getElementById('customerModalTitle');
@@ -217,6 +219,7 @@
             const points = parseInt(document.getElementById('custPoints').value, 10) || 0;
             const tier = document.getElementById('custTier').value;
 
+            try {
             const saved = await LoyaltyStore.saveCustomer({
                 id,
                 realId: id && !isNaN(Number(id)) ? Number(id) : null,
@@ -236,6 +239,7 @@
             updateStats();
             renderCustomers();
             closeCustomerModal();
+            } catch (error) { CP.notify(error.message); }
         };
     }
 

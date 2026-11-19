@@ -56,6 +56,10 @@ public class Product {
     @Column(name = "emoji", length = 16)
     private String emoji;
 
+    @jakarta.persistence.ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @jakarta.persistence.JoinColumn(name = "branch_id")
+    private Branch branch;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

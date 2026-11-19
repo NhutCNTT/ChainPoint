@@ -1,12 +1,25 @@
 // ChainPoint — Báo cáo Doanh thu Chi nhánh
 // Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn mock data
 
-(function () {
+(async function () {
+    await window.CP.ready;
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
+    const filters = document.createElement('form'); filters.className = 'panel';
+    filters.style.cssText = 'display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:16px';
+    filters.innerHTML = '<label>Từ <input id="reportFrom" type="date"></label><label>Đến <input id="reportTo" type="date"></label><button class="btn-primary" type="submit">Lọc báo cáo</button><button class="btn-secondary" id="printRevenueReport" type="button">In báo cáo</button>';
+    document.querySelector('.topbar').after(filters);
+    document.getElementById('printRevenueReport').onclick = () => window.print();
+    filters.onsubmit = event => { event.preventDefault(); loadRevenueReport(); };
 
     async function loadRevenueReport() {
         const branchId = sessionStorage.getItem('cp_branch_id') || '';
-        const endpoint = branchId ? `/orders?branchId=${branchId}` : '/orders';
+        const params = new URLSearchParams();
+        if (branchId) params.set('branchId', branchId);
+        const from = document.getElementById('reportFrom').value, to = document.getElementById('reportTo').value;
+        if (from && to && from > to) return CP.notify('Ngày bắt đầu phải trước ngày kết thúc.');
+        if (from) params.set('from', from + 'T00:00:00');
+        if (to) params.set('to', to + 'T23:59:59.999999');
+        const endpoint = '/orders?' + params;
 
         let history = [];
         try {
@@ -33,7 +46,7 @@
 
         const itemSales = {};
 
-        history.forEach(h => {
+        history.filter(h => h.status === 'paid').forEach(h => {
             const paid = Number(h.finalAmount || h.paidAmount || h.grossAmount || 0);
             const discount = Number(h.discountAmount || 0);
 
@@ -116,7 +129,7 @@
                     return `
                         <tr>
                             <td style="padding:10px 8px;"><strong>#${idx + 1}</strong></td>
-                            <td style="padding:10px 8px; font-weight:600;">${name}</td>
+                            <td style="padding:10px 8px; font-weight:600;">${window.escapeHtml(name)}</td>
                             <td style="padding:10px 8px; color:var(--muted);">${priceDisplay}</td>
                             <td style="padding:10px 8px;"><span class="badge badge-primary">${data.qty} suất</span></td>
                             <td style="padding:10px 8px; text-align:right; font-weight:700; color:var(--text);">${formatVND(data.revenue)}</td>

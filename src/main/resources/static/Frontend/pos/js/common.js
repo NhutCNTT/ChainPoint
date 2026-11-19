@@ -90,7 +90,7 @@ const UI = (() => {
     const isOwner = role === 'owner';
     const isManager = role === 'manager';
     const canAccessAdmin = isOwner || isManager;
-    const returnDashboardUrl = '../pages/admin/dashboard.html';
+    const returnDashboardUrl = role === 'owner' ? '../pages/owner/dashboard.html' : '../pages/branch/dashboard.html';
     const pendingCount = typeof Store !== 'undefined' && Store.getPending ? Store.getPending().length : 0;
 
     drawer.innerHTML = `
@@ -122,10 +122,10 @@ const UI = (() => {
         <a id="menu-tables" class="drawer-link ${activeKey === 'tables' ? 'active' : ''}" href="index.html"><span class="ico">🍽️</span><span class="drawer-label">Chọn bàn / Gọi món</span></a>
         <a id="menu-pending" class="drawer-link ${activeKey === 'pending' ? 'active' : ''}" href="pending.html"><span class="ico">💳</span><span class="drawer-label">Chờ thanh toán</span><b id="drawer-pending-count" class="drawer-badge" data-zero="${pendingCount === 0}">${pendingCount}</b></a>
         <a id="menu-history" class="drawer-link ${activeKey === 'history' ? 'active' : ''}" href="history.html"><span class="ico">🧾</span><span class="drawer-label">Lịch sử hóa đơn</span></a>
-        <a id="menu-orders" class="drawer-link" href="../pages/branch/orders.html"><span class="ico">🏬</span><span class="drawer-label">Đơn hàng chi nhánh</span></a>
+        <a id="menu-orders" class="drawer-link" href="../pages/employee/orders.html"><span class="ico">🏬</span><span class="drawer-label">Đơn hàng chi nhánh</span></a>
 
         <div class="drawer-section-label">Tiện ích</div>
-        <button id="menu-reset" class="drawer-link" type="button"><span class="ico">♻️</span><span class="drawer-label">Đặt lại dữ liệu demo</span></button>
+        <a class="drawer-link" href="../pages/employee/customers.html">Khách hàng</a><a class="drawer-link" href="../pages/employee/profile.html">Hồ sơ</a>
       </div>
 
       <div class="drawer-footer">
@@ -162,14 +162,9 @@ const UI = (() => {
     overlay.addEventListener('click', close);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
 
-    drawer.querySelector('#menu-reset').addEventListener('click', () => {
-      showModal({ icon: '♻️', tone: 'warn', title: 'Đặt lại dữ liệu demo?', message: 'Toàn bộ bàn, bill chờ và lịch sử sẽ trở về dữ liệu mẫu ban đầu.',
-        actions: [{ label: 'Hủy' }, { label: 'Đặt lại', cls: 'btn-danger', onClick: () => Store.reset() }] });
-    });
-
     const logoutBtn = drawer.querySelector('#menu-logout');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
+      logoutBtn.addEventListener('click', () => { CP.logout(); return;
         ['cp_role', 'cp_user', 'cp_branch', 'cp_branch_id', 'cp_token'].forEach(k => {
           sessionStorage.removeItem(k);
           localStorage.removeItem(k);

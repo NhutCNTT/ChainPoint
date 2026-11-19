@@ -40,8 +40,8 @@ public class Bill {
     @Column(name = "bill_code", nullable = false, unique = true, length = 32)
     private String billCode;
 
-    @Column(name = "idempotency_key", unique = true, length = 64)
-    private String idempotencyKey;
+    @Column(name = "request_key", unique = true, length = 64)
+    private String requestKey;
 
     @Column(name = "table_code", nullable = false, length = 20)
     private String tableCode;
@@ -73,6 +73,15 @@ public class Bill {
     @Column(name = "payment_method", length = 20)
     private String paymentMethod;
 
+    @Column(name = "order_note", length = 500)
+    private String note;
+
+    @Column(name = "cash_received", precision = 15, scale = 2)
+    private BigDecimal cashReceived;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     @Builder.Default
     @Column(name = "status", nullable = false, length = 20)
     private String status = "paid";
@@ -82,6 +91,20 @@ public class Bill {
 
     @Column(name = "blockchain_tx_hash", length = 66)
     private String blockchainTxHash;
+
+    @Column(name = "provider_reference", unique = true, length = 100)
+    private String providerReference;
+
+    @Builder.Default
+    @Column(name = "blockchain_pending", nullable = false)
+    private Boolean blockchainPending = false;
+
+    @Builder.Default
+    @Column(name = "redemption_reserved", nullable = false)
+    private Boolean redemptionReserved = false;
+
+    @Column(name = "redeem_tx_hash", length = 66)
+    private String redeemTxHash;
 
     @Column(name = "loyalty_tx_hash", length = 66)
     private String loyaltyTxHash;

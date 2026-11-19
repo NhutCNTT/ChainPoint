@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface ProductService {
 
-    List<ProductResponse> getAllProducts(String category, String status);
+    List<ProductResponse> getAllProducts(String category, String status, Long branchId);
 
     ProductResponse getProductById(Long id);
 

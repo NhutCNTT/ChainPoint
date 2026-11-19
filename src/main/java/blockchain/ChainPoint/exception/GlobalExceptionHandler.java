@@ -20,6 +20,16 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleStatus(org.springframework.web.server.ResponseStatusException exception) {
+        return build(HttpStatus.valueOf(exception.getStatusCode().value()), exception.getReason());
+    }
+
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<Map<String, Object>> handleAuthentication(Exception exception) {
+        return build(HttpStatus.UNAUTHORIZED, "Invalid credentials or expired session");
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException exception) {
         return build(HttpStatus.NOT_FOUND, exception.getMessage());
@@ -72,8 +82,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleUnexpected(Exception exception) {
         log.error("Unexpected server error", exception);
-        return build(HttpStatus.INTERNAL_SERVER_ERROR,
-                exception.getMessage() != null ? exception.getMessage() : "Lỗi hệ thống");
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi hệ thống");
     }
 
     private ResponseEntity<Map<String, Object>> build(HttpStatus status, String message) {

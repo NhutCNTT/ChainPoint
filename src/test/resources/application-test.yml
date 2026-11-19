@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:chainpoint;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  cache:
+    type: simple
+  rabbitmq:
+    dynamic: false
+    listener:
+      simple:
+        auto-startup: false
+      direct:
+        auto-startup: false
+jwt:
+  secret: chainpoint-test-only-signing-key-32-characters-minimum
+  expiration: 3600000
+blockchain:
+  rpc-url: http://127.0.0.1:18545
+  master-wallet-private-key: "0000000000000000000000000000000000000000000000000000000000000001"
+  delivery-delay-ms: 3600000
+payment:
+  bank-code: "970422"
+  bank-name: Test bank
+  account-number: "0000000000"
+  account-name: TEST ONLY
+  webhook-secret: chainpoint-test-only-webhook-secret
+logging:
+  level:
+    root: WARN
+    org.springframework: WARN
+    org.springframework.web: WARN
+    org.springframework.boot: WARN
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+    blockchain.ChainPoint: WARN
+debug: false

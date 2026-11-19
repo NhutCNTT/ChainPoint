@@ -21,6 +21,17 @@ public class PosController {
 
     private final CheckoutService checkoutService;
 
+    @PostMapping("/orders")
+    public ResponseEntity<CheckoutResponse> saveOrder(@Valid @RequestBody CheckoutRequest request) {
+        return ResponseEntity.ok(checkoutService.saveOrder(request));
+    }
+
+    @PostMapping("/orders/{billCode}/cancel")
+    public ResponseEntity<Void> cancelOrder(@org.springframework.web.bind.annotation.PathVariable String billCode) {
+        checkoutService.cancelOrder(billCode);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/checkout")
     @PreAuthorize("hasAnyRole('OWNER','MANAGER','CASHIER','ADMIN','STORE_OWNER','BRANCH_MANAGER')")
     public ResponseEntity<CheckoutResponse> checkout(

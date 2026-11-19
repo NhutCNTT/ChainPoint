@@ -26,14 +26,21 @@ public class StaffServiceImpl implements StaffService {
     private final UserRepository userRepository;
     private final BranchRepository branchRepository;
     private final PasswordEncoder passwordEncoder;
+    private final blockchain.ChainPoint.security.BranchAccess access;
 
     @Override
     public List<StaffResponse> getStaff(Long branchId) {
-        List<User> users = branchId != null
-                ? userRepository.findByBranchIdOrderByIdAsc(branchId)
+        access.requireManagement();
+        if (branchId != null) access.check(branchId);
+        List<User> users = !access.isOwner() ? userRepository.findCashiersInBranches(branchId == null ? access.branchIds() : java.util.Set.of(branchId)) : branchId != null
+                ? userRepository.findAllByOrderByIdAsc().stream().filter(u ->
+                    (u.getBranch() != null && branchId.equals(u.getBranch().getId()))
+                    || u.getManagedBranches().stream().anyMatch(b -> branchId.equals(b.getId()))).toList()
                 : userRepository.findAllByOrderByIdAsc();
 
         return users.stream()
+                .filter(u -> access.isOwner() || (u.getRole() == RoleType.ROLE_CASHIER
+                        && u.getBranch() != null && access.canAccess(u.getBranch().getId())))
                 .map(this::toResponse)
                 .toList();
     }
@@ -41,6 +48,7 @@ public class StaffServiceImpl implements StaffService {
     @Override
     @Transactional
     public StaffResponse createStaff(StaffRequest request) {
+        validateAssignment(request);
         String username = request.getUsername().trim().toLowerCase();
 
         if (userRepository.existsByUsername(username)) {
@@ -62,6 +70,8 @@ public class StaffServiceImpl implements StaffService {
                 .status(defaultStatus(request.getStatus()))
                 .build();
 
+        setManagedBranches(user, request);
+
         return toResponse(userRepository.save(user));
     }
 
@@ -69,6 +79,10 @@ public class StaffServiceImpl implements StaffService {
     @Transactional
     public StaffResponse updateStaff(Long id, StaffRequest request) {
         User user = findUser(id);
+        validateAssignment(request);
+        if (user.getId().equals(access.user().getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Use profile settings for your own account");
+        }
         String username = request.getUsername().trim().toLowerCase();
 
         if (!Objects.equals(user.getUsername(), username)
@@ -83,6 +97,7 @@ public class StaffServiceImpl implements StaffService {
         user.setRole(parseRole(request.getRole()));
         user.setBranch(resolveBranch(request.getBranchId()));
         user.setStatus(defaultStatus(request.getStatus()));
+        setManagedBranches(user, request);
 
         if (StringUtils.hasText(request.getPassword())) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -94,12 +109,49 @@ public class StaffServiceImpl implements StaffService {
     @Override
     @Transactional
     public void deleteStaff(Long id) {
-        userRepository.delete(findUser(id));
+        User user = findUser(id);
+        if (user.getId().equals(access.user().getId()) || user.getRole() == RoleType.ROLE_OWNER) {
+            throw new org.springframework.security.access.AccessDeniedException("Owner and current accounts cannot be deactivated here");
+        }
+        user.setStatus("inactive");
+    }
+
+    private void validateAssignment(StaffRequest request) {
+        access.requireManagement();
+        RoleType role = parseRole(request.getRole());
+        if (role == RoleType.ROLE_OWNER) throw new org.springframework.security.access.AccessDeniedException("Owner creation is not a staff workflow");
+        if (!access.isOwner() && role != RoleType.ROLE_CASHIER) {
+            throw new org.springframework.security.access.AccessDeniedException("Managers can manage cashiers only");
+        }
+        access.requireBranch(request.getBranchId());
+        if (request.getBranchId() == null) throw new IllegalArgumentException("Primary branch is required");
+        if (request.getBranchIds() != null && !request.getBranchIds().isEmpty()) {
+            if (role != RoleType.ROLE_MANAGER) throw new IllegalArgumentException("Only managers can have multiple branch assignments");
+            access.requireOwner();
+            request.getBranchIds().forEach(access::check);
+        }
+        if (request.getPassword() != null && !request.getPassword().isBlank() && request.getPassword().length() < 8) {
+            throw new IllegalArgumentException("Password must contain at least 8 characters");
+        }
+    }
+
+    private void setManagedBranches(User user, StaffRequest request) {
+        user.getManagedBranches().clear();
+        if (user.getRole() == RoleType.ROLE_MANAGER) {
+            user.getManagedBranches().add(user.getBranch());
+            if (request.getBranchIds() != null) request.getBranchIds().forEach(id -> user.getManagedBranches().add(resolveBranch(id)));
+        }
     }
 
     private User findUser(Long id) {
-        return userRepository.findById(id)
+        access.requireManagement();
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Staff account not found with id: " + id));
+        if (!access.isOwner()) {
+            if (user.getRole() != RoleType.ROLE_CASHIER) throw new org.springframework.security.access.AccessDeniedException("Cashier management only");
+            access.check(user.getBranch() == null ? null : user.getBranch().getId());
+        }
+        return user;
     }
 
     private Branch resolveBranch(Long branchId) {
@@ -113,7 +165,7 @@ public class StaffServiceImpl implements StaffService {
 
     private RoleType parseRole(String role) {
         try {
-            return RoleType.valueOf(role.trim().toUpperCase());
+            return RoleType.fromStored(role);
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Invalid role: " + role);
         }
@@ -138,6 +190,7 @@ public class StaffServiceImpl implements StaffService {
                 .email(user.getEmail())
                 .role(user.getRole() != null ? user.getRole().name() : null)
                 .branchId(branch != null ? branch.getId() : null)
+                .branchIds(new blockchain.ChainPoint.security.CustomUserDetails(user).getBranchIds())
                 .branchName(branch != null ? branch.getName() : null)
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())

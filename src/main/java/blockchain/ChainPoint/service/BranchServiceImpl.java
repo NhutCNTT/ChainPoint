@@ -36,10 +36,12 @@ public class BranchServiceImpl implements BranchService {
     private final DiningTableRepository diningTableRepository;
     private final UserRepository userRepository;
     private final BillRepository billRepository;
+    private final blockchain.ChainPoint.security.BranchAccess access;
 
     @Override
     public List<BranchResponse> getAllBranches() {
-        return branchRepository.findAll().stream()
+        return (access.isOwner() ? branchRepository.findAll() : branchRepository.findAllById(access.branchIds())).stream()
+                .filter(branch -> access.canAccess(branch.getId()))
                 .sorted(Comparator.comparing(Branch::getId))
                 .map(this::toResponse)
                 .toList();
@@ -53,6 +55,7 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional
     public BranchResponse createBranch(BranchRequest request) {
+        access.requireOwner();
         String code = normalizeCode(request.getCode());
 
         if (branchRepository.existsByCode(code)) {
@@ -66,16 +69,20 @@ public class BranchServiceImpl implements BranchService {
                 .phone(trimToNull(request.getPhone()))
                 .managerName(trimToNull(request.getManagerName()))
                 .openHours(defaultOpenHours(request.getOpenHours()))
+                .autoPrint(Boolean.TRUE.equals(request.getAutoPrint()))
                 .vatPercent(defaultVat(request.getVatPercent()))
                 .status(defaultStatus(request.getStatus()))
                 .build();
 
-        return toResponse(branchRepository.save(branch));
+        Branch saved = branchRepository.saveAndFlush(branch);
+        assignManager(saved, request.getManagerId());
+        return toResponse(saved);
     }
 
     @Override
     @Transactional
     public BranchResponse updateBranch(Long id, BranchRequest request) {
+        access.requireManagement();
         Branch branch = findBranch(id);
         String code = normalizeCode(request.getCode());
 
@@ -91,8 +98,10 @@ public class BranchServiceImpl implements BranchService {
         branch.setPhone(trimToNull(request.getPhone()));
         branch.setManagerName(trimToNull(request.getManagerName()));
         branch.setOpenHours(defaultOpenHours(request.getOpenHours()));
+        if (request.getAutoPrint() != null) branch.setAutoPrint(request.getAutoPrint());
         branch.setVatPercent(defaultVat(request.getVatPercent()));
         branch.setStatus(defaultStatus(request.getStatus()));
+        assignManager(branch, request.getManagerId());
 
         return toResponse(branchRepository.save(branch));
     }
@@ -100,10 +109,12 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional
     public void deleteBranch(Long id) {
-        branchRepository.delete(findBranch(id));
+        access.requireOwner();
+        findBranch(id).setStatus("closed");
     }
 
     private Branch findBranch(Long id) {
+        access.check(id);
         return branchRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Branch not found with id: " + id));
     }
@@ -123,11 +134,12 @@ public class BranchServiceImpl implements BranchService {
                 .address(branch.getAddress())
                 .phone(branch.getPhone())
                 .status(branch.getStatus())
-                .managerName(branch.getManagerName())
+                .managerName(managerNames(branch))
                 .openHours(branch.getOpenHours())
+                .autoPrint(branch.getAutoPrint())
                 .vatPercent(branch.getVatPercent())
                 .tablesCount(diningTableRepository.countByBranchId(branch.getId()))
-                .staffCount(userRepository.countByBranchId(branch.getId()))
+                .staffCount(userRepository.countStaffInBranch(branch.getId()))
                 .weeklyRevenue(weeklyRevenue != null
                         ? weeklyRevenue.setScale(2, RoundingMode.HALF_UP)
                         : BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP))
@@ -138,6 +150,23 @@ public class BranchServiceImpl implements BranchService {
 
     private String normalizeCode(String code) {
         return code.trim().toUpperCase();
+    }
+
+    private String managerNames(Branch branch) {
+        String names = userRepository.findManagersForBranch(branch.getId()).stream().map(blockchain.ChainPoint.entity.User::getFullName)
+                .collect(java.util.stream.Collectors.joining(", "));
+        return names.isBlank() ? branch.getManagerName() : names;
+    }
+
+    private void assignManager(Branch branch, Long managerId) {
+        if (managerId == null) return;
+        access.requireOwner();
+        var manager = userRepository.findById(managerId).orElseThrow(() -> new ResourceNotFoundException("Manager not found"));
+        if (manager.getRole() != blockchain.ChainPoint.entity.enums.RoleType.ROLE_MANAGER || !"active".equals(manager.getStatus())) {
+            throw new IllegalArgumentException("Select an active manager account");
+        }
+        if (manager.getBranch() == null) manager.setBranch(branch);
+        manager.getManagedBranches().add(branch);
     }
 
     private String trimToNull(String value) {

@@ -31,4 +31,6 @@ public class LoginResponse {
     private String branchName;
 
     private String branchCode;
+
+    private java.util.Set<Long> branchIds;
 }

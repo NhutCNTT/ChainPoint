@@ -23,4 +23,7 @@ public class CheckoutItemRequest {
     @NotNull(message = "Quantity is required")
     @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantity;
+
+    @jakarta.validation.constraints.Size(max = 255)
+    private String note;
 }

@@ -33,9 +33,10 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<List<ProductResponse>> getAllProducts(
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long branchId
     ) {
-        return ResponseEntity.ok(productService.getAllProducts(category, status));
+        return ResponseEntity.ok(productService.getAllProducts(category, status, branchId));
     }
 
     @GetMapping("/{id}")

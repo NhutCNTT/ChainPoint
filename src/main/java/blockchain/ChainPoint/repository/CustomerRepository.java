@@ -14,6 +14,16 @@ import java.util.Optional;
 
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
+    @Query("SELECT c FROM Customer c WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(c.phone, ' ', ''), '-', ''), '.', ''), '(', ''), ')', '') IN :phones")
+    List<Customer> findPhoneVariants(@Param("phones") List<String> phones);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Customer c WHERE REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(c.phone, ' ', ''), '-', ''), '.', ''), '(', ''), ')', '') IN :phones")
+    List<Customer> findPhoneVariantsForUpdate(@Param("phones") List<String> phones);
+
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT c FROM Customer c WHERE c.phone = :phone")
+    Optional<Customer> findByPhoneForUpdate(@Param("phone") String phone);
 
     Optional<Customer> findByPhone(String phone);
 

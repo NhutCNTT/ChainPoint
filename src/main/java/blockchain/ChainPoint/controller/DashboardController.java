@@ -5,6 +5,7 @@ import blockchain.ChainPoint.dto.dashboard.RevenueChartResponse;
 import blockchain.ChainPoint.dto.dashboard.TopDishResponse;
 import blockchain.ChainPoint.service.DashboardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,9 +26,11 @@ public class DashboardController {
     @GetMapping("/metrics")
     public ResponseEntity<DashboardMetricsResponse> getMetrics(
             @RequestParam(required = false) Long branchId,
-            @RequestParam(defaultValue = "7days") String range
+            @RequestParam(defaultValue = "7days") String range,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to
     ) {
-        return ResponseEntity.ok(dashboardService.getMetrics(branchId, range));
+        return ResponseEntity.ok(dashboardService.getMetrics(branchId, range, from, to));
     }
 
     @GetMapping("/revenue-chart")

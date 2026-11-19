@@ -11,5 +11,5 @@ public interface PaymentService {
 
     PaymentStatusResponse getStatus(String billCode);
 
-    PaymentStatusResponse simulatePayment(String billCode);
+    PaymentStatusResponse confirm(blockchain.ChainPoint.dto.payment.ProviderConfirmation request, String signature);
 }

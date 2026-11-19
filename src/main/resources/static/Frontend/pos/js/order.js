@@ -1,4 +1,5 @@
 (async () => {
+  await Store.ready;
   if (window.POS_DATA_READY) {
     await window.POS_DATA_READY;
   }
@@ -26,7 +27,7 @@
   function renderCats() {
     catList.innerHTML = CATEGORIES.map((c) => {
       const n = c.id === 'all' ? MENU.length : MENU.filter((m) => m.cat === c.id).length;
-      return `<li><button id="cat-${c.id}" class="cat-item ${c.id === activeCat ? 'active' : ''}" data-cat="${c.id}" type="button"><span class="ico">${c.icon}</span>${c.name}<span class="cnt">${n}</span></button></li>`;
+      return `<li><button id="cat-${c.id}" class="cat-item ${c.id === activeCat ? 'active' : ''}" data-cat="${c.id}" type="button"><span class="ico">${c.icon}</span>${UI.escapeHtml(c.name)}<span class="cnt">${n}</span></button></li>`;
     }).join('');
   }
 
@@ -45,8 +46,8 @@
       return `
       <button id="dish-${m.id}" class="dish" data-dish="${m.id}" type="button" style="--h:${hueOf(m.id)};animation-delay:${i * 20}ms">
         ${q ? `<span class="dish-qty">${q}</span>` : ''}
-        <span class="dish-art">${m.emoji}</span>
-        <span class="dish-body"><span class="dish-name">${m.name}</span><span class="dish-price">${UI.formatVND(m.price)}</span></span>
+        <span class="dish-art">${UI.escapeHtml(m.emoji)}</span>
+        <span class="dish-body"><span class="dish-name">${UI.escapeHtml(m.name)}</span><span class="dish-price">${UI.formatVND(m.price)}</span></span>
       </button>`;
     }).join('');
   }
@@ -147,27 +148,39 @@
       actions: [{ label: 'Ở lại', id: 'modal-stay' }, { label: 'Thoát', cls: 'btn-danger', id: 'modal-leave', onClick: goHome }] });
   });
 
-  $('btn-save').addEventListener('click', () => {
-    persist(); dirty = false;
+  $('btn-save').addEventListener('click', async () => {
+    try {
+    await persist(); dirty = false;
     UI.toast(cart.length ? `Đã lưu ${table.name}` : `Đã xóa order ${table.name}`);
     setTimeout(goHome, 600);
+    } catch (error) { UI.toast(error.message, 'error'); }
   });
 
-  $('btn-temp').addEventListener('click', () => {
+  $('btn-temp').addEventListener('click', async () => {
+    try {
     if (!cart.length) return UI.toast('Chưa có món để tạm tính', 'error');
-    const order = persist();
-    Store.moveToPending(order.billId, 'temp'); dirty = false;
+    const order = await persist();
+    dirty = false;
     UI.toast('Đã chuyển sang Chờ thanh toán');
     setTimeout(goHome, 600);
+    } catch (error) { UI.toast(error.message, 'error'); }
   });
 
-  $('btn-pay').addEventListener('click', () => {
+  $('btn-pay').addEventListener('click', async () => {
+    try {
+    if (saved?.status === 'pending') { dirty = false; location.href = 'payment-transfer.html?bill=' + encodeURIComponent(saved.billId); return; }
     if (!cart.length) return UI.toast('Chưa có món để thanh toán', 'error');
-    const order = persist(); dirty = false;
+    const order = await persist(); dirty = false;
     location.href = 'payment.html?bill=' + order.billId;
+    } catch (error) { UI.toast(error.message, 'error'); }
   });
 
   window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 
   renderHeader(); renderCats(); renderMenu(); renderCart();
+  ['btn-save', 'btn-temp', 'btn-pay'].forEach(id => $(id).disabled = false);
+  if (saved?.status === 'pending') {
+    $('btn-save').disabled = true; $('btn-temp').disabled = true;
+    menuGrid.style.pointerEvents = 'none'; cartList.querySelectorAll('button,input').forEach(control => control.disabled = true);
+  }
 })();

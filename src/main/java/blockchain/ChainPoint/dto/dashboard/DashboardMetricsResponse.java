@@ -28,4 +28,8 @@ public class DashboardMetricsResponse {
     private String customerGrowth;
 
     private Long activeTablesCount;
+
+    private Long totalEmployees;
+
+    private Long totalBranches;
 }

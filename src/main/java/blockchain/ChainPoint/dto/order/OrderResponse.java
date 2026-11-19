@@ -18,6 +18,12 @@ import java.util.List;
 @Builder
 public class OrderResponse {
 
+    private String note;
+
+    private java.time.LocalDateTime paidAt;
+
+    private java.math.BigDecimal cashReceived;
+
     private Long id;
 
     private String billCode;

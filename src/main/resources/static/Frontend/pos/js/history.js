@@ -22,7 +22,7 @@
   }
 
   function renderStats(rows) {
-    const sum = (m) => rows.filter((r) => !m || r.method === m).reduce((s, r) => s + Number(r.total || 0), 0);
+    const sum = (m) => rows.filter((r) => r.status === 'paid' && (!m || r.method === m)).reduce((s, r) => s + Number(r.total || 0), 0);
     $('stat-count').textContent = rows.length;
     $('stat-cash').textContent = UI.formatVND(sum('cash'));
     $('stat-transfer').textContent = UI.formatVND(sum('transfer'));
@@ -35,8 +35,8 @@
     const t = getTable(h.tableId);
     detailEl.innerHTML = `
       <div class="d-head">
-        <div><h2>${t ? t.name : ('Bàn ' + h.tableId)}</h2><small>#${h.billId} · ${UI.formatDate(h.paidAt)} ${UI.formatTime(h.paidAt)}</small></div>
-        <span class="badge badge-${h.method}">${methodLabel[h.method] || h.method}</span>
+        <div><h2>${window.escapeHtml(t ? t.name : ('Bàn ' + h.tableId))}</h2><small>#${h.billId} · ${UI.formatDate(h.paidAt)} ${UI.formatTime(h.paidAt)}</small></div>
+        <span class="badge badge-${h.method}">${h.status === 'refunded' ? 'Đã hoàn tiền' : methodLabel[h.method] || h.method}</span>
       </div>
       <div class="d-items sum-list">
         ${h.items.map((i) => `
@@ -64,7 +64,7 @@
         const t = getTable(h.tableId);
         return `
         <button id="row-${h.billId}" class="h-row ${h.billId === selected ? 'active' : ''}" data-bill="${h.billId}" type="button" style="animation-delay:${i * 30}ms">
-          <span class="h-table">${t ? t.name : ('Bàn ' + h.tableId)}</span>
+          <span class="h-table">${window.escapeHtml(t ? t.name : ('Bàn ' + h.tableId))}</span>
           <span class="h-info"><b>#${h.billId}</b><small>${UI.formatDate(h.paidAt)} · ${UI.formatTime(h.paidAt)} · ${h.items.reduce((s, x) => s + x.qty, 0)} món</small></span>
           <span class="badge badge-${h.method}">${methodLabel[h.method] || h.method}</span>
           <span class="h-total money">${UI.formatVND(h.total)}</span>

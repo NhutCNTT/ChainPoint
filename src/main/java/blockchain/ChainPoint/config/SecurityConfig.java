@@ -92,6 +92,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/Frontend/pages/auth/**").permitAll()
+                        .requestMatchers("/Frontend/pages/owner/*.html", "/Frontend/pages/admin/*.html").hasRole("OWNER")
+                        .requestMatchers("/Frontend/pages/branch/*.html").hasAnyRole("OWNER", "MANAGER")
+                        .requestMatchers("/Frontend/pages/employee/*.html", "/Frontend/pos/*.html", "/pos/*.html").hasAnyRole("OWNER", "MANAGER", "CASHIER")
                         .requestMatchers(
                                 "/",
                                 "/index.html",
@@ -116,7 +120,9 @@ public class SecurityConfig {
                                 "/*.ttf"
                         ).permitAll()
                         .requestMatchers(
-                                "/api/v1/auth/**",
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/register",
+                                "/api/v1/auth/logout",
                                 "/actuator/health",
                                 "/actuator/health/**",
                                 "/error",
@@ -125,8 +131,10 @@ public class SecurityConfig {
                                 "/swagger-ui.html",
                                 "/webjars/**"
                         ).permitAll()
+                        .requestMatchers("/api/v1/payment/provider-confirmation").permitAll()
+                        .requestMatchers("/api/v1/admin/**", "/api/v1/staff/**").hasAnyRole("OWNER", "MANAGER")
                         .requestMatchers("/api/v1/**").authenticated()
-                        .requestMatchers("/actuator/**").authenticated()
+                        .requestMatchers("/actuator/**").hasRole("OWNER")
                         .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationProvider())

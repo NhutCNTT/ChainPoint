@@ -21,7 +21,7 @@ let CATEGORIES = [
 let MENU = [];
 let TABLES = [];
 
-const POS_API_BASE = (typeof window !== 'undefined' && window.location.port && window.location.port !== '8080' && window.location.port !== '')
+const POS_API_BASE = (typeof window !== 'undefined' && window.location.port && ['5500', '5501'].includes(window.location.port) && window.location.port !== '')
   ? 'http://localhost:8080/api/v1'
   : ((typeof window !== 'undefined' && window.location.origin && window.location.origin !== 'null') ? `${window.location.origin}/api/v1` : 'http://localhost:8080/api/v1');
 
@@ -36,6 +36,7 @@ const posFetch = (url, options = {}) => fetch(url, {
 });
 
 async function resolveActiveBranchId() {
+  await CP.ready;
   let branchId = sessionStorage.getItem('cp_branch_id') || localStorage.getItem('cp_branch_id') || '';
   if (branchId) return branchId;
   try {
@@ -84,18 +85,12 @@ async function fetchMenuFromDatabase() {
     const res = await posFetch(url);
     if (res.ok) {
       let data = await res.json();
-      // Nếu chi nhánh hiện tại chưa có món riêng, tải toàn bộ sản phẩm trong DB
-      if (Array.isArray(data) && data.length === 0 && branchId) {
-        const fallbackRes = await posFetch(`${POS_API_BASE}/products`);
-        if (fallbackRes.ok) {
-          data = await fallbackRes.json();
-        }
-      }
+
       if (Array.isArray(data)) {
         MENU = data
-          .filter(p => p.status !== 'out_of_stock')
+          .filter(p => p.status === 'available')
           .map(p => ({
-            id: p.code || ('m' + p.id),
+            id: 'p' + p.id,
             realId: p.id,
             cat: p.category || 'other',
             name: p.name,
@@ -127,16 +122,11 @@ async function fetchTablesFromDatabase() {
     const res = await posFetch(url);
     if (res.ok) {
       let data = await res.json();
-      if (Array.isArray(data) && data.length === 0 && branchId) {
-        const fallbackRes = await posFetch(`${POS_API_BASE}/tables`);
-        if (fallbackRes.ok) {
-          data = await fallbackRes.json();
-        }
-      }
       if (Array.isArray(data)) {
         TABLES = data.filter(t => t.status !== 'disabled').map(t => ({
           id: t.code,
           realId: t.id,
+          status: t.status,
           name: t.name || ('Bàn ' + t.code),
           area: t.area || 'Tầng 1',
           seats: parseInt(t.seats, 10) || 4

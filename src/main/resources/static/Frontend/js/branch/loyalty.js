@@ -1,7 +1,8 @@
 // ChainPoint — Quản trị Chương trình Khách hàng thân thiết Loyalty
 // Used by: pages/branch/loyalty.html
 
-(function () {
+(async function () {
+    await window.CP.ready;
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
     const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -16,6 +17,11 @@
     const txBody = document.getElementById('loyaltyTxBody');
     const configForm = document.getElementById('loyaltyConfigForm');
     const saveNotice = document.getElementById('configSaveNotice');
+    const expiryInput = document.getElementById('pointExpiryDays');
+    if (expiryInput) {
+        expiryInput.readOnly = true;
+        expiryInput.title = 'Tự động hết hạn điểm chưa được hỗ trợ; giá trị hiện có được giữ nguyên.';
+    }
 
     function updateBannerText() {
         const cfg = LoyaltyStore.getConfig();
@@ -154,7 +160,7 @@
                 allowEarn: document.getElementById('allowEarn').checked
             };
 
-            await LoyaltyStore.saveConfig(newCfg);
+            try { await LoyaltyStore.saveConfig(newCfg); } catch (error) { CP.notify(error.message); return; }
             renderStats();
             renderTransactions();
 

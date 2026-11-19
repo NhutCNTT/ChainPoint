@@ -32,6 +32,8 @@ public class BranchResponse {
 
     private String openHours;
 
+    private Boolean autoPrint;
+
     private BigDecimal vatPercent;
 
     private Long tablesCount;

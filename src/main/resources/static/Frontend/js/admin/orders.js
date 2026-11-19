@@ -1,17 +1,19 @@
 // ChainPoint — Quản lý & tra cứu đơn hàng (Phục vụ Thu ngân, Quản lý, Chủ chuỗi)
 // Dữ liệu kết nối trực tiếp 100% với MySQL Backend API (không dùng mock data)
 
-(function () {
+(async function () {
+    await window.CP.ready;
     const formatVND = n => (Number(n) || 0).toLocaleString('vi-VN') + ' ₫';
     const escapeHtml = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
     let orders = [];
     let activeTablesCount = 0;
     let currentStatusFilter = 'all';
-    let currentSearch = '';
+    let currentSearch = new URLSearchParams(location.search).get('q') || '';
 
     const ordersTableBody = document.getElementById('ordersTableBody');
     const searchInput = document.getElementById('orderSearchInput');
+    if (searchInput) searchInput.value = currentSearch;
     const statusTabs = document.getElementById('orderStatusTabs');
 
     // Detail Modal elements

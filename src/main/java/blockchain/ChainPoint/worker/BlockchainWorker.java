@@ -21,6 +21,7 @@ public class BlockchainWorker {
     private final BillRepository billRepository;
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_NAME)
+    @org.springframework.transaction.annotation.Transactional(noRollbackFor = AmqpRejectAndDontRequeueException.class)
     public void handleCheckoutEvent(CheckoutWeb3Event event) {
         if (event == null) {
             log.warn("Received a null checkout Web3 event; routing to dead letter queue");
@@ -33,6 +34,8 @@ public class BlockchainWorker {
         }
 
         try {
+            Bill current = billRepository.findForUpdate(event.getBillCode()).orElseThrow();
+            if (!"paid".equals(current.getStatus()) || !Boolean.TRUE.equals(current.getBlockchainPending())) return;
             log.info(
                     "Processing checkout Web3 event for billCode={}, pointsEarned={}, pointsUsed={}",
                     event.getBillCode(),
@@ -40,7 +43,7 @@ public class BlockchainWorker {
                     event.getPointsUsed()
             );
 
-            String invoiceTxHash = blockchainService.recordInvoice(
+            String invoiceTxHash = StringUtils.hasText(current.getBlockchainTxHash()) ? current.getBlockchainTxHash() : blockchainService.recordInvoice(
                     event.getBillCode(),
                     event.getBranchId(),
                     event.getFinalAmount(),
@@ -48,7 +51,7 @@ public class BlockchainWorker {
             );
             updateBillHashes(event.getBillCode(), invoiceTxHash, null);
 
-            if (event.getPointsUsed() != null && event.getPointsUsed() > 0
+            if (!StringUtils.hasText(current.getRedeemTxHash()) && event.getPointsUsed() != null && event.getPointsUsed() > 0
                     && StringUtils.hasText(event.getCustomerPhone())) {
                 String redeemTxHash = blockchainService.redeemPoints(
                         event.getWalletAddress(),
@@ -59,10 +62,10 @@ public class BlockchainWorker {
                                 ? event.getDiscountAmount()
                                 : java.math.BigDecimal.ZERO
                 );
-                updateBillHashes(event.getBillCode(), null, redeemTxHash);
+                current.setRedeemTxHash(redeemTxHash);
             }
 
-            if (event.getPointsEarned() != null && event.getPointsEarned() > 0
+            if (!StringUtils.hasText(current.getLoyaltyTxHash()) && event.getPointsEarned() != null && event.getPointsEarned() > 0
                     && StringUtils.hasText(event.getCustomerPhone())) {
                 String loyaltyTxHash = blockchainService.earnPoints(
                         event.getWalletAddress(),
@@ -75,6 +78,7 @@ public class BlockchainWorker {
             }
 
             log.info("Finished processing checkout Web3 event for billCode={}", event.getBillCode());
+            current.setBlockchainPending(false);
         } catch (Exception exception) {
             log.error(
                     "Failed to process checkout Web3 event for billCode={}; routing to dead letter queue",

@@ -9,8 +9,6 @@ import blockchain.ChainPoint.exception.ResourceNotFoundException;
 import blockchain.ChainPoint.repository.BranchRepository;
 import blockchain.ChainPoint.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -28,9 +26,12 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customerRepository;
     private final BranchRepository branchRepository;
+    private final blockchain.ChainPoint.security.BranchAccess access;
+    private final blockchain.ChainPoint.repository.BillRepository bills;
 
     @Override
     public List<CustomerResponse> getCustomers(Long branchId, String query) {
+        branchId = access.resolve(branchId);
         List<Customer> customers = branchId != null
                 ? customerRepository.findByBranchId(branchId)
                 : customerRepository.findAllByOrderByCreatedAtDesc();
@@ -53,29 +54,32 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponse getCustomerByPhone(String phone) {
-        return customerRepository.findByPhone(phone.trim())
-                .map(this::toResponse)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Customer not found with phone: " + phone
-                ));
+        var matches = customerRepository.findPhoneVariants(blockchain.ChainPoint.util.VietnamPhone.variants(phone));
+        if (matches.size() > 1) throw new DuplicateResourceException("Duplicate legacy phone records require review");
+        return matches.stream().filter(c -> access.canAccess(c.getBranch() == null ? null : c.getBranch().getId()))
+                .map(this::toResponse).findFirst().orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
     }
 
     @Override
     @Transactional
     public CustomerResponse createCustomer(CustomerRequest request) {
-        String phone = request.getPhone().trim();
+        if (StringUtils.hasText(request.getWalletAddress())) access.requireOwner();
+        if (request.getPoints() != null && request.getPoints() != 0) {
+            throw new IllegalArgumentException("Loyalty balances can only change through payment workflows");
+        }
+        String phone = blockchain.ChainPoint.util.VietnamPhone.normalize(request.getPhone());
 
-        if (customerRepository.existsByPhone(phone)) {
+        if (!customerRepository.findPhoneVariants(blockchain.ChainPoint.util.VietnamPhone.variants(phone)).isEmpty()) {
             throw new DuplicateResourceException("Số điện thoại đã được đăng ký hội viên: " + phone);
         }
 
         Customer customer = Customer.builder()
-                .code(generateCustomerCode())
+                .code("KH" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 18))
                 .name(request.getName().trim())
                 .phone(phone)
                 .dateOfBirth(request.getDateOfBirth())
-                .tier(defaultTier(request.getTier()))
-                .points(canAdjustLoyaltyPoints() ? defaultPoints(request.getPoints()) : 0L)
+                .tier(DEFAULT_TIER)
+                .points(0L)
                 .walletAddress(trimToNull(request.getWalletAddress()))
                 .branch(resolveBranch(request.getBranchId()))
                 .build();
@@ -86,22 +90,25 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public CustomerResponse updateCustomer(Long id, CustomerRequest request) {
-        Customer customer = findCustomer(id);
-        String phone = request.getPhone().trim();
+        Customer customer = customerRepository.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+        access.check(customer.getBranch() == null ? null : customer.getBranch().getId());
+        String phone = blockchain.ChainPoint.util.VietnamPhone.normalize(request.getPhone());
+        if (blockchain.ChainPoint.util.VietnamPhone.normalize(customer.getPhone()).equals(phone)) phone = customer.getPhone();
+        if (!phone.equals(customer.getPhone()) && bills.existsByCustomerPhone(customer.getPhone())) throw new IllegalArgumentException("Phone is referenced by financial history");
+        if (!Objects.equals(trimToNull(request.getWalletAddress()), customer.getWalletAddress()) && request.getWalletAddress() != null) access.requireOwner();
 
         if (!Objects.equals(customer.getPhone(), phone)
-                && customerRepository.existsByPhone(phone)) {
+                && customerRepository.findPhoneVariants(blockchain.ChainPoint.util.VietnamPhone.variants(phone)).stream().anyMatch(c -> !c.getId().equals(id))) {
             throw new DuplicateResourceException("Số điện thoại đã được đăng ký hội viên: " + phone);
         }
 
         customer.setName(request.getName().trim());
         customer.setPhone(phone);
         customer.setDateOfBirth(request.getDateOfBirth());
-        customer.setTier(defaultTier(request.getTier()));
-        if (request.getPoints() != null && canAdjustLoyaltyPoints()) {
-            customer.setPoints(Math.max(0L, request.getPoints()));
+        if (request.getPoints() != null && !Objects.equals(request.getPoints(), customer.getPoints())) {
+            throw new IllegalArgumentException("Loyalty balances can only change through payment workflows");
         }
-        customer.setWalletAddress(trimToNull(request.getWalletAddress()));
+        if (request.getWalletAddress() != null) customer.setWalletAddress(trimToNull(request.getWalletAddress()));
         customer.setBranch(resolveBranch(request.getBranchId()));
 
         return toResponse(customerRepository.save(customer));
@@ -110,21 +117,26 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional
     public void deleteCustomer(Long id) {
-        customerRepository.delete(findCustomer(id));
+        access.requireManagement();
+        Customer customer = findCustomer(id);
+        if (bills.existsByCustomerPhone(customer.getPhone()) || customer.getTotalSpent().signum() > 0 || customer.getPoints() > 0) {
+            throw new IllegalArgumentException("Customers with financial history must be retained");
+        }
+        customerRepository.delete(customer);
     }
 
     private Customer findCustomer(Long id) {
-        return customerRepository.findById(id)
+        Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
+        access.check(customer.getBranch() != null ? customer.getBranch().getId() : null);
+        return customer;
     }
 
     private Branch resolveBranch(Long branchId) {
-        if (branchId == null) {
-            return null;
-        }
+        branchId = access.requireBranch(branchId);
 
         return branchRepository.findById(branchId)
-                .orElseThrow(() -> new ResourceNotFoundException("Branch not found with id: " + branchId));
+                .orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
     }
 
     private String generateCustomerCode() {
@@ -137,16 +149,6 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         return code;
-    }
-
-    private boolean canAdjustLoyaltyPoints() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return false;
-        }
-        return authentication.getAuthorities().stream()
-                .anyMatch(authority -> "ROLE_OWNER".equals(authority.getAuthority())
-                        || "ROLE_MANAGER".equals(authority.getAuthority()));
     }
 
     private String defaultTier(String tier) {
@@ -172,6 +174,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .dateOfBirth(customer.getDateOfBirth())
                 .tier(customer.getTier())
                 .points(customer.getPoints())
+                .availablePoints(Math.max(0, customer.getPoints() - bills.reservedPoints(customer.getPhone())))
                 .totalSpent(customer.getTotalSpent())
                 .walletAddress(customer.getWalletAddress())
                 .branchId(branch != null ? branch.getId() : null)

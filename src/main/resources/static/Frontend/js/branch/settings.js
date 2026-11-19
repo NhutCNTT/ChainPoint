@@ -1,12 +1,14 @@
 // ChainPoint — Cài đặt thông tin vận hành Chi nhánh
 // Kết nối trực tiếp với MySQL Backend API thay thế hoàn toàn localStorage
 
-(function () {
+(async function () {
+    await window.CP.ready;
     const currentBranchName = sessionStorage.getItem('cp_branch') || '';
     let currentBranchId = sessionStorage.getItem('cp_branch_id') || '';
 
     const form = document.getElementById('branchSettingsForm');
     const notice = document.getElementById('saveNotice');
+    document.getElementById('setManager').readOnly = true;
 
     async function loadBranchSettings() {
         try {
@@ -35,8 +37,9 @@
                 document.getElementById('setCloseTime').value = (hours[1] || '22:30').trim();
 
                 document.getElementById('setManager').value = branch.managerName || '';
-                document.getElementById('setVat').value = branch.vatPercent || 8;
+                document.getElementById('setVat').value = branch.vatPercent ?? 8;
                 document.getElementById('setBranchStatus').value = branch.status || 'open';
+                document.getElementById('setAutoPrint').checked = branch.autoPrint === true;
             }
         } catch (e) {
             console.warn('Không thể nạp cài đặt chi nhánh từ MySQL API:', e);
@@ -52,12 +55,13 @@
 
             const payload = {
                 name: document.getElementById('setBranchName').value.trim(),
+                autoPrint: document.getElementById('setAutoPrint').checked,
                 code: document.getElementById('setBranchCode').value.trim().toUpperCase(),
                 address: document.getElementById('setBranchAddress').value.trim(),
                 phone: document.getElementById('setBranchHotline').value.trim(),
                 openHours: `${openTime} - ${closeTime}`,
                 managerName: document.getElementById('setManager').value.trim(),
-                vatPercent: parseFloat(document.getElementById('setVat').value) || 8.0,
+                vatPercent: parseFloat(document.getElementById('setVat').value),
                 status: document.getElementById('setBranchStatus').value
             };
 

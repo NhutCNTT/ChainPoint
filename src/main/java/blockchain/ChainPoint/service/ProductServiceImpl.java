@@ -9,7 +9,6 @@ import blockchain.ChainPoint.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -26,31 +25,14 @@ public class ProductServiceImpl implements ProductService {
     private static final String STATUS_OUT_OF_STOCK = "out_of_stock";
 
     private final ProductRepository productRepository;
+    private final blockchain.ChainPoint.repository.BranchRepository branchRepository;
+    private final blockchain.ChainPoint.security.BranchAccess access;
 
     @Override
-    @Cacheable(
-            value = "products",
-            key = "#category != null ? #category : 'all'",
-            condition = "#status == null"
-    )
-    public List<ProductResponse> getAllProducts(String category, String status) {
-        List<Product> products;
-
-        if (StringUtils.hasText(category)) {
-            products = productRepository.findByCategoryIgnoreCase(category);
-        } else if (StringUtils.hasText(status)) {
-            products = productRepository.findByStatus(status);
-        } else {
-            products = productRepository.findAll();
-        }
-
-        if (StringUtils.hasText(category) && StringUtils.hasText(status)) {
-            products = products.stream()
-                    .filter(product -> status.equalsIgnoreCase(product.getStatus()))
-                    .toList();
-        }
-
-        return products.stream()
+    public List<ProductResponse> getAllProducts(String category, String status, Long branchId) {
+        return productRepository.findVisibleProducts(access.resolve(branchId)).stream()
+                .filter(p -> !StringUtils.hasText(category) || category.equalsIgnoreCase(p.getCategory()))
+                .filter(p -> !StringUtils.hasText(status) || status.equalsIgnoreCase(p.getStatus()))
                 .map(this::toResponse)
                 .toList();
     }
@@ -64,6 +46,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public ProductResponse createProduct(ProductRequest request) {
+        access.requireManagement();
         if (productRepository.existsByCode(request.getCode())) {
             throw new DuplicateResourceException("Product code already exists: " + request.getCode());
         }
@@ -77,6 +60,7 @@ public class ProductServiceImpl implements ProductService {
                 .status(defaultStatus(request.getStatus()))
                 .stockQuantity(defaultStockQuantity(request.getStockQuantity()))
                 .imageUrl(request.getImageUrl())
+                .branch(resolveBranch(request.getBranchId()))
                 .build();
 
         return toResponse(productRepository.save(product));
@@ -86,7 +70,11 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public ProductResponse updateProduct(Long id, ProductRequest request) {
-        Product product = findProduct(id);
+        Product product = productRepository.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        checkWrite(product);
+        if (request.getBranchId() != null && (product.getBranch() == null || !request.getBranchId().equals(product.getBranch().getId()))) {
+            throw new IllegalArgumentException("Product branch cannot be changed");
+        }
 
         if (!Objects.equals(product.getCode(), request.getCode())
                 && productRepository.existsByCode(request.getCode())) {
@@ -110,6 +98,7 @@ public class ProductServiceImpl implements ProductService {
     @CacheEvict(value = "products", allEntries = true)
     public void deleteProduct(Long id) {
         Product product = findProduct(id);
+        checkWrite(product);
 
         try {
             productRepository.delete(product);
@@ -126,7 +115,8 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     @CacheEvict(value = "products", allEntries = true)
     public ProductResponse toggleStockStatus(Long id) {
-        Product product = findProduct(id);
+        Product product = productRepository.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        checkWrite(product);
         product.setStatus(
                 STATUS_AVAILABLE.equalsIgnoreCase(product.getStatus())
                         ? STATUS_OUT_OF_STOCK
@@ -137,8 +127,22 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private Product findProduct(Long id) {
-        return productRepository.findById(id)
+        Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        if (product.getBranch() != null) access.check(product.getBranch().getId());
+        return product;
+    }
+
+    private void checkWrite(Product product) {
+        access.requireManagement();
+        if (product.getBranch() == null) access.requireOwner();
+        else access.check(product.getBranch().getId());
+    }
+
+    private blockchain.ChainPoint.entity.Branch resolveBranch(Long requested) {
+        Long id = access.resolve(requested);
+        if (id == null) return null;
+        return branchRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Branch not found"));
     }
 
     private String defaultStatus(String status) {
@@ -152,6 +156,7 @@ public class ProductServiceImpl implements ProductService {
     private ProductResponse toResponse(Product product) {
         return ProductResponse.builder()
                 .id(product.getId())
+                .branchId(product.getBranch() == null ? null : product.getBranch().getId())
                 .code(product.getCode())
                 .name(product.getName())
                 .category(product.getCategory())

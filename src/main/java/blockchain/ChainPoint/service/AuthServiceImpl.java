@@ -32,6 +32,9 @@ public class AuthServiceImpl implements AuthService {
     private final BranchRepository branchRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @org.springframework.beans.factory.annotation.Value("${auth.registration-enabled:false}")
+    private boolean registrationEnabled;
+
     @Override
     public LoginResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
@@ -51,6 +54,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public LoginResponse register(RegisterRequest request) {
+        if (!registrationEnabled || userRepository.count() > 0) {
+            throw new org.springframework.security.access.AccessDeniedException("Owner registration is closed. Contact the existing owner.");
+        }
         String phone = request.getPhone().trim();
 
         if (userRepository.existsByUsername(phone)) {
@@ -83,7 +89,7 @@ public class AuthServiceImpl implements AuthService {
         return toLoginResponse(user);
     }
 
-    private LoginResponse toLoginResponse(User user) {
+    public LoginResponse toLoginResponse(User user) {
         Branch branch = user.getBranch();
         String accessToken = jwtTokenProvider.generateToken(new CustomUserDetails(user));
 
@@ -97,6 +103,7 @@ public class AuthServiceImpl implements AuthService {
                 .branchId(branch != null ? branch.getId() : null)
                 .branchName(branch != null ? branch.getName() : null)
                 .branchCode(branch != null ? branch.getCode() : null)
+                .branchIds(new CustomUserDetails(user).getBranchIds())
                 .build();
     }
 

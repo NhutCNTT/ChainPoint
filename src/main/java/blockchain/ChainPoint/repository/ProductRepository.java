@@ -14,6 +14,9 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
+    @Query("SELECT p FROM Product p WHERE (:branchId IS NULL OR p.branch IS NULL OR p.branch.id = :branchId)")
+    List<Product> findVisibleProducts(@Param("branchId") Long branchId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findByIdForUpdate(@Param("id") Long id);
