@@ -41,6 +41,7 @@ spring:
 #    port: 5672
 #    username: guest
 #    password: guest
+
 jwt:
   secret: 1858FEBBD48332BFB67978F5929B105A6668DEF6AD59AFB82D9E90506A85A05D
   expiration: 86400000

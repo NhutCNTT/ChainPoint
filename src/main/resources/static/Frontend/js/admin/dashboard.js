@@ -163,17 +163,8 @@
         }
 
         updateDashboardUI();
-        updateOpenBranchesBadge();
         loadTopDishes(branchQuery);
         renderBranchPerformance();
-    }
-
-    function updateOpenBranchesBadge() {
-        const badge = document.getElementById('openBranchesCount');
-        if (badge) {
-            const openCount = branchesList.filter(b => b.status === 'open').length;
-            badge.textContent = `${openCount} chi nhánh đang mở`;
-        }
     }
 
     async function loadTopDishes(queryBranch) {

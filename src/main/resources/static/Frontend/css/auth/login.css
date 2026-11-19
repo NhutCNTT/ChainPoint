@@ -95,28 +95,6 @@ body {
     padding: 0 var(--sp-2) var(--sp-1);
 }
 
-.hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: var(--fs-xs);
-    font-weight: var(--fw-semibold);
-    color: var(--primary);
-    background: #ffffff;
-    border: 1px solid var(--border);
-    padding: 5px 12px;
-    border-radius: var(--r-full);
-    margin-bottom: var(--sp-3);
-    box-shadow: var(--shadow-sm);
-}
-
-.hero-badge .dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--success);
-}
-
 .hero-copy h1 {
     font-size: clamp(25px, 3vw, 36px);
     line-height: 1.2;
